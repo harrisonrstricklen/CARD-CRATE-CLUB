@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referrals — CardCrate Club</title>
+<meta name="description" content="Share your CardCrate Club referral link and earn Crate Coins for every friend who joins and subscribes.">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="theme.css">
+<style>
+  .ref-hero { text-align: center; padding: 8px 0 24px; }
+
+  .link-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 28px; }
+  .link-row { display: flex; gap: 10px; }
+  .link-input { flex: 1; background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-size: 0.85rem; overflow-x: auto; white-space: nowrap; }
+  .copy-btn { flex-shrink: 0; }
+  .copy-feedback { font-size: 0.78rem; color: var(--green); margin-top: 10px; min-height: 18px; }
+
+  .ref-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+
+  .flow-track { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 10px; }
+  .flow-step { flex: 1; min-width: 130px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 14px; text-align: center; }
+  .flow-step .icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .flow-step strong { display: block; font-size: 0.82rem; }
+  .flow-arrow { color: var(--gold); font-size: 1.2rem; flex-shrink: 0; }
+
+  .share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .share-btn { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--text); font-size: 0.8rem; font-weight: 700; }
+  .share-btn:hover { border-color: rgba(245,200,66,0.4); background: #1c1c28; }
+  .share-btn .icon { font-size: 1.5rem; display: block; margin-bottom: 8px; }
+
+  @media (max-width: 700px) {
+    .ref-stats { grid-template-columns: 1fr 1fr; }
+    .share-grid { grid-template-columns: repeat(2, 1fr); }
+    .flow-arrow { display: none; }
+    .flow-step { min-width: 45%; }
+  }
+</style>
+</head>
+<body class="member-page">
+
+<div id="loading-overlay"><div class="loader-logo">CCC<span>.</span></div><div class="spinner"></div></div>
+
+<div class="floating-bg">
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="nav-logo">CCC<span>.</span></div>
+    <nav class="nav-links">
+      <a href="dashboard.html">🏠 Dashboard</a>
+      <a href="crates.html">📦 My Crates</a>
+      <a href="collection.html">🃏 Collection</a>
+      <a href="rewards.html">🪙 Rewards</a>
+      <div class="nav-dropdown">
+        <a href="#">🤖 AI Tools ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="card-evaluator.html">Card Evaluator</a>
+          <a href="crate-advisor.html">Crate Advisor</a>
+        </div>
+      </div>
+      <a href="account.html">⚙️ Account</a>
+    </nav>
+    <div class="nav-right">
+      <button class="avatar-btn" id="avatar-btn">?</button>
+      <button class="sign-out-btn" id="sign-out-btn">Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="ref-hero">
+      <div class="page-title">Refer <span class="gold">Friends</span></div>
+      <p class="page-subtitle" style="margin-bottom:0;">Share your link — you and your friend both earn Crate Coins when they subscribe.</p>
+    </div>
+
+    <div class="link-card">
+      <label class="form-hint" style="display:block;margin-bottom:8px;">Your referral link</label>
+      <div class="link-row">
+        <div class="link-input" id="refLink">Loading your link...</div>
+        <button class="btn btn-gold copy-btn" id="copyBtn">Copy</button>
+      </div>
+      <div class="copy-feedback" id="copyFeedback"></div>
+    </div>
+
+    <div class="ref-stats">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="statTotalRef">0</div><div class="stat-label">Total Referrals</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="statSuccessRef">0</div><div class="stat-label">Subscribed Friends</div></div>
+      <div class="stat-card"><div class="stat-icon">🪙</div><div class="stat-value" id="statCoinsEarned">0</div><div class="stat-label">Coins Earned</div></div>
+    </div>
+
+    <div class="section-title">🔄 How It Works</div>
+    <div class="flow-track">
+      <div class="flow-step"><div class="icon">📤</div><strong>Share</strong></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="icon">🙋</div><strong>Friend Joins</strong></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="icon">📦</div><strong>Friend Subscribes</strong></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="icon">🪙</div><strong>Both Earn</strong></div>
+    </div>
+
+    <div class="section-title">📣 Share To</div>
+    <div class="share-grid">
+      <div class="share-btn" id="shareDiscord"><span class="icon">💬</span>Discord</div>
+      <div class="share-btn" id="shareFacebook"><span class="icon">📘</span>Facebook</div>
+      <div class="share-btn" id="shareInstagram"><span class="icon">📷</span>Instagram</div>
+      <div class="share-btn" id="shareX"><span class="icon">✖️</span>X / Twitter</div>
+    </div>
+    <p class="form-hint">Discord and Instagram don't support pre-filled share links — clicking those copies your link so you can paste it in.</p>
+  </main>
+
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <a href="dashboard.html"   class="mnav-item"><span class="micon">🏠</span>Home</a>
+      <a href="crates.html"      class="mnav-item"><span class="micon">📦</span>Crates</a>
+      <a href="collection.html"  class="mnav-item"><span class="micon">🃏</span>Collection</a>
+      <a href="rewards.html"     class="mnav-item"><span class="micon">🪙</span>Rewards</a>
+      <a href="account.html"     class="mnav-item"><span class="micon">⚙️</span>Account</a>
+    </div>
+  </nav>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+    authDomain: "cardcrate-club.firebaseapp.com",
+    projectId: "cardcrate-club",
+    storageBucket: "cardcrate-club.firebasestorage.app",
+    messagingSenderId: "261800955788",
+    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+    measurementId: "G-5B8J0LWGKE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const overlay = document.getElementById('loading-overlay');
+  const avatarBtn = document.getElementById('avatar-btn');
+  let refUrl = '';
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    avatarBtn.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+
+    // Referral code: derived from the user's UID. A real implementation
+    // should mint a short, human-friendly code server-side and store it
+    // on the user doc — this is a functional placeholder using the UID.
+    refUrl = `${window.location.origin}/signup.html?ref=${user.uid}`;
+    document.getElementById('refLink').textContent = refUrl;
+
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        const r = data.referrals || {};
+        document.getElementById('statTotalRef').textContent = r.total ?? 0;
+        document.getElementById('statSuccessRef').textContent = r.subscribed ?? 0;
+        document.getElementById('statCoinsEarned').textContent = r.coinsEarned ?? 0;
+      }
+    } catch (err) {
+      console.warn('Firestore read error:', err);
+    }
+
+    overlay.classList.add('hide');
+    setTimeout(() => overlay.style.display = 'none', 400);
+  });
+
+  document.getElementById('sign-out-btn').addEventListener('click', async () => { await signOut(auth); window.location.href = 'login.html'; });
+  avatarBtn.addEventListener('click', () => window.location.href = 'account.html');
+
+  function copyLink() {
+    navigator.clipboard.writeText(refUrl).then(() => {
+      document.getElementById('copyFeedback').textContent = '✅ Copied to clipboard!';
+      setTimeout(() => document.getElementById('copyFeedback').textContent = '', 2500);
+    });
+  }
+
+  document.getElementById('copyBtn').addEventListener('click', copyLink);
+
+  document.getElementById('shareX').addEventListener('click', () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('Join me on CardCrate Club — monthly Pokémon TCG crates for collectors!')}&url=${encodeURIComponent(refUrl)}`, '_blank');
+  });
+  document.getElementById('shareFacebook').addEventListener('click', () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(refUrl)}`, '_blank');
+  });
+  document.getElementById('shareDiscord').addEventListener('click', copyLink);
+  document.getElementById('shareInstagram').addEventListener('click', copyLink);
+</script>
+
+</body>
+</html>

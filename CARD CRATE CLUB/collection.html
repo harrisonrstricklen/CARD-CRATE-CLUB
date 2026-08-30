@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Collection — CardCrate Club</title>
+<meta name="description" content="Track your Pokémon TCG collection with CardCrate Club — cards, sets, rarity, quantity, and estimated value.">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="theme.css">
+<style>
+  main.wide-main { max-width: 1100px; }
+  .coll-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 24px; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+  .toolbar input[type="search"], .toolbar select {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 0.85rem;
+  }
+  .toolbar input[type="search"] { flex: 1; min-width: 180px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .coll-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: border-color 0.2s; position: relative; }
+  .coll-card:hover { border-color: rgba(245,200,66,0.4); }
+  .coll-card-img { width: 100%; aspect-ratio: 5/7; border-radius: 8px; background: var(--dark2); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 10px; overflow: hidden; }
+  .coll-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .coll-card-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 2px; }
+  .coll-card-meta { font-size: 0.7rem; color: var(--muted); margin-bottom: 6px; }
+  .coll-card-value { font-size: 0.9rem; font-weight: 800; color: var(--gold); }
+  .coll-card-qty { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); border-radius: 20px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; }
+  .coll-card-del { position: absolute; bottom: 10px; right: 10px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+  .coll-card-del:hover { color: var(--red); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { background: var(--dark3); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; max-width: 440px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-box h3 { font-size: 1.1rem; margin-bottom: 18px; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .modal-actions .btn { flex: 1; }
+
+  @media (max-width: 900px) { .coll-stats { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 480px) { .coll-stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body class="member-page">
+
+<div id="loading-overlay"><div class="loader-logo">CCC<span>.</span></div><div class="spinner"></div></div>
+
+<div class="floating-bg">
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="nav-logo">CCC<span>.</span></div>
+    <nav class="nav-links">
+      <a href="dashboard.html">🏠 Dashboard</a>
+      <a href="crates.html">📦 My Crates</a>
+      <a href="collection.html" class="active">🃏 Collection</a>
+      <a href="rewards.html">🪙 Rewards</a>
+      <div class="nav-dropdown">
+        <a href="#">🤖 AI Tools ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="card-evaluator.html">Card Evaluator</a>
+          <a href="crate-advisor.html">Crate Advisor</a>
+        </div>
+      </div>
+      <a href="account.html">⚙️ Account</a>
+    </nav>
+    <div class="nav-right">
+      <button class="avatar-btn" id="avatar-btn">?</button>
+      <button class="sign-out-btn" id="sign-out-btn">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="wide-main">
+    <div class="page-title">My <span class="gold">Collection</span></div>
+    <p class="page-subtitle">Track every card you own — value, rarity, and how your collection is growing.</p>
+
+    <div class="coll-stats">
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="statValue">$0</div><div class="stat-label">Collection Value</div></div>
+      <div class="stat-card"><div class="stat-icon">🃏</div><div class="stat-value" id="statCount">0</div><div class="stat-label">Total Cards</div></div>
+      <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-value" id="statTopCard">—</div><div class="stat-label">Most Valuable</div></div>
+      <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="statMonthly">—</div><div class="stat-label">Monthly Change</div></div>
+      <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value" id="statSets">0</div><div class="stat-label">Sets</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="statGain">—</div><div class="stat-label">Est. Gain/Loss</div></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="🔍 Search by card name..." />
+      <select id="filterSet"><option value="">All Sets</option></select>
+      <select id="filterRarity">
+        <option value="">All Rarities</option>
+        <option>Common</option><option>Uncommon</option><option>Rare</option>
+        <option>Rare Holo</option><option>Ultra Rare</option><option>Secret Rare</option>
+      </select>
+      <select id="sortBy">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="value-high">Value: High to Low</option>
+        <option value="value-low">Value: Low to High</option>
+      </select>
+      <button class="btn btn-gold" id="addCardBtn">+ Add Card</button>
+    </div>
+
+    <div class="card-grid" id="cardGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      🃏 No cards yet. Click <strong>+ Add Card</strong> to start tracking your collection.
+    </div>
+
+    <p class="form-hint">🔧 Estimated values are entered manually for now. Once connected to a Pokémon TCG pricing API, values will update automatically.</p>
+  </main>
+
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <a href="dashboard.html"   class="mnav-item"><span class="micon">🏠</span>Home</a>
+      <a href="crates.html"      class="mnav-item"><span class="micon">📦</span>Crates</a>
+      <a href="collection.html"  class="mnav-item active"><span class="micon">🃏</span>Collection</a>
+      <a href="rewards.html"     class="mnav-item"><span class="micon">🪙</span>Rewards</a>
+      <a href="account.html"     class="mnav-item"><span class="micon">⚙️</span>Account</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ADD CARD MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <h3>Add a Card</h3>
+    <form id="addCardForm" novalidate>
+      <div class="form-group"><label for="cName">Card Name</label><input type="text" id="cName" required /></div>
+      <div class="form-row-2">
+        <div class="form-group"><label for="cSet">Set</label><input type="text" id="cSet" placeholder="e.g. Surging Sparks" required /></div>
+        <div class="form-group"><label for="cNumber">Card Number</label><input type="text" id="cNumber" placeholder="e.g. 054/191" /></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label for="cRarity">Rarity</label>
+          <select id="cRarity">
+            <option>Common</option><option>Uncommon</option><option>Rare</option>
+            <option>Rare Holo</option><option>Ultra Rare</option><option>Secret Rare</option>
+          </select>
+        </div>
+        <div class="form-group"><label for="cQty">Quantity</label><input type="number" id="cQty" min="1" value="1" required /></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label for="cValue">Estimated Value ($)</label><input type="number" id="cValue" min="0" step="0.01" required /></div>
+        <div class="form-group"><label for="cCost">Acquisition Price ($)</label><input type="number" id="cCost" min="0" step="0.01" /></div>
+      </div>
+      <div class="form-group"><label for="cImage">Image URL (optional)</label><input type="url" id="cImage" placeholder="https://..." /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelAddBtn">Cancel</button>
+        <button type="submit" class="btn btn-gold">Add to Collection</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+    authDomain: "cardcrate-club.firebaseapp.com",
+    projectId: "cardcrate-club",
+    storageBucket: "cardcrate-club.firebasestorage.app",
+    messagingSenderId: "261800955788",
+    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+    measurementId: "G-5B8J0LWGKE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const overlay = document.getElementById('loading-overlay');
+  const avatarBtn = document.getElementById('avatar-btn');
+  let currentUser = null;
+  let allCards = [];
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    avatarBtn.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+
+    const collRef = collection(db, 'users', user.uid, 'collection');
+    onSnapshot(collRef, (snap) => {
+      allCards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      populateSetFilter();
+      renderCards();
+      overlay.classList.add('hide');
+      setTimeout(() => overlay.style.display = 'none', 400);
+    }, (err) => {
+      console.warn('Firestore snapshot error:', err);
+      overlay.classList.add('hide');
+      setTimeout(() => overlay.style.display = 'none', 400);
+    });
+  });
+
+  document.getElementById('sign-out-btn').addEventListener('click', async () => { await signOut(auth); window.location.href = 'login.html'; });
+  avatarBtn.addEventListener('click', () => window.location.href = 'account.html');
+
+  // ---- Stats ----
+  function renderStats(cards) {
+    const totalValue = cards.reduce((sum, c) => sum + (Number(c.value) || 0) * (Number(c.qty) || 1), 0);
+    const totalCost = cards.reduce((sum, c) => sum + (Number(c.cost) || 0) * (Number(c.qty) || 1), 0);
+    const totalCount = cards.reduce((sum, c) => sum + (Number(c.qty) || 1), 0);
+    const sets = new Set(cards.map(c => c.set).filter(Boolean));
+    const topCard = cards.slice().sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))[0];
+
+    document.getElementById('statValue').textContent = `$${totalValue.toFixed(2)}`;
+    document.getElementById('statCount').textContent = totalCount;
+    document.getElementById('statTopCard').textContent = topCard ? topCard.name : '—';
+    document.getElementById('statSets').textContent = sets.size;
+
+    // Gain/loss is only meaningful once acquisition prices are entered
+    if (cards.some(c => c.cost !== undefined && c.cost !== null && c.cost !== '')) {
+      const gain = totalValue - totalCost;
+      document.getElementById('statGain').textContent = `${gain >= 0 ? '+' : '-'}$${Math.abs(gain).toFixed(2)}`;
+    } else {
+      document.getElementById('statGain').textContent = '—';
+    }
+
+    // Monthly change requires historical snapshots we don't have yet
+    document.getElementById('statMonthly').textContent = '—';
+  }
+
+  function populateSetFilter() {
+    const select = document.getElementById('filterSet');
+    const current = select.value;
+    const sets = [...new Set(allCards.map(c => c.set).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">All Sets</option>' + sets.map(s => `<option value="${s}">${s}</option>`).join('');
+    select.value = current;
+  }
+
+  function renderCards() {
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const setFilter = document.getElementById('filterSet').value;
+    const rarityFilter = document.getElementById('filterRarity').value;
+    const sortBy = document.getElementById('sortBy').value;
+
+    let filtered = allCards.filter(c => {
+      const matchesSearch = !search || (c.name || '').toLowerCase().includes(search);
+      const matchesSet = !setFilter || c.set === setFilter;
+      const matchesRarity = !rarityFilter || c.rarity === rarityFilter;
+      return matchesSearch && matchesSet && matchesRarity;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'value-high') return (Number(b.value) || 0) - (Number(a.value) || 0);
+      if (sortBy === 'value-low') return (Number(a.value) || 0) - (Number(b.value) || 0);
+      const aTime = a.addedAt?.seconds || 0;
+      const bTime = b.addedAt?.seconds || 0;
+      return sortBy === 'oldest' ? aTime - bTime : bTime - aTime;
+    });
+
+    renderStats(allCards);
+
+    const grid = document.getElementById('cardGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    if (allCards.length === 0) {
+      grid.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+
+    grid.innerHTML = filtered.map(c => `
+      <div class="coll-card">
+        <span class="coll-card-qty">×${c.qty || 1}</span>
+        <div class="coll-card-img">${c.image ? `<img src="${c.image}" alt="${c.name}" onerror="this.parentElement.innerHTML='🃏'"/>` : '🃏'}</div>
+        <div class="coll-card-name">${c.name}</div>
+        <div class="coll-card-meta">${c.set || 'Unknown Set'} ${c.number ? '• #' + c.number : ''} ${c.rarity ? '• ' + c.rarity : ''}</div>
+        <div class="coll-card-value">$${(Number(c.value) || 0).toFixed(2)}</div>
+        <button class="coll-card-del" onclick="window.deleteCard('${c.id}')" title="Remove">🗑️</button>
+      </div>
+    `).join('');
+  }
+
+  ['searchInput', 'filterSet', 'filterRarity', 'sortBy'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderCards);
+    document.getElementById(id).addEventListener('change', renderCards);
+  });
+
+  // ---- Add / delete ----
+  const addModal = document.getElementById('addModal');
+  document.getElementById('addCardBtn').addEventListener('click', () => addModal.classList.add('active'));
+  document.getElementById('cancelAddBtn').addEventListener('click', () => addModal.classList.remove('active'));
+  addModal.addEventListener('click', (e) => { if (e.target === addModal) addModal.classList.remove('active'); });
+
+  document.getElementById('addCardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const card = {
+      name: document.getElementById('cName').value.trim(),
+      set: document.getElementById('cSet').value.trim(),
+      number: document.getElementById('cNumber').value.trim(),
+      rarity: document.getElementById('cRarity').value,
+      qty: Number(document.getElementById('cQty').value) || 1,
+      value: Number(document.getElementById('cValue').value) || 0,
+      cost: document.getElementById('cCost').value ? Number(document.getElementById('cCost').value) : null,
+      image: document.getElementById('cImage').value.trim(),
+      addedAt: serverTimestamp()
+    };
+    try {
+      await addDoc(collection(db, 'users', currentUser.uid, 'collection'), card);
+      document.getElementById('addCardForm').reset();
+      addModal.classList.remove('active');
+    } catch (err) {
+      alert('Could not add card: ' + (err.message || 'unknown error'));
+    }
+  });
+
+  window.deleteCard = async function(cardId) {
+    if (!confirm('Remove this card from your collection?')) return;
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'collection', cardId));
+    } catch (err) {
+      alert('Could not remove card: ' + (err.message || 'unknown error'));
+    }
+  };
+</script>
+
+</body>
+</html>
