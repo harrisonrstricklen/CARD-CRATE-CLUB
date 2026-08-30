@@ -148,7 +148,7 @@
         <input type="text" id="cardSearchInput" placeholder="e.g. Charizard ex, Pikachu VMAX..." style="flex:1;" />
         <button type="button" class="btn btn-gold" id="cardSearchBtn">Search</button>
       </div>
-      <div class="form-hint">Powered by the public Pokémon TCG API — pulls real card art, set, number, and rarity for you.</div>
+      <div class="form-hint">Real card art, set, number, rarity, and live TCGplayer market pricing — auto-filled as you type.</div>
     </div>
 
     <div id="searchResults" style="display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;max-height:220px;overflow-y:auto;"></div>
@@ -161,7 +161,10 @@
     <form id="addCardForm" novalidate>
       <div id="selectedCardPreview" style="display:none;align-items:center;gap:12px;background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:16px;">
         <img id="selectedCardImg" src="" alt="" style="width:44px;height:61px;object-fit:cover;border-radius:4px;" />
-        <div style="font-size:0.8rem;color:var(--muted);">Auto-filled from search below — edit anything before adding.</div>
+        <div>
+          <div style="font-size:0.8rem;color:var(--muted);">Auto-filled below — edit anything before adding.</div>
+          <div id="selectedCardPrice" style="font-size:0.8rem;font-weight:700;color:var(--gold);margin-top:2px;"></div>
+        </div>
       </div>
       <div class="form-group"><label for="cName">Card Name</label><input type="text" id="cName" required /></div>
       <div class="form-row-2">
@@ -178,7 +181,7 @@
         <div class="form-group"><label for="cQty">Quantity</label><input type="number" id="cQty" min="1" value="1" required /></div>
       </div>
       <div class="form-row-2">
-        <div class="form-group"><label for="cValue">Estimated Value ($)</label><input type="number" id="cValue" min="0" step="0.01" required /></div>
+        <div class="form-group"><label for="cValue" id="cValueLabel">Estimated Value ($)</label><input type="number" id="cValue" min="0" step="0.01" required /></div>
         <div class="form-group"><label for="cCost">Acquisition Price ($)</label><input type="number" id="cCost" min="0" step="0.01" /></div>
       </div>
       <div class="form-group"><label for="cImage">Image URL (optional)</label><input type="url" id="cImage" placeholder="https://..." /></div>
@@ -403,11 +406,20 @@
         : card.rarity.toLowerCase().includes('rare') ? 'Rare' : 'Common');
     }
 
-    // Suggested market value, if TCGplayer pricing data is present — clearly editable, not final
+    // Suggested market value, pulled live from TCGplayer pricing data via the
+    // Pokémon TCG API — clearly labeled as an estimate the user can edit.
     const prices = card.tcgplayer?.prices;
     const firstPriceBlock = prices ? Object.values(prices)[0] : null;
+    const priceLabelEl = document.getElementById('selectedCardPrice');
+    const valueLabelEl = document.getElementById('cValueLabel');
+
     if (firstPriceBlock?.market) {
       document.getElementById('cValue').value = firstPriceBlock.market.toFixed(2);
+      priceLabelEl.textContent = `💰 TCG market price: $${firstPriceBlock.market.toFixed(2)} (via TCGplayer)`;
+      valueLabelEl.textContent = 'Estimated Value ($) — from TCGplayer';
+    } else {
+      priceLabelEl.textContent = '💰 No live market price available for this card — enter your own estimate.';
+      valueLabelEl.textContent = 'Estimated Value ($)';
     }
 
     const preview = document.getElementById('selectedCardPreview');
@@ -417,6 +429,20 @@
 
   document.getElementById('cardSearchBtn').addEventListener('click', searchCards);
   document.getElementById('cardSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchCards(); } });
+
+  // Live search: auto-search ~500ms after the user stops typing (3+ characters),
+  // so results appear as they type instead of requiring a button click.
+  let searchDebounceTimer = null;
+  document.getElementById('cardSearchInput').addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const value = document.getElementById('cardSearchInput').value.trim();
+    if (value.length < 3) {
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('searchStatus').style.display = 'none';
+      return;
+    }
+    searchDebounceTimer = setTimeout(searchCards, 500);
+  });
 
   document.getElementById('addCardForm').addEventListener('submit', async (e) => {
     e.preventDefault();
