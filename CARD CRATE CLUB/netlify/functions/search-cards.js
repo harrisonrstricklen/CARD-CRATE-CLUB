@@ -14,17 +14,29 @@
 // lower public rate limit.
 
 exports.handler = async function (event) {
-  const query = (event.queryStringParameters && event.queryStringParameters.q || '').trim();
+  const params = event.queryStringParameters || {};
+  const nameQuery = (params.q || '').trim();
+  const dexQuery = (params.dex || '').trim();
+  const numberQuery = (params.number || '').trim();
+  const setQuery = (params.set || '').trim();
 
-  if (!query) {
+  if (!nameQuery && !dexQuery && !numberQuery) {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Missing required query parameter "q".' })
+      body: JSON.stringify({ error: 'Provide "q" (name), "dex" (Pokédex number), and/or "number" (card number).' })
     };
   }
 
-  const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent('name:"' + query + '*"')}&pageSize=12&orderBy=-set.releaseDate`;
+  // Build the upstream query from whichever field(s) were provided.
+  const clauses = [];
+  if (nameQuery) clauses.push(`name:"${nameQuery}*"`);
+  if (dexQuery) clauses.push(`nationalPokedexNumbers:${dexQuery}`);
+  if (numberQuery) clauses.push(`number:${numberQuery}`);
+  if (setQuery) clauses.push(`set.name:"${setQuery}*"`);
+  const queryString = clauses.join(' ');
+
+  const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryString)}&pageSize=24&orderBy=-set.releaseDate`;
 
   try {
     const headers = {};
