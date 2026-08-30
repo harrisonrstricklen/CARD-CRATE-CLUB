@@ -31,7 +31,7 @@
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 500; padding: 20px; }
   .modal-overlay.active { display: flex; }
-  .modal-box { background: var(--dark3); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; max-width: 440px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-box { background: var(--dark3); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; }
   .modal-box h3 { font-size: 1.1rem; margin-bottom: 18px; }
   .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
@@ -147,12 +147,13 @@
       <label for="cardSearchInput">Search instead of typing everything</label>
       <div style="display:flex;gap:8px;">
         <input type="text" id="cardSearchInput" placeholder="e.g. Charizard ex, Pikachu VMAX..." style="flex:1;" />
+        <input type="number" id="cardDexInput" placeholder="Pokédex #" min="1" style="width:110px;" />
         <button type="button" class="btn btn-gold" id="cardSearchBtn">Search</button>
       </div>
-      <div class="form-hint">Real card art, set, number, rarity, and live TCGplayer market pricing — auto-filled as you type.</div>
+      <div class="form-hint">Real card art, set, number, rarity, and live TCGplayer market pricing — auto-filled as you type. Know the Pokédex number instead of the name? Use that field, or combine both to narrow results.</div>
     </div>
 
-    <div id="searchResults" style="display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;max-height:220px;overflow-y:auto;"></div>
+    <div id="searchResults" style="display:none;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;max-height:440px;overflow-y:auto;"></div>
     <div id="searchStatus" style="display:none;font-size:0.8rem;color:var(--muted);margin-bottom:16px;"></div>
 
     <div style="border-top:1px solid var(--border);margin:4px 0 16px;padding-top:16px;font-size:0.78rem;color:var(--muted);">
@@ -173,6 +174,7 @@
         <div class="form-group"><label for="cSet">Set</label><input type="text" id="cSet" placeholder="e.g. Surging Sparks" required /></div>
         <div class="form-group"><label for="cNumber">Card Number</label><input type="text" id="cNumber" placeholder="e.g. 054/191" /></div>
       </div>
+      <div id="numberLookupStatus" style="display:none;font-size:0.78rem;color:var(--muted);margin:-10px 0 16px;"></div>
       <div class="form-row-2">
         <div class="form-group"><label for="cRarity">Rarity</label>
           <select id="cRarity">
@@ -340,6 +342,7 @@
     document.getElementById('searchStatus').style.display = 'none';
     document.getElementById('selectedCardPreview').style.display = 'none';
     document.getElementById('cardSearchInput').value = '';
+    document.getElementById('cardDexInput').value = '';
     document.getElementById('cApiId').value = '';
   }
 
@@ -350,9 +353,10 @@
   // entirely and keeps room for an API key on the server side.
   async function searchCards() {
     const query = document.getElementById('cardSearchInput').value.trim();
+    const dex = document.getElementById('cardDexInput').value.trim();
     const resultsEl = document.getElementById('searchResults');
     const statusEl = document.getElementById('searchStatus');
-    if (!query) return;
+    if (!query && !dex) return;
 
     statusEl.style.display = 'block';
     statusEl.textContent = 'Searching...';
@@ -360,7 +364,10 @@
     resultsEl.innerHTML = '';
 
     try {
-      const res = await fetch(`/.netlify/functions/search-cards?q=${encodeURIComponent(query)}`);
+      const params = new URLSearchParams();
+      if (query) params.set('q', query);
+      if (dex) params.set('dex', dex);
+      const res = await fetch(`/.netlify/functions/search-cards?${params.toString()}`);
       if (!res.ok) throw new Error('Search request failed');
       const data = await res.json();
       const cards = data.data || [];
@@ -435,6 +442,85 @@
 
   document.getElementById('cardSearchBtn').addEventListener('click', searchCards);
   document.getElementById('cardSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchCards(); } });
+  document.getElementById('cardDexInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchCards(); } });
+
+  // ---- Exact lookup by Card Number (+ optional Set) ----
+  // Typing a card number in the manual entry section triggers a targeted
+  // lookup: one match auto-fills everything (including TCGplayer price)
+  // silently; multiple matches populate the search results grid above so
+  // the user can pick the right one.
+  function extractNumberPart(raw) {
+    return raw.split('/')[0].trim();
+  }
+
+  let numberDebounceTimer = null;
+  async function lookupByNumber() {
+    const numRaw = document.getElementById('cNumber').value.trim();
+    const setName = document.getElementById('cSet').value.trim();
+    const statusEl = document.getElementById('numberLookupStatus');
+    if (!numRaw) { statusEl.style.display = 'none'; return; }
+
+    const number = extractNumberPart(numRaw);
+    statusEl.style.display = 'block';
+    statusEl.textContent = '🔎 Looking up card...';
+
+    try {
+      const params = new URLSearchParams();
+      params.set('number', number);
+      if (setName) params.set('set', setName);
+      const res = await fetch(`/.netlify/functions/search-cards?${params.toString()}`);
+      if (!res.ok) throw new Error('Lookup failed');
+      const data = await res.json();
+      const cards = data.data || [];
+
+      if (cards.length === 0) {
+        statusEl.textContent = setName
+          ? 'No exact match for that number in that set — check the spelling, or fill in the rest manually.'
+          : 'No exact match — try adding the Set name above to narrow it down.';
+        return;
+      }
+
+      if (cards.length === 1) {
+        fillFormFromCard(cards[0]);
+        statusEl.textContent = '✅ Found an exact match — auto-filled below, including TCGplayer price.';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+        return;
+      }
+
+      // Multiple cards share this number across different sets — show them
+      // in the same results grid used for name/Pokédex search.
+      statusEl.textContent = `Found ${cards.length} cards with that number — add a Set name above to narrow it down, or pick one below.`;
+      const resultsEl = document.getElementById('searchResults');
+      resultsEl.style.display = 'grid';
+      resultsEl.innerHTML = cards.map((c, i) => `
+        <div class="search-result-thumb" data-index="${i}">
+          <img src="${c.images?.small || ''}" alt="${c.name}" loading="lazy" />
+          <div class="srt-label">${c.name}</div>
+        </div>
+      `).join('');
+      resultsEl.querySelectorAll('.search-result-thumb').forEach(el => {
+        el.addEventListener('click', () => {
+          resultsEl.querySelectorAll('.search-result-thumb').forEach(t => t.classList.remove('selected'));
+          el.classList.add('selected');
+          fillFormFromCard(cards[Number(el.dataset.index)]);
+        });
+      });
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      statusEl.textContent = '⚠️ Lookup temporarily unavailable — fill in the rest manually.';
+      console.warn('Card number lookup error:', err);
+    }
+  }
+
+  document.getElementById('cNumber').addEventListener('input', () => {
+    clearTimeout(numberDebounceTimer);
+    numberDebounceTimer = setTimeout(lookupByNumber, 600);
+  });
+  document.getElementById('cSet').addEventListener('input', () => {
+    if (!document.getElementById('cNumber').value.trim()) return;
+    clearTimeout(numberDebounceTimer);
+    numberDebounceTimer = setTimeout(lookupByNumber, 600);
+  });
 
   // If the user manually edits the name after picking a search result,
   // the captured apiId no longer reliably matches — clear it so we don't
@@ -443,13 +529,24 @@
     document.getElementById('cApiId').value = '';
   });
 
-  // Live search: auto-search ~500ms after the user stops typing (3+ characters),
-  // so results appear as they type instead of requiring a button click.
+  // Live search: auto-search ~500ms after the user stops typing (3+ characters
+  // in the name field, or any digits in the Pokédex field), so results appear
+  // as they type instead of requiring a button click.
   let searchDebounceTimer = null;
   document.getElementById('cardSearchInput').addEventListener('input', () => {
     clearTimeout(searchDebounceTimer);
     const value = document.getElementById('cardSearchInput').value.trim();
     if (value.length < 3) {
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('searchStatus').style.display = 'none';
+      return;
+    }
+    searchDebounceTimer = setTimeout(searchCards, 500);
+  });
+  document.getElementById('cardDexInput').addEventListener('input', () => {
+    clearTimeout(searchDebounceTimer);
+    const value = document.getElementById('cardDexInput').value.trim();
+    if (!value) {
       document.getElementById('searchResults').style.display = 'none';
       document.getElementById('searchStatus').style.display = 'none';
       return;
