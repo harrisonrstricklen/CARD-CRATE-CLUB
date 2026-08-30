@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             const submitBtn = waitlistForm.querySelector('.btn-submit');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Joining...';
+            submitBtn.innerHTML = '⏳ Joining...';
             submitBtn.disabled = true;
 
             try {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error('Form submission failed');
                 }
             } catch (error) {
-                submitBtn.innerHTML = '<i class="fas fa-crown"></i> Claim My Founding Spot';
+                submitBtn.innerHTML = '👑 Claim My Founding Spot';
                 submitBtn.disabled = false;
                 alert('Something went wrong. Please try again or email hello@cardcrateclub.com');
             }
