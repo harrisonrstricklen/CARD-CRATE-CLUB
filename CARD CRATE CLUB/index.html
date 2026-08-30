@@ -50,8 +50,8 @@
         .hero-disclaimer { color: var(--muted); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
         /* ===== Announcement bar ===== */
-        .announcement-bar { background: linear-gradient(90deg, rgba(245,200,66,0.12), rgba(212,160,23,0.06)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 0; overflow: hidden; white-space: nowrap; }
-        .announcement-inner { display: inline-flex; gap: 40px; animation: marquee 28s linear infinite; font-size: 0.82rem; color: #ddd; }
+        .announcement-bar { position: relative; height: 40px; background: linear-gradient(90deg, rgba(245,200,66,0.12), rgba(212,160,23,0.06)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
+        .announcement-inner { position: absolute; top: 0; left: 0; height: 100%; display: flex; align-items: center; gap: 40px; white-space: nowrap; font-size: 0.82rem; color: #ddd; animation: marquee 22s linear infinite; will-change: transform; }
         .announcement-divider { color: var(--gold); }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
@@ -170,6 +170,15 @@
             .features-grid, .tiers-grid, .founding-benefits, .social-grid { grid-template-columns: 1fr; }
             .hero-stats { gap: 14px; }
         }
+
+        /* Boost floating card visibility on this page specifically (theme.css default is subtler) */
+        @keyframes floatUp {
+            0%   { transform: translateY(0) rotate(-8deg);     opacity: 0;    }
+            5%   { opacity: 0.6; }
+            95%  { opacity: 0.6; }
+            100% { transform: translateY(-110vh) rotate(8deg); opacity: 0;    }
+        }
+        .fc { box-shadow: 0 4px 24px rgba(245,200,66,0.25); }
     </style>
 </head>
 <body>
