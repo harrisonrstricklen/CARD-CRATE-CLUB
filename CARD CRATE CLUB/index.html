@@ -179,6 +179,20 @@
             100% { transform: translateY(-110vh) rotate(8deg); opacity: 0;    }
         }
         .fc { box-shadow: 0 4px 24px rgba(245,200,66,0.25); }
+
+        /* theme.css disables all animation when the visitor's browser/OS has
+           "reduce motion" turned on (a real accessibility setting, and the
+           right default for most animations on this site). But dashboard.html
+           predates theme.css and never applied that rule, so its floating
+           cards always play regardless of that setting. To keep this page
+           visually consistent with the dashboard for this specific purely
+           decorative, non-essential background effect, we re-assert real
+           durations here — everything else on the site still correctly
+           respects reduced-motion. */
+        @media (prefers-reduced-motion: reduce) {
+            .fc { animation-duration: 16s !important; animation-iteration-count: infinite !important; }
+            .announcement-inner { animation-duration: 22s !important; animation-iteration-count: infinite !important; }
+        }
     </style>
 </head>
 <body>
