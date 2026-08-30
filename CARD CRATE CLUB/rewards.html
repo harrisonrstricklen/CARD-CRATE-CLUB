@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rewards — Crate Coins | CardCrate Club</title>
+<meta name="description" content="Earn and spend Crate Coins with CardCrate Club — from subscriptions, referrals, social engagement, and Founding 100 bonuses.">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="theme.css">
+<style>
+  .coin-hero { text-align: center; padding: 8px 0 28px; }
+  .coin-balance-card {
+    background: linear-gradient(135deg, rgba(245,200,66,0.14), rgba(212,160,23,0.05));
+    border: 1px solid rgba(245,200,66,0.3); border-radius: 20px; padding: 32px 24px; text-align: center; margin-bottom: 28px;
+  }
+  .coin-balance-icon { font-size: 2.2rem; margin-bottom: 6px; }
+  .coin-balance-value { font-size: 2.6rem; font-weight: 900; color: var(--gold); line-height: 1; }
+  .coin-balance-label { font-size: 0.8rem; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .earn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .earn-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; }
+  .earn-icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .earn-card strong { display: block; font-size: 0.88rem; margin-bottom: 4px; }
+  .earn-card span { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  .txn-list { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 28px; }
+  .txn-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .txn-row:last-child { border-bottom: none; }
+  .txn-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .txn-text { flex: 1; color: #ccc; }
+  .txn-time { color: var(--muted); font-size: 0.72rem; }
+  .txn-amount { font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+  .txn-amount.positive { color: var(--green); }
+  .txn-amount.negative { color: var(--red); }
+
+  .referral-banner {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 22px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .referral-banner .icon { font-size: 1.8rem; }
+  .referral-banner-text { flex: 1; min-width: 200px; }
+  .referral-banner-text strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+  .referral-banner-text span { font-size: 0.8rem; color: var(--muted); }
+
+  .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .shop-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; text-align: center; position: relative; opacity: 0.85; }
+  .shop-card .icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .shop-card strong { display: block; font-size: 0.88rem; margin-bottom: 4px; }
+  .shop-card span { font-size: 0.76rem; color: var(--muted); }
+  .shop-soon { position: absolute; top: 10px; right: 10px; background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.35); color: var(--gold); font-size: 0.62rem; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; }
+
+  @media (max-width: 760px) {
+    .earn-grid, .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .earn-grid, .shop-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="member-page">
+
+<div id="loading-overlay"><div class="loader-logo">CCC<span>.</span></div><div class="spinner"></div></div>
+
+<div class="floating-bg">
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <div class="nav-logo">CCC<span>.</span></div>
+    <nav class="nav-links">
+      <a href="dashboard.html">🏠 Dashboard</a>
+      <a href="crates.html">📦 My Crates</a>
+      <a href="collection.html">🃏 Collection</a>
+      <a href="rewards.html" class="active">🪙 Rewards</a>
+      <div class="nav-dropdown">
+        <a href="#">🤖 AI Tools ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="card-evaluator.html">Card Evaluator</a>
+          <a href="crate-advisor.html">Crate Advisor</a>
+        </div>
+      </div>
+      <a href="account.html">⚙️ Account</a>
+    </nav>
+    <div class="nav-right">
+      <button class="avatar-btn" id="avatar-btn">?</button>
+      <button class="sign-out-btn" id="sign-out-btn">Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="coin-hero">
+      <div class="page-title">Crate <span class="gold">Coins</span></div>
+      <p class="page-subtitle" style="margin-bottom:0;">Earn coins by subscribing, referring friends, and staying active — redeem them in the Rewards Shop.</p>
+    </div>
+
+    <div class="coin-balance-card">
+      <div class="coin-balance-icon">🪙</div>
+      <div class="coin-balance-value" id="coinBalance">0</div>
+      <div class="coin-balance-label">Current Balance</div>
+    </div>
+
+    <div class="section-title">✨ Ways to Earn</div>
+    <div class="earn-grid">
+      <div class="earn-card"><div class="earn-icon">📦</div><strong>Subscriptions</strong><span>Earn coins every month your subscription is active.</span></div>
+      <div class="earn-card"><div class="earn-icon">🎁</div><strong>Referrals</strong><span>Earn a bonus when a friend you refer subscribes.</span></div>
+      <div class="earn-card"><div class="earn-icon">📱</div><strong>Social Engagement</strong><span>Coins for sharing pulls and tagging us on social.</span></div>
+      <div class="earn-card"><div class="earn-icon">🔥</div><strong>Promotions</strong><span>Limited-time bonus coin events throughout the year.</span></div>
+      <div class="earn-card"><div class="earn-icon">🏆</div><strong>Founding Bonuses</strong><span>Founding 100 members earn 2× coins for their first 6 months.</span></div>
+      <div class="earn-card"><div class="earn-icon">🎯</div><strong>Challenges</strong><span>Complete community challenges for coin rewards.</span></div>
+    </div>
+
+    <div class="section-title">🕒 Recent Transactions</div>
+    <div class="txn-list" id="txnList">
+      <div class="empty-state">No transactions yet — coin activity will show up here once you're subscribed.</div>
+    </div>
+
+    <div class="referral-banner">
+      <div class="icon">🎁</div>
+      <div class="referral-banner-text">
+        <strong>Earn more with referrals</strong>
+        <span>Get your unique referral link and earn coins for every friend who joins.</span>
+      </div>
+      <a href="referrals.html" class="btn btn-gold">Get My Link →</a>
+    </div>
+
+    <div class="section-title">🛍️ Rewards Shop</div>
+    <p class="form-hint" style="margin-bottom:16px;">Coming soon — redeem Crate Coins for these once the shop is live. Coin costs aren't final yet, so nothing's listed here until they are.</p>
+    <div class="shop-grid">
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">🎴</div><strong>Booster Packs</strong><span>Redeem coins for extra packs</span></div>
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">🎲</div><strong>Mystery Packs</strong><span>Surprise pulls, coin-only</span></div>
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">💸</div><strong>Discounts</strong><span>Take coins off your next crate</span></div>
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">👕</div><strong>Merchandise</strong><span>CardCrate Club apparel & gear</span></div>
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">💎</div><strong>Exclusive Items</strong><span>Member-only collectibles</span></div>
+      <div class="shop-card"><span class="shop-soon">Soon</span><div class="icon">⚡</div><strong>Special Drops</strong><span>Limited coin-redeemable drops</span></div>
+    </div>
+  </main>
+
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <a href="dashboard.html"   class="mnav-item"><span class="micon">🏠</span>Home</a>
+      <a href="crates.html"      class="mnav-item"><span class="micon">📦</span>Crates</a>
+      <a href="collection.html"  class="mnav-item"><span class="micon">🃏</span>Collection</a>
+      <a href="rewards.html"     class="mnav-item active"><span class="micon">🪙</span>Rewards</a>
+      <a href="account.html"     class="mnav-item"><span class="micon">⚙️</span>Account</a>
+    </div>
+  </nav>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+    authDomain: "cardcrate-club.firebaseapp.com",
+    projectId: "cardcrate-club",
+    storageBucket: "cardcrate-club.firebasestorage.app",
+    messagingSenderId: "261800955788",
+    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+    measurementId: "G-5B8J0LWGKE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const overlay = document.getElementById('loading-overlay');
+  const avatarBtn = document.getElementById('avatar-btn');
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    avatarBtn.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById('coinBalance').textContent = data.crateCoins ?? 0;
+
+        if (Array.isArray(data.coinTransactions) && data.coinTransactions.length > 0) {
+          document.getElementById('txnList').innerHTML = data.coinTransactions.slice(0, 8).map(t => `
+            <div class="txn-row">
+              <span class="txn-icon">${t.icon || '🪙'}</span>
+              <span class="txn-text">${t.text || ''}<br><span class="txn-time">${t.time || ''}</span></span>
+              <span class="txn-amount ${t.amount >= 0 ? 'positive' : 'negative'}">${t.amount >= 0 ? '+' : ''}${t.amount ?? 0}</span>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore read error:', err);
+    }
+
+    overlay.classList.add('hide');
+    setTimeout(() => overlay.style.display = 'none', 400);
+  });
+
+  document.getElementById('sign-out-btn').addEventListener('click', async () => { await signOut(auth); window.location.href = 'login.html'; });
+  avatarBtn.addEventListener('click', () => window.location.href = 'account.html');
+</script>
+
+</body>
+</html>

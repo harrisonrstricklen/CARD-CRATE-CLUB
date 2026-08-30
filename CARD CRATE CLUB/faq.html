@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ — CardCrate Club</title>
+<meta name="description" content="Answers to common questions about CardCrate Club — membership, subscriptions, shipping, Crate Coins, Founding 100, billing, and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  main.faq-main { max-width: 800px; }
+  .faq-search { width: 100%; padding: 14px 18px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.95rem; margin-bottom: 20px; }
+  .faq-search:focus { outline: none; border-color: var(--gold); }
+
+  .faq-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .faq-cat-chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+  .faq-cat-chip.active { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border-color: var(--gold); }
+  .faq-cat-chip:hover:not(.active) { color: var(--text); border-color: rgba(245,200,66,0.4); }
+
+  .faq-cat-heading { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); font-weight: 800; margin: 24px 0 10px; }
+  .faq-cat-heading:first-of-type { margin-top: 0; }
+
+  .faq-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; background: var(--card-bg); }
+  .faq-question { width: 100%; background: none; border: none; color: var(--text); padding: 16px 18px; text-align: left; font-size: 0.9rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .faq-question .chev { transition: transform 0.2s; color: var(--gold); flex-shrink: 0; }
+  .faq-question.active .chev { transform: rotate(180deg); }
+  .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .faq-answer p { padding: 0 18px 16px; color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .faq-answer.active { max-height: 300px; }
+  .faq-noresults { text-align: center; color: var(--muted); padding: 30px 0; font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<div class="floating-bg">
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <a href="index.html" class="nav-logo">CCC<span>.</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How It Works</a>
+      <a href="subscriptions.html">Subscriptions</a>
+      <a href="founding-members.html">Founding 100</a>
+      <a href="rewards.html">Rewards</a>
+      <a href="community.html">Community</a>
+    </nav>
+    <div class="nav-right" id="navAuth">
+      <a href="login.html" style="padding:6px 12px;">Login</a>
+      <a href="signup.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join the Club</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  </header>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="subscriptions.html">Subscriptions</a></li>
+      <li><a href="founding-members.html">Founding 100</a></li>
+      <li><a href="rewards.html">Rewards</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li id="mobileAuth"><a href="login.html">Login</a></li>
+    </ul>
+  </div>
+
+  <main class="faq-main">
+    <div class="page-title">Frequently Asked <span class="gold">Questions</span></div>
+    <p class="page-subtitle">Search or browse by category.</p>
+
+    <input type="search" class="faq-search" id="faqSearch" placeholder="🔍 Search questions..." />
+
+    <div class="faq-cats" id="faqCats">
+      <div class="faq-cat-chip active" data-cat="all">All</div>
+      <div class="faq-cat-chip" data-cat="Membership">Membership</div>
+      <div class="faq-cat-chip" data-cat="Subscriptions">Subscriptions</div>
+      <div class="faq-cat-chip" data-cat="Shipping">Shipping</div>
+      <div class="faq-cat-chip" data-cat="Products">Products</div>
+      <div class="faq-cat-chip" data-cat="Crate Coins">Crate Coins</div>
+      <div class="faq-cat-chip" data-cat="Founding 100">Founding 100</div>
+      <div class="faq-cat-chip" data-cat="Billing">Billing</div>
+      <div class="faq-cat-chip" data-cat="Cancellation">Cancellation</div>
+      <div class="faq-cat-chip" data-cat="Collection">Collection</div>
+      <div class="faq-cat-chip" data-cat="AI Tools">AI Tools</div>
+    </div>
+
+    <div id="faqContainer"></div>
+    <div class="faq-noresults" id="faqNoResults" style="display:none;">No matching questions — try a different search or <a href="contact.html" style="color:var(--gold);">contact us</a>.</div>
+  </main>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="footer-brand-logo">CCC<span>.</span></div>
+      <p class="footer-tagline">Stop Hunting. Start Collecting.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="subscriptions.html">Subscriptions</a></li>
+        <li><a href="founding-members.html">Founding 100</a></li>
+        <li><a href="community.html">Community</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="shipping-policy.html">Shipping Policy</a></li>
+        <li><a href="refund-policy.html">Refund Policy</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li><a href="terms.html">Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 CardCrate Club. All rights reserved.</p>
+    <p>CardCrate Club is an independent collector subscription service and is not affiliated with, sponsored by, or endorsed by Pokémon, The Pokémon Company, Nintendo, Game Freak, or Creatures Inc. All Pokémon trademarks are property of their respective owners.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+    authDomain: "cardcrate-club.firebaseapp.com",
+    projectId: "cardcrate-club",
+    storageBucket: "cardcrate-club.firebasestorage.app",
+    messagingSenderId: "261800955788",
+    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+    measurementId: "G-5B8J0LWGKE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  setPersistence(auth, browserLocalPersistence).then(() => {
+    onAuthStateChanged(auth, (user) => {
+      const navAuth = document.getElementById('navAuth');
+      const mobileAuth = document.getElementById('mobileAuth');
+      if (user) {
+        navAuth.innerHTML = `<a href="dashboard.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Dashboard</a>`;
+        mobileAuth.innerHTML = `<a href="dashboard.html">Dashboard</a>`;
+      } else {
+        navAuth.innerHTML = `<a href="login.html" style="padding:6px 12px;">Login</a><a href="signup.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join the Club</a>`;
+        mobileAuth.innerHTML = `<a href="login.html">Login</a>`;
+      }
+    });
+  });
+</script>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); mobileMenu.classList.toggle('active'); });
+</script>
+
+<script>
+  const FAQS = [
+    { cat: 'Membership', q: 'Is it free to create an account?', a: 'Yes — creating an account and browsing plans is completely free. You only pay once you choose and confirm a subscription.' },
+    { cat: 'Membership', q: 'Do I need a subscription to use the site?', a: 'No, you can create a free account, browse plans, and check out the community without subscribing. Some member tools like Collection tracking work best once you\'re subscribed.' },
+    { cat: 'Subscriptions', q: 'What subscription tiers are available?', a: 'Pack Club, Trainer Club, Collector Club, and Box Club — each with a different number of packs, sets, and perks. See the Subscriptions page for full details.' },
+    { cat: 'Subscriptions', q: 'Can I switch plans later?', a: 'Yes — upgrade, downgrade, pause, skip, or cancel anytime from your Dashboard. Changes apply to your next billing cycle.' },
+    { cat: 'Subscriptions', q: 'Is there a contract or commitment?', a: 'No contracts. Every plan is month-to-month.' },
+    { cat: 'Shipping', q: 'How will I know when my crate ships?', a: 'Your Dashboard shows a live shipping timeline — Confirmed, Preparing, Packed, Shipped, and Delivered — plus email updates if you have Shipping Updates turned on in Notifications.' },
+    { cat: 'Shipping', q: 'Do all plans include free shipping?', a: 'Yes, every tier includes free shipping; Collector Club and Box Club include free priority shipping.' },
+    { cat: 'Shipping', q: 'Can I change my shipping address?', a: 'Yes, update it anytime under Account → Shipping Address. Changes apply to your next unshipped crate.' },
+    { cat: 'Products', q: 'What kind of products are in each crate?', a: 'Booster packs, promo cards, and — depending on tier — sealed products like Elite Trainer Boxes or booster boxes. See each tier\'s feature list on the Subscriptions page.' },
+    { cat: 'Products', q: 'Can I choose which sets I get?', a: 'Depends on your tier — some let you pick a single set, others let you choose from multiple or any set. Set your Collector Preferences in Account or Onboarding.' },
+    { cat: 'Crate Coins', q: 'How do I earn Crate Coins?', a: 'From active subscriptions, referrals, social engagement, promotions, Founding 100 bonuses, and community challenges. See the Rewards page for the full breakdown.' },
+    { cat: 'Crate Coins', q: 'What can I redeem Crate Coins for?', a: 'The Rewards Shop is coming soon — it will offer booster packs, mystery packs, discounts, merchandise, and exclusive items. Redemption costs haven\'t been finalized yet.' },
+    { cat: 'Founding 100', q: 'How do I become a Founding Member?', a: 'The first 100 people to convert to a paid subscription become Founding Members automatically, regardless of tier.' },
+    { cat: 'Founding 100', q: 'What perks do Founding Members get?', a: 'A numbered badge, physical member card, price lock guarantee, bonus Crate Coins, early access, and a Discord role. See the Founding 100 page for the full list.' },
+    { cat: 'Billing', q: 'When am I billed?', a: 'On the same day each month as your signup date. Your exact billing date is shown on your Dashboard.' },
+    { cat: 'Billing', q: 'What payment methods are accepted?', a: 'Card payments via Stripe. Payment processing is being connected — the Account page shows where this will live once it\'s live.' },
+    { cat: 'Cancellation', q: 'How do I cancel my subscription?', a: 'From your Dashboard, under Subscription Controls, select Cancel. No penalties or questions asked.' },
+    { cat: 'Cancellation', q: 'Do I get a refund if I cancel mid-cycle?', a: 'See our Refund Policy page for the specifics — refund eligibility depends on shipping status.' },
+    { cat: 'Collection', q: 'How does the Collection tracker work?', a: 'Add cards manually with set, rarity, quantity, and value — your Collection page calculates total value, most valuable card, and more automatically.' },
+    { cat: 'Collection', q: 'Will card values update automatically?', a: 'Not yet — values are entered manually for now. Automatic pricing via a Pokémon TCG pricing API is planned.' },
+    { cat: 'AI Tools', q: 'What is the AI Card Evaluator?', a: 'A tool for identifying cards and estimating value and grading potential from a photo or search. The AI backend isn\'t connected yet — the interface is live as a preview.' },
+    { cat: 'AI Tools', q: 'What is Crate Advisor?', a: 'A chat assistant for collecting questions — set recommendations, grading advice, and Crate Coin spending tips. Like the Card Evaluator, it\'s not yet connected to a live AI model.' }
+  ];
+
+  const container = document.getElementById('faqContainer');
+  const searchInput = document.getElementById('faqSearch');
+  const catChips = document.querySelectorAll('.faq-cat-chip');
+  let activeCat = 'all';
+
+  function render() {
+    const search = searchInput.value.trim().toLowerCase();
+    const grouped = {};
+    FAQS.forEach(item => {
+      if (activeCat !== 'all' && item.cat !== activeCat) return;
+      if (search && !item.q.toLowerCase().includes(search) && !item.a.toLowerCase().includes(search)) return;
+      if (!grouped[item.cat]) grouped[item.cat] = [];
+      grouped[item.cat].push(item);
+    });
+
+    const cats = Object.keys(grouped);
+    document.getElementById('faqNoResults').style.display = cats.length === 0 ? 'block' : 'none';
+
+    container.innerHTML = cats.map(cat => `
+      <div class="faq-cat-heading">${cat}</div>
+      ${grouped[cat].map(item => `
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)"><span>${item.q}</span><span class="chev">▾</span></button>
+          <div class="faq-answer"><p>${item.a}</p></div>
+        </div>
+      `).join('')}
+    `).join('');
+  }
+
+  window.toggleFaq = function(button) {
+    const answer = button.nextElementSibling;
+    const isActive = button.classList.contains('active');
+    document.querySelectorAll('.faq-question').forEach(q => { q.classList.remove('active'); q.nextElementSibling.classList.remove('active'); });
+    if (!isActive) { button.classList.add('active'); answer.classList.add('active'); }
+  };
+
+  searchInput.addEventListener('input', render);
+  catChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      catChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeCat = chip.dataset.cat;
+      render();
+    });
+  });
+
+  render();
+</script>
+
+</body>
+</html>

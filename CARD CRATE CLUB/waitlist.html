@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Join the Waitlist – CardCrate Club</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .waitlist-box {
+      position: relative;
+      z-index: 1;
+      background: #1a1a1a;
+      border: 1px solid #f5c842;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ========== FLOATING POKEMON CARDS BACKGROUND ========== */
+    .floating-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .fc {
+      position: absolute;
+      bottom: -150px;
+      border-radius: 10px;
+      opacity: 0;
+      animation: floatUp linear infinite;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.12);
+    }
+
+    .fc img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+
+    .fc:nth-child(1)  { left: 4%;  width: 60px;  height: 84px;  animation-duration: 14s; animation-delay: 0s;  }
+    .fc:nth-child(2)  { left: 12%; width: 75px;  height: 105px; animation-duration: 18s; animation-delay: 2s;  }
+    .fc:nth-child(3)  { left: 21%; width: 55px;  height: 77px;  animation-duration: 12s; animation-delay: 5s;  }
+    .fc:nth-child(4)  { left: 31%; width: 80px;  height: 112px; animation-duration: 20s; animation-delay: 1s;  }
+    .fc:nth-child(5)  { left: 41%; width: 65px;  height: 91px;  animation-duration: 16s; animation-delay: 7s;  }
+    .fc:nth-child(6)  { left: 51%; width: 70px;  height: 98px;  animation-duration: 15s; animation-delay: 3s;  }
+    .fc:nth-child(7)  { left: 61%; width: 58px;  height: 81px;  animation-duration: 19s; animation-delay: 9s;  }
+    .fc:nth-child(8)  { left: 71%; width: 72px;  height: 101px; animation-duration: 13s; animation-delay: 4s;  }
+    .fc:nth-child(9)  { left: 81%; width: 62px;  height: 87px;  animation-duration: 17s; animation-delay: 6s;  }
+    .fc:nth-child(10) { left: 90%; width: 68px;  height: 95px;  animation-duration: 11s; animation-delay: 8s;  }
+    .fc:nth-child(11) { left: 8%;  width: 64px;  height: 90px;  animation-duration: 22s; animation-delay: 10s; }
+    .fc:nth-child(12) { left: 56%; width: 52px;  height: 73px;  animation-duration: 16s; animation-delay: 12s; }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(-8deg);     opacity: 0;    }
+      5%   { opacity: 0.3; }
+      95%  { opacity: 0.3; }
+      100% { transform: translateY(-110vh) rotate(8deg); opacity: 0;    }
+    }
+    .waitlist-box h1 {
+      color: #f5c842;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .waitlist-box p {
+      color: #ccc;
+      margin-bottom: 24px;
+      font-size: 1rem;
+    }
+    .waitlist-count {
+      background: #f5c842;
+      color: #000;
+      font-weight: bold;
+      border-radius: 20px;
+      padding: 6px 18px;
+      display: inline-block;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #f5c842;
+      color: #000;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #e0b030; }
+    .message {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      min-height: 20px;
+    }
+    .message.success { color: #4caf50; }
+    .message.error { color: #f44336; }
+    .back-link {
+      margin-top: 24px;
+      display: inline-block;
+      color: #f5c842;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="floating-bg">
+    <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+  </div>
+
+  <div class="waitlist-box">
+    <h1>🎴 Join the Waitlist</h1>
+    <p>Be the first to know when CardCrate Club launches. Founding members get exclusive perks, locked-in pricing, and early access.</p>
+
+    <div class="waitlist-count" id="waitlist-count">⏳ Loading count...</div>
+
+    <form id="waitlist-form">
+      <input type="text" id="name" placeholder="Your Name" required />
+      <input type="email" id="email" placeholder="Your Email" required />
+      <button type="submit">🚀 Reserve My Spot</button>
+    </form>
+
+    <div class="message" id="form-message"></div>
+    <a href="index.html" class="back-link">← Back to Home</a>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, getCountFromServer }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+      authDomain: "cardcrate-club.firebaseapp.com",
+      projectId: "cardcrate-club",
+      storageBucket: "cardcrate-club.firebasestorage.app",
+      messagingSenderId: "261800955788",
+      appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+      measurementId: "G-5B8J0LWGKE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load waitlist count
+    async function loadCount() {
+      const snapshot = await getCountFromServer(collection(db, "waitlist"));
+      const count = snapshot.data().count;
+      document.getElementById("waitlist-count").textContent =
+        `🔥 ${count} people already on the list!`;
+    }
+    loadCount();
+
+    // Handle form submit
+    document.getElementById("waitlist-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const msgEl = document.getElementById("form-message");
+
+      msgEl.textContent = "Checking...";
+      msgEl.className = "message";
+
+      // Check for duplicate email
+      const q = query(collection(db, "waitlist"), where("email", "==", email));
+      const existing = await getDocs(q);
+
+      if (!existing.empty) {
+        msgEl.textContent = "⚠️ That email is already on the waitlist!";
+        msgEl.className = "message error";
+        return;
+      }
+
+      // Add to Firestore
+      await addDoc(collection(db, "waitlist"), {
+        name,
+        email,
+        joinedAt: new Date().toISOString()
+      });
+
+      msgEl.textContent = "🎉 You're on the list! We'll be in touch soon.";
+      msgEl.className = "message success";
+      document.getElementById("waitlist-form").reset();
+      loadCount();
+    });
+  </script>
+
+</body>
+</html>
