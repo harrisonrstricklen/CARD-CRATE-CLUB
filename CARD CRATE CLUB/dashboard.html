@@ -701,19 +701,19 @@
   </div>
 
   <!-- ========== FLOATING POKEMON CARDS BACKGROUND ========== -->
-  <div class="floating-bg">
-    <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
-    <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+  <div class="floating-bg" id="floatingBg">
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv3/4.png"       src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv1/47.png"      src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv1/81.png"      src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv1/247.png"     src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv2/86.png"      src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/swsh12/67.png"   src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/swsh4/94.png"    src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/swsh7/111.png"   src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/swsh11/186.png"  src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv3pt5/133.png"  src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv3pt5/151.png"  src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+    <div class="fc"><img data-default-src="https://images.pokemontcg.io/sv3pt5/94.png"   src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
   </div>
 
   <!-- ========== PAGE WRAPPER ========== -->
@@ -888,50 +888,56 @@
         <div class="sets-scroll">
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv8/logo.png" alt="Surging Sparks"/>
+            <img src="https://images.pokemontcg.io/me5/logo.png" alt="Pitch Black" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">🌑</div>
             <div class="set-card-info">
-              <strong>Destined Rivals</strong>
-              <span>May 2025</span>
+              <strong>Pitch Black</strong>
+              <span>Jul 2026</span>
             </div>
           </div>
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv6pt5/logo.png" alt="Prismatic Evolutions"/>
+            <img src="https://images.pokemontcg.io/me4/logo.png" alt="Chaos Rising" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">⚡</div>
             <div class="set-card-info">
-              <strong>Prismatic Evolutions</strong>
-              <span>Jan 2025</span>
+              <strong>Chaos Rising</strong>
+              <span>May 2026</span>
             </div>
           </div>
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv7/logo.png" alt="Stellar Crown"/>
+            <img src="https://images.pokemontcg.io/me3/logo.png" alt="Perfect Order" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">🔷</div>
             <div class="set-card-info">
-              <strong>Journey Together</strong>
-              <span>Mar 2025</span>
+              <strong>Perfect Order</strong>
+              <span>Mar 2026</span>
             </div>
           </div>
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv6/logo.png" alt="Twilight Masquerade"/>
+            <img src="https://images.pokemontcg.io/me2pt5/logo.png" alt="Ascended Heroes" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">✨</div>
             <div class="set-card-info">
-              <strong>Surging Sparks</strong>
-              <span>Nov 2024</span>
+              <strong>Ascended Heroes</strong>
+              <span>Jan 2026</span>
             </div>
           </div>
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv3pt5/logo.png" alt="151"/>
+            <img src="https://images.pokemontcg.io/me2/logo.png" alt="Phantasmal Flames" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">🔥</div>
             <div class="set-card-info">
-              <strong>151</strong>
-              <span>Sep 2023</span>
+              <strong>Phantasmal Flames</strong>
+              <span>Nov 2025</span>
             </div>
           </div>
 
           <div class="set-card">
-            <img src="https://images.pokemontcg.io/sv3/logo.png" alt="Obsidian Flames"/>
+            <img src="https://images.pokemontcg.io/me1/logo.png" alt="Mega Evolution" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+            <div class="set-fallback-icon" style="display:none;width:100%;height:90px;align-items:center;justify-content:center;font-size:1.8rem;background:linear-gradient(135deg,var(--dark3),var(--dark2));">💎</div>
             <div class="set-card-info">
-              <strong>Obsidian Flames</strong>
-              <span>Aug 2023</span>
+              <strong>Mega Evolution</strong>
+              <span>Sep 2025</span>
             </div>
           </div>
 
@@ -969,7 +975,7 @@
   <script type="module">
     import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc }            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // ── Firebase Config ──────────────────────────────────────────────
     const firebaseConfig = {
@@ -1118,10 +1124,44 @@
         console.warn('Firestore read error:', err);
       }
 
+      // ── Floating background: show real cards from the user's stash ──
+      // Falls back to the default set of images (already in the HTML) if
+      // the user has no cards yet, or if this fetch fails for any reason.
+      try {
+        await loadStashIntoFloatingBg(user.uid);
+      } catch (err) {
+        console.warn('Could not load stash for floating background:', err);
+      }
+
       // ── Hide loading overlay ───────────────────────────────────────
       overlay.classList.add('hide');
       setTimeout(() => overlay.style.display = 'none', 500);
     });
+
+    async function loadStashIntoFloatingBg(uid) {
+      const fcImgs = document.querySelectorAll('#floatingBg .fc img');
+      const collRef = collection(db, 'users', uid, 'collection');
+      const q = query(collRef, orderBy('addedAt', 'desc'), limit(fcImgs.length));
+      const snap = await getDocs(q);
+
+      if (snap.empty) return; // No cards yet — keep the default artwork already in the HTML
+
+      const stashImages = snap.docs
+        .map(d => d.data().image)
+        .filter(url => !!url);
+
+      if (stashImages.length === 0) return; // Cards exist but none have an image saved
+
+      // Fill floating slots with real cards first, cycling if there are
+      // fewer stash images than slots; leftover slots keep their default.
+      fcImgs.forEach((img, i) => {
+        if (i < stashImages.length || stashImages.length >= fcImgs.length) {
+          const src = stashImages[i % stashImages.length];
+          img.src = src;
+          img.onerror = () => { img.src = img.dataset.defaultSrc; }; // fall back per-image if a stash image fails to load
+        }
+      });
+    }
 
     // ── Sign Out ─────────────────────────────────────────────────────
     signOutBtn.addEventListener('click', async () => {
