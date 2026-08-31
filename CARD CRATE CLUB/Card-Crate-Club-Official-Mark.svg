@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
   <title id="title">Card Crate Club official emblem</title>
-  <desc id="desc">Three nested angular hexagonal C forms with the official right-side wedge opening.</desc>
+  <desc id="desc">Three concentric hexagonal C forms with equal stroke weight and consistent spacing.</desc>
   <g fill="none" stroke="#F5B81C" stroke-width="8" stroke-linecap="butt" stroke-linejoin="miter">
-    <path d="M78 24 L50 8 L20 25 L20 75 L50 92 L78 76"/>
-    <path d="M68 37 L50 27 L35 36 L35 64 L50 73 L68 63"/>
-    <path d="M59 46 L50 41 L43 45 L43 55 L50 59 L59 54"/>
+    <path d="M78 26 L50 10 L22 26 L22 74 L50 90 L78 74"/>
+    <path d="M67 36 L50 26 L33 36 L33 64 L50 74 L67 64"/>
+    <path d="M57 45 L50 41 L43 45 L43 55 L50 59 L57 55"/>
   </g>
 </svg>
