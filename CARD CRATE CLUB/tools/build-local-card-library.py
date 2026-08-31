@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Build Card Crate Club's local artwork library quickly and resume-safely.
 
-Existing images are skipped. Missing cards are downloaded concurrently. Permanent
-HTTP failures such as 404/410 are never retried; only transient failures are.
+Existing images are skipped. Missing cards are downloaded concurrently. TCGdex
+uses zero-padded local IDs for cards below 100, so both padded and legacy forms
+are tried. Permanent HTTP failures such as 404/410 are not retried; transient
+network/server failures are retried.
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -18,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "card-data"
 IMAGE_DIR = ROOT / "card-images"
 REPORT = ROOT / "card-library-report.txt"
-USER_AGENT = "CardCrateClub-LocalLibrary/2.0"
+USER_AGENT = "CardCrateClub-LocalLibrary/2.1"
 MAX_WORKERS = 12
 TIMEOUT = 12
 TRANSIENT_RETRIES = 2
@@ -29,15 +31,30 @@ def safe_id(value):
     return re.sub(r"[^A-Za-z0-9._-]+", "-", text) or "unknown"
 
 
+def id_variants(value):
+    """Return TCGdex-compatible ID variants, padded form first."""
+    raw = str(value or "").strip()
+    variants = []
+    if raw.isdigit():
+        variants.append(raw.zfill(3))
+    if raw and raw not in variants:
+        variants.append(raw)
+    return variants
+
+
 def candidates(set_id, card):
-    """Return a small, deduplicated list of plausible low-res image URLs."""
+    """Return deduplicated plausible low-res image URLs."""
     base = str(card.get("image") or "").rstrip("/")
     local_id = str(card.get("localId") or "").strip()
     bases = []
+
+    # The stored JSON was generated with unpadded IDs (1, 2, ... 99), while
+    # TCGdex artwork paths use 001, 002, ... 099. Rebuild the canonical asset
+    # URL from the set/local ID first, then retain the stored URL as fallback.
+    for variant in id_variants(local_id):
+        bases.append(f"https://assets.tcgdex.net/en/me/{set_id}/{variant}")
     if base:
         bases.append(base)
-    if local_id:
-        bases.append(f"https://assets.tcgdex.net/en/me/{set_id}/{local_id}")
 
     out = []
     seen = set()
