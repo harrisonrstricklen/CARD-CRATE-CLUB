@@ -339,6 +339,7 @@
 
   function closeAddModal() {
     addModal.classList.remove('active');
+    activeCardSearchId += 1;
     document.getElementById('searchResults').style.display = 'none';
     document.getElementById('searchResults').innerHTML = '';
     document.getElementById('searchStatus').style.display = 'none';
@@ -350,11 +351,12 @@
   }
 
   // ---- Card search (via our own /.netlify/functions/search-cards proxy) ----
-  // Calling api.pokemontcg.io directly from the browser is unreliable
-  // (public monitoring shows frequent failures and inconsistent CORS
-  // support). Routing through our own serverless function avoids that
-  // entirely and keeps room for an API key on the server side.
+  // Temporary network/API failures are retried automatically until the
+  // search succeeds, the query changes, or the Add Card modal is closed.
+  let activeCardSearchId = 0;
+
   async function searchCards() {
+    const searchId = ++activeCardSearchId;
     const query = document.getElementById('cardSearchInput').value.trim();
     const dex = document.getElementById('cardDexInput').value.trim();
     const numberRaw = document.getElementById('cardNumberSearchInput').value.trim();
@@ -378,10 +380,14 @@
       const res = await fetch(`/.netlify/functions/search-cards?${params.toString()}`);
       if (!res.ok) throw new Error('Search request failed');
       const data = await res.json();
+
+      // Ignore stale responses if a newer search has started.
+      if (searchId !== activeCardSearchId) return;
+
       const cards = data.data || [];
 
       if (cards.length === 0) {
-        statusEl.textContent = 'No cards found — try a different spelling, add the set name, or fill in the form manually below.';
+        statusEl.textContent = 'No cards found — try a different spelling, add the set name, or try a different card number.';
         return;
       }
 
@@ -411,9 +417,27 @@
         });
       });
     } catch (err) {
+      if (searchId !== activeCardSearchId) return;
+
       statusEl.style.display = 'block';
-      statusEl.textContent = '⚠️ Search is temporarily unavailable — you can still fill in the form manually below.';
-      console.warn('Pokemon TCG API search error:', err);
+      statusEl.textContent = 'Still searching… connection hiccup. Retrying automatically…';
+      console.warn('Pokemon TCG API search error; retrying:', err);
+
+      // Keep retrying the exact same search instead of dropping the user into
+      // manual entry. The guards stop stale retries when they type something
+      // new, start another search, or close the modal.
+      setTimeout(() => {
+        const sameQuery = document.getElementById('cardSearchInput').value.trim() === query;
+        const sameDex = document.getElementById('cardDexInput').value.trim() === dex;
+        const sameNumber = document.getElementById('cardNumberSearchInput').value.trim() === numberRaw;
+        if (
+          searchId === activeCardSearchId &&
+          addModal.classList.contains('active') &&
+          sameQuery && sameDex && sameNumber
+        ) {
+          searchCards();
+        }
+      }, 2000);
     }
   }
 
