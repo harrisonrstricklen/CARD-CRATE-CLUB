@@ -14,7 +14,7 @@ jobs:
   build-library:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -24,17 +24,31 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Build local artwork library
-        run: python 'CARD CRATE CLUB/tools/build-local-card-library.py'
-
-      - name: Commit local artwork and updated databases
+      - name: Configure Git
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 'CARD CRATE CLUB/card-images' 'CARD CRATE CLUB/card-data' 'CARD CRATE CLUB/card-library-report.txt'
-          if git diff --cached --quiet; then
-            echo 'No library changes to commit.'
-          else
-            git commit -m 'Build local Pokémon card artwork library'
-            git push
-          fi
+
+      - name: Build and save each set independently
+        shell: bash
+        run: |
+          set -e
+          for set_id in me01 me02 me02.5 me03 me04 me05; do
+            echo "========================================"
+            echo "Building $set_id"
+            echo "========================================"
+
+            python 'CARD CRATE CLUB/tools/build-local-card-library.py' "$set_id"
+
+            git add "CARD CRATE CLUB/card-images/$set_id" \
+                    "CARD CRATE CLUB/card-data/$set_id.json" \
+                    'CARD CRATE CLUB/card-library-report.txt'
+
+            if git diff --cached --quiet; then
+              echo "$set_id already complete; nothing new to save."
+            else
+              git commit -m "Save local Pokémon artwork for $set_id"
+              git push
+              echo "$set_id saved to GitHub successfully."
+            fi
+          done
