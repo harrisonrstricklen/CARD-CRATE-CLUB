@@ -1,0 +1,48 @@
+/* CARD CRATE CLUB — OFFICIAL NESTED-C BRAND MARK */
+.nav-logo::before,
+.footer-brand-logo::before,
+.loader-logo::before,
+.brand-mark::before,
+.ccc-brand-mark {
+  content:"";
+  display:inline-block;
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  background:url('brand-mark.svg') center/contain no-repeat;
+  filter:drop-shadow(0 3px 9px rgba(245,200,66,.14));
+}
+
+.nav-logo,
+.footer-brand-logo { display:inline-flex !important; align-items:center; }
+.nav-logo::after { content:'CARD CRATE CLUB' !important; }
+.footer-brand-logo::after { content:'CARD CRATE CLUB' !important; }
+
+.loader-logo {
+  display:flex !important;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  font-size:.82rem !important;
+  letter-spacing:.12em !important;
+  color:#f0f0f0 !important;
+  text-transform:uppercase;
+}
+.loader-logo::before { width:74px; height:74px; flex-basis:74px; }
+
+/* Legacy square CCC badges are converted to the emblem. */
+.brand-mark {
+  font-size:0 !important;
+  color:transparent !important;
+  background:transparent !important;
+  border-radius:0 !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+}
+.brand-mark::before { width:36px; height:36px; flex-basis:36px; }
+
+@media (max-width:640px){
+  .nav-logo::before { width:32px; height:32px; flex-basis:32px; }
+  .footer-brand-logo::before { width:34px; height:34px; flex-basis:34px; }
+}
