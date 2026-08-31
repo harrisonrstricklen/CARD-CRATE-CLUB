@@ -12,693 +12,693 @@
       "localId": "1",
       "name": "Card #1",
       "image": "https://assets.tcgdex.net/en/me/me05/1",
-      "localImage": ""
+      "localImage": "card-images/me05/1.webp"
     },
     {
       "id": "me05-2",
       "localId": "2",
       "name": "Card #2",
       "image": "https://assets.tcgdex.net/en/me/me05/2",
-      "localImage": ""
+      "localImage": "card-images/me05/2.webp"
     },
     {
       "id": "me05-3",
       "localId": "3",
       "name": "Card #3",
       "image": "https://assets.tcgdex.net/en/me/me05/3",
-      "localImage": ""
+      "localImage": "card-images/me05/3.webp"
     },
     {
       "id": "me05-4",
       "localId": "4",
       "name": "Card #4",
       "image": "https://assets.tcgdex.net/en/me/me05/4",
-      "localImage": ""
+      "localImage": "card-images/me05/4.webp"
     },
     {
       "id": "me05-5",
       "localId": "5",
       "name": "Card #5",
       "image": "https://assets.tcgdex.net/en/me/me05/5",
-      "localImage": ""
+      "localImage": "card-images/me05/5.webp"
     },
     {
       "id": "me05-6",
       "localId": "6",
       "name": "Card #6",
       "image": "https://assets.tcgdex.net/en/me/me05/6",
-      "localImage": ""
+      "localImage": "card-images/me05/6.webp"
     },
     {
       "id": "me05-7",
       "localId": "7",
       "name": "Card #7",
       "image": "https://assets.tcgdex.net/en/me/me05/7",
-      "localImage": ""
+      "localImage": "card-images/me05/7.webp"
     },
     {
       "id": "me05-8",
       "localId": "8",
       "name": "Card #8",
       "image": "https://assets.tcgdex.net/en/me/me05/8",
-      "localImage": ""
+      "localImage": "card-images/me05/8.webp"
     },
     {
       "id": "me05-9",
       "localId": "9",
       "name": "Card #9",
       "image": "https://assets.tcgdex.net/en/me/me05/9",
-      "localImage": ""
+      "localImage": "card-images/me05/9.webp"
     },
     {
       "id": "me05-10",
       "localId": "10",
       "name": "Card #10",
       "image": "https://assets.tcgdex.net/en/me/me05/10",
-      "localImage": ""
+      "localImage": "card-images/me05/10.webp"
     },
     {
       "id": "me05-11",
       "localId": "11",
       "name": "Card #11",
       "image": "https://assets.tcgdex.net/en/me/me05/11",
-      "localImage": ""
+      "localImage": "card-images/me05/11.webp"
     },
     {
       "id": "me05-12",
       "localId": "12",
       "name": "Card #12",
       "image": "https://assets.tcgdex.net/en/me/me05/12",
-      "localImage": ""
+      "localImage": "card-images/me05/12.webp"
     },
     {
       "id": "me05-13",
       "localId": "13",
       "name": "Card #13",
       "image": "https://assets.tcgdex.net/en/me/me05/13",
-      "localImage": ""
+      "localImage": "card-images/me05/13.webp"
     },
     {
       "id": "me05-14",
       "localId": "14",
       "name": "Card #14",
       "image": "https://assets.tcgdex.net/en/me/me05/14",
-      "localImage": ""
+      "localImage": "card-images/me05/14.webp"
     },
     {
       "id": "me05-15",
       "localId": "15",
       "name": "Card #15",
       "image": "https://assets.tcgdex.net/en/me/me05/15",
-      "localImage": ""
+      "localImage": "card-images/me05/15.webp"
     },
     {
       "id": "me05-16",
       "localId": "16",
       "name": "Card #16",
       "image": "https://assets.tcgdex.net/en/me/me05/16",
-      "localImage": ""
+      "localImage": "card-images/me05/16.webp"
     },
     {
       "id": "me05-17",
       "localId": "17",
       "name": "Card #17",
       "image": "https://assets.tcgdex.net/en/me/me05/17",
-      "localImage": ""
+      "localImage": "card-images/me05/17.webp"
     },
     {
       "id": "me05-18",
       "localId": "18",
       "name": "Card #18",
       "image": "https://assets.tcgdex.net/en/me/me05/18",
-      "localImage": ""
+      "localImage": "card-images/me05/18.webp"
     },
     {
       "id": "me05-19",
       "localId": "19",
       "name": "Card #19",
       "image": "https://assets.tcgdex.net/en/me/me05/19",
-      "localImage": ""
+      "localImage": "card-images/me05/19.webp"
     },
     {
       "id": "me05-20",
       "localId": "20",
       "name": "Card #20",
       "image": "https://assets.tcgdex.net/en/me/me05/20",
-      "localImage": ""
+      "localImage": "card-images/me05/20.webp"
     },
     {
       "id": "me05-21",
       "localId": "21",
       "name": "Card #21",
       "image": "https://assets.tcgdex.net/en/me/me05/21",
-      "localImage": ""
+      "localImage": "card-images/me05/21.webp"
     },
     {
       "id": "me05-22",
       "localId": "22",
       "name": "Card #22",
       "image": "https://assets.tcgdex.net/en/me/me05/22",
-      "localImage": ""
+      "localImage": "card-images/me05/22.webp"
     },
     {
       "id": "me05-23",
       "localId": "23",
       "name": "Card #23",
       "image": "https://assets.tcgdex.net/en/me/me05/23",
-      "localImage": ""
+      "localImage": "card-images/me05/23.webp"
     },
     {
       "id": "me05-24",
       "localId": "24",
       "name": "Card #24",
       "image": "https://assets.tcgdex.net/en/me/me05/24",
-      "localImage": ""
+      "localImage": "card-images/me05/24.webp"
     },
     {
       "id": "me05-25",
       "localId": "25",
       "name": "Card #25",
       "image": "https://assets.tcgdex.net/en/me/me05/25",
-      "localImage": ""
+      "localImage": "card-images/me05/25.webp"
     },
     {
       "id": "me05-26",
       "localId": "26",
       "name": "Card #26",
       "image": "https://assets.tcgdex.net/en/me/me05/26",
-      "localImage": ""
+      "localImage": "card-images/me05/26.webp"
     },
     {
       "id": "me05-27",
       "localId": "27",
       "name": "Card #27",
       "image": "https://assets.tcgdex.net/en/me/me05/27",
-      "localImage": ""
+      "localImage": "card-images/me05/27.webp"
     },
     {
       "id": "me05-28",
       "localId": "28",
       "name": "Card #28",
       "image": "https://assets.tcgdex.net/en/me/me05/28",
-      "localImage": ""
+      "localImage": "card-images/me05/28.webp"
     },
     {
       "id": "me05-29",
       "localId": "29",
       "name": "Card #29",
       "image": "https://assets.tcgdex.net/en/me/me05/29",
-      "localImage": ""
+      "localImage": "card-images/me05/29.webp"
     },
     {
       "id": "me05-30",
       "localId": "30",
       "name": "Card #30",
       "image": "https://assets.tcgdex.net/en/me/me05/30",
-      "localImage": ""
+      "localImage": "card-images/me05/30.webp"
     },
     {
       "id": "me05-31",
       "localId": "31",
       "name": "Card #31",
       "image": "https://assets.tcgdex.net/en/me/me05/31",
-      "localImage": ""
+      "localImage": "card-images/me05/31.webp"
     },
     {
       "id": "me05-32",
       "localId": "32",
       "name": "Card #32",
       "image": "https://assets.tcgdex.net/en/me/me05/32",
-      "localImage": ""
+      "localImage": "card-images/me05/32.webp"
     },
     {
       "id": "me05-33",
       "localId": "33",
       "name": "Card #33",
       "image": "https://assets.tcgdex.net/en/me/me05/33",
-      "localImage": ""
+      "localImage": "card-images/me05/33.webp"
     },
     {
       "id": "me05-34",
       "localId": "34",
       "name": "Card #34",
       "image": "https://assets.tcgdex.net/en/me/me05/34",
-      "localImage": ""
+      "localImage": "card-images/me05/34.webp"
     },
     {
       "id": "me05-35",
       "localId": "35",
       "name": "Card #35",
       "image": "https://assets.tcgdex.net/en/me/me05/35",
-      "localImage": ""
+      "localImage": "card-images/me05/35.webp"
     },
     {
       "id": "me05-36",
       "localId": "36",
       "name": "Card #36",
       "image": "https://assets.tcgdex.net/en/me/me05/36",
-      "localImage": ""
+      "localImage": "card-images/me05/36.webp"
     },
     {
       "id": "me05-37",
       "localId": "37",
       "name": "Card #37",
       "image": "https://assets.tcgdex.net/en/me/me05/37",
-      "localImage": ""
+      "localImage": "card-images/me05/37.webp"
     },
     {
       "id": "me05-38",
       "localId": "38",
       "name": "Card #38",
       "image": "https://assets.tcgdex.net/en/me/me05/38",
-      "localImage": ""
+      "localImage": "card-images/me05/38.webp"
     },
     {
       "id": "me05-39",
       "localId": "39",
       "name": "Card #39",
       "image": "https://assets.tcgdex.net/en/me/me05/39",
-      "localImage": ""
+      "localImage": "card-images/me05/39.webp"
     },
     {
       "id": "me05-40",
       "localId": "40",
       "name": "Card #40",
       "image": "https://assets.tcgdex.net/en/me/me05/40",
-      "localImage": ""
+      "localImage": "card-images/me05/40.webp"
     },
     {
       "id": "me05-41",
       "localId": "41",
       "name": "Card #41",
       "image": "https://assets.tcgdex.net/en/me/me05/41",
-      "localImage": ""
+      "localImage": "card-images/me05/41.webp"
     },
     {
       "id": "me05-42",
       "localId": "42",
       "name": "Card #42",
       "image": "https://assets.tcgdex.net/en/me/me05/42",
-      "localImage": ""
+      "localImage": "card-images/me05/42.webp"
     },
     {
       "id": "me05-43",
       "localId": "43",
       "name": "Card #43",
       "image": "https://assets.tcgdex.net/en/me/me05/43",
-      "localImage": ""
+      "localImage": "card-images/me05/43.webp"
     },
     {
       "id": "me05-44",
       "localId": "44",
       "name": "Card #44",
       "image": "https://assets.tcgdex.net/en/me/me05/44",
-      "localImage": ""
+      "localImage": "card-images/me05/44.webp"
     },
     {
       "id": "me05-45",
       "localId": "45",
       "name": "Card #45",
       "image": "https://assets.tcgdex.net/en/me/me05/45",
-      "localImage": ""
+      "localImage": "card-images/me05/45.webp"
     },
     {
       "id": "me05-46",
       "localId": "46",
       "name": "Card #46",
       "image": "https://assets.tcgdex.net/en/me/me05/46",
-      "localImage": ""
+      "localImage": "card-images/me05/46.webp"
     },
     {
       "id": "me05-47",
       "localId": "47",
       "name": "Card #47",
       "image": "https://assets.tcgdex.net/en/me/me05/47",
-      "localImage": ""
+      "localImage": "card-images/me05/47.webp"
     },
     {
       "id": "me05-48",
       "localId": "48",
       "name": "Card #48",
       "image": "https://assets.tcgdex.net/en/me/me05/48",
-      "localImage": ""
+      "localImage": "card-images/me05/48.webp"
     },
     {
       "id": "me05-49",
       "localId": "49",
       "name": "Card #49",
       "image": "https://assets.tcgdex.net/en/me/me05/49",
-      "localImage": ""
+      "localImage": "card-images/me05/49.webp"
     },
     {
       "id": "me05-50",
       "localId": "50",
       "name": "Card #50",
       "image": "https://assets.tcgdex.net/en/me/me05/50",
-      "localImage": ""
+      "localImage": "card-images/me05/50.webp"
     },
     {
       "id": "me05-51",
       "localId": "51",
       "name": "Card #51",
       "image": "https://assets.tcgdex.net/en/me/me05/51",
-      "localImage": ""
+      "localImage": "card-images/me05/51.webp"
     },
     {
       "id": "me05-52",
       "localId": "52",
       "name": "Card #52",
       "image": "https://assets.tcgdex.net/en/me/me05/52",
-      "localImage": ""
+      "localImage": "card-images/me05/52.webp"
     },
     {
       "id": "me05-53",
       "localId": "53",
       "name": "Card #53",
       "image": "https://assets.tcgdex.net/en/me/me05/53",
-      "localImage": ""
+      "localImage": "card-images/me05/53.webp"
     },
     {
       "id": "me05-54",
       "localId": "54",
       "name": "Card #54",
       "image": "https://assets.tcgdex.net/en/me/me05/54",
-      "localImage": ""
+      "localImage": "card-images/me05/54.webp"
     },
     {
       "id": "me05-55",
       "localId": "55",
       "name": "Card #55",
       "image": "https://assets.tcgdex.net/en/me/me05/55",
-      "localImage": ""
+      "localImage": "card-images/me05/55.webp"
     },
     {
       "id": "me05-56",
       "localId": "56",
       "name": "Card #56",
       "image": "https://assets.tcgdex.net/en/me/me05/56",
-      "localImage": ""
+      "localImage": "card-images/me05/56.webp"
     },
     {
       "id": "me05-57",
       "localId": "57",
       "name": "Card #57",
       "image": "https://assets.tcgdex.net/en/me/me05/57",
-      "localImage": ""
+      "localImage": "card-images/me05/57.webp"
     },
     {
       "id": "me05-58",
       "localId": "58",
       "name": "Card #58",
       "image": "https://assets.tcgdex.net/en/me/me05/58",
-      "localImage": ""
+      "localImage": "card-images/me05/58.webp"
     },
     {
       "id": "me05-59",
       "localId": "59",
       "name": "Card #59",
       "image": "https://assets.tcgdex.net/en/me/me05/59",
-      "localImage": ""
+      "localImage": "card-images/me05/59.webp"
     },
     {
       "id": "me05-60",
       "localId": "60",
       "name": "Card #60",
       "image": "https://assets.tcgdex.net/en/me/me05/60",
-      "localImage": ""
+      "localImage": "card-images/me05/60.webp"
     },
     {
       "id": "me05-61",
       "localId": "61",
       "name": "Card #61",
       "image": "https://assets.tcgdex.net/en/me/me05/61",
-      "localImage": ""
+      "localImage": "card-images/me05/61.webp"
     },
     {
       "id": "me05-62",
       "localId": "62",
       "name": "Card #62",
       "image": "https://assets.tcgdex.net/en/me/me05/62",
-      "localImage": ""
+      "localImage": "card-images/me05/62.webp"
     },
     {
       "id": "me05-63",
       "localId": "63",
       "name": "Card #63",
       "image": "https://assets.tcgdex.net/en/me/me05/63",
-      "localImage": ""
+      "localImage": "card-images/me05/63.webp"
     },
     {
       "id": "me05-64",
       "localId": "64",
       "name": "Card #64",
       "image": "https://assets.tcgdex.net/en/me/me05/64",
-      "localImage": ""
+      "localImage": "card-images/me05/64.webp"
     },
     {
       "id": "me05-65",
       "localId": "65",
       "name": "Card #65",
       "image": "https://assets.tcgdex.net/en/me/me05/65",
-      "localImage": ""
+      "localImage": "card-images/me05/65.webp"
     },
     {
       "id": "me05-66",
       "localId": "66",
       "name": "Card #66",
       "image": "https://assets.tcgdex.net/en/me/me05/66",
-      "localImage": ""
+      "localImage": "card-images/me05/66.webp"
     },
     {
       "id": "me05-67",
       "localId": "67",
       "name": "Card #67",
       "image": "https://assets.tcgdex.net/en/me/me05/67",
-      "localImage": ""
+      "localImage": "card-images/me05/67.webp"
     },
     {
       "id": "me05-68",
       "localId": "68",
       "name": "Card #68",
       "image": "https://assets.tcgdex.net/en/me/me05/68",
-      "localImage": ""
+      "localImage": "card-images/me05/68.webp"
     },
     {
       "id": "me05-69",
       "localId": "69",
       "name": "Card #69",
       "image": "https://assets.tcgdex.net/en/me/me05/69",
-      "localImage": ""
+      "localImage": "card-images/me05/69.webp"
     },
     {
       "id": "me05-70",
       "localId": "70",
       "name": "Card #70",
       "image": "https://assets.tcgdex.net/en/me/me05/70",
-      "localImage": ""
+      "localImage": "card-images/me05/70.webp"
     },
     {
       "id": "me05-71",
       "localId": "71",
       "name": "Card #71",
       "image": "https://assets.tcgdex.net/en/me/me05/71",
-      "localImage": ""
+      "localImage": "card-images/me05/71.webp"
     },
     {
       "id": "me05-72",
       "localId": "72",
       "name": "Card #72",
       "image": "https://assets.tcgdex.net/en/me/me05/72",
-      "localImage": ""
+      "localImage": "card-images/me05/72.webp"
     },
     {
       "id": "me05-73",
       "localId": "73",
       "name": "Card #73",
       "image": "https://assets.tcgdex.net/en/me/me05/73",
-      "localImage": ""
+      "localImage": "card-images/me05/73.webp"
     },
     {
       "id": "me05-74",
       "localId": "74",
       "name": "Card #74",
       "image": "https://assets.tcgdex.net/en/me/me05/74",
-      "localImage": ""
+      "localImage": "card-images/me05/74.webp"
     },
     {
       "id": "me05-75",
       "localId": "75",
       "name": "Card #75",
       "image": "https://assets.tcgdex.net/en/me/me05/75",
-      "localImage": ""
+      "localImage": "card-images/me05/75.webp"
     },
     {
       "id": "me05-76",
       "localId": "76",
       "name": "Card #76",
       "image": "https://assets.tcgdex.net/en/me/me05/76",
-      "localImage": ""
+      "localImage": "card-images/me05/76.webp"
     },
     {
       "id": "me05-77",
       "localId": "77",
       "name": "Card #77",
       "image": "https://assets.tcgdex.net/en/me/me05/77",
-      "localImage": ""
+      "localImage": "card-images/me05/77.webp"
     },
     {
       "id": "me05-78",
       "localId": "78",
       "name": "Card #78",
       "image": "https://assets.tcgdex.net/en/me/me05/78",
-      "localImage": ""
+      "localImage": "card-images/me05/78.webp"
     },
     {
       "id": "me05-79",
       "localId": "79",
       "name": "Card #79",
       "image": "https://assets.tcgdex.net/en/me/me05/79",
-      "localImage": ""
+      "localImage": "card-images/me05/79.webp"
     },
     {
       "id": "me05-80",
       "localId": "80",
       "name": "Card #80",
       "image": "https://assets.tcgdex.net/en/me/me05/80",
-      "localImage": ""
+      "localImage": "card-images/me05/80.webp"
     },
     {
       "id": "me05-81",
       "localId": "81",
       "name": "Card #81",
       "image": "https://assets.tcgdex.net/en/me/me05/81",
-      "localImage": ""
+      "localImage": "card-images/me05/81.webp"
     },
     {
       "id": "me05-82",
       "localId": "82",
       "name": "Card #82",
       "image": "https://assets.tcgdex.net/en/me/me05/82",
-      "localImage": ""
+      "localImage": "card-images/me05/82.webp"
     },
     {
       "id": "me05-83",
       "localId": "83",
       "name": "Card #83",
       "image": "https://assets.tcgdex.net/en/me/me05/83",
-      "localImage": ""
+      "localImage": "card-images/me05/83.webp"
     },
     {
       "id": "me05-84",
       "localId": "84",
       "name": "Card #84",
       "image": "https://assets.tcgdex.net/en/me/me05/84",
-      "localImage": ""
+      "localImage": "card-images/me05/84.webp"
     },
     {
       "id": "me05-85",
       "localId": "85",
       "name": "Card #85",
       "image": "https://assets.tcgdex.net/en/me/me05/85",
-      "localImage": ""
+      "localImage": "card-images/me05/85.webp"
     },
     {
       "id": "me05-86",
       "localId": "86",
       "name": "Card #86",
       "image": "https://assets.tcgdex.net/en/me/me05/86",
-      "localImage": ""
+      "localImage": "card-images/me05/86.webp"
     },
     {
       "id": "me05-87",
       "localId": "87",
       "name": "Card #87",
       "image": "https://assets.tcgdex.net/en/me/me05/87",
-      "localImage": ""
+      "localImage": "card-images/me05/87.webp"
     },
     {
       "id": "me05-88",
       "localId": "88",
       "name": "Card #88",
       "image": "https://assets.tcgdex.net/en/me/me05/88",
-      "localImage": ""
+      "localImage": "card-images/me05/88.webp"
     },
     {
       "id": "me05-89",
       "localId": "89",
       "name": "Card #89",
       "image": "https://assets.tcgdex.net/en/me/me05/89",
-      "localImage": ""
+      "localImage": "card-images/me05/89.webp"
     },
     {
       "id": "me05-90",
       "localId": "90",
       "name": "Card #90",
       "image": "https://assets.tcgdex.net/en/me/me05/90",
-      "localImage": ""
+      "localImage": "card-images/me05/90.webp"
     },
     {
       "id": "me05-91",
       "localId": "91",
       "name": "Card #91",
       "image": "https://assets.tcgdex.net/en/me/me05/91",
-      "localImage": ""
+      "localImage": "card-images/me05/91.webp"
     },
     {
       "id": "me05-92",
       "localId": "92",
       "name": "Card #92",
       "image": "https://assets.tcgdex.net/en/me/me05/92",
-      "localImage": ""
+      "localImage": "card-images/me05/92.webp"
     },
     {
       "id": "me05-93",
       "localId": "93",
       "name": "Card #93",
       "image": "https://assets.tcgdex.net/en/me/me05/93",
-      "localImage": ""
+      "localImage": "card-images/me05/93.webp"
     },
     {
       "id": "me05-94",
       "localId": "94",
       "name": "Card #94",
       "image": "https://assets.tcgdex.net/en/me/me05/94",
-      "localImage": ""
+      "localImage": "card-images/me05/94.webp"
     },
     {
       "id": "me05-95",
       "localId": "95",
       "name": "Card #95",
       "image": "https://assets.tcgdex.net/en/me/me05/95",
-      "localImage": ""
+      "localImage": "card-images/me05/95.webp"
     },
     {
       "id": "me05-96",
       "localId": "96",
       "name": "Card #96",
       "image": "https://assets.tcgdex.net/en/me/me05/96",
-      "localImage": ""
+      "localImage": "card-images/me05/96.webp"
     },
     {
       "id": "me05-97",
       "localId": "97",
       "name": "Card #97",
       "image": "https://assets.tcgdex.net/en/me/me05/97",
-      "localImage": ""
+      "localImage": "card-images/me05/97.webp"
     },
     {
       "id": "me05-98",
       "localId": "98",
       "name": "Card #98",
       "image": "https://assets.tcgdex.net/en/me/me05/98",
-      "localImage": ""
+      "localImage": "card-images/me05/98.webp"
     },
     {
       "id": "me05-99",
       "localId": "99",
       "name": "Card #99",
       "image": "https://assets.tcgdex.net/en/me/me05/99",
-      "localImage": ""
+      "localImage": "card-images/me05/99.webp"
     },
     {
       "id": "me05-100",
