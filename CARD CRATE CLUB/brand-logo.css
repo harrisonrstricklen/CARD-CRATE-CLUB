@@ -13,8 +13,8 @@
   width:38px;
   height:38px;
   flex:0 0 38px;
-  background:url('brand-mark.svg') center/contain no-repeat;
-  filter:drop-shadow(0 3px 9px rgba(245,200,66,.14));
+  background:url('brand-mark.svg?v=approved-38deg-20260831') center/contain no-repeat;
+  filter:drop-shadow(0 3px 9px rgba(245,184,28,.16));
 }
 
 /* Shared member-page header: replace legacy CCC text with one official mark + wordmark. */
