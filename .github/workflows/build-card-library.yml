@@ -1,0 +1,40 @@
+name: Build Local Card Library
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'CARD CRATE CLUB/card-data/**.json'
+      - 'CARD CRATE CLUB/tools/build-local-card-library.py'
+
+permissions:
+  contents: write
+
+jobs:
+  build-library:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build local artwork library
+        run: python 'CARD CRATE CLUB/tools/build-local-card-library.py'
+
+      - name: Commit local artwork and updated databases
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB/card-images' 'CARD CRATE CLUB/card-data' 'CARD CRATE CLUB/card-library-report.txt'
+          if git diff --cached --quiet; then
+            echo 'No library changes to commit.'
+          else
+            git commit -m 'Build local Pokémon card artwork library'
+            git push
+          fi
