@@ -4,6 +4,15 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    // ---- OFFICIAL BRAND MARK ----
+    if (!document.querySelector('link[data-ccc-brand-logo]')) {
+        const brandLogo = document.createElement('link');
+        brandLogo.rel = 'stylesheet';
+        brandLogo.href = 'brand-logo.css';
+        brandLogo.dataset.cccBrandLogo = 'true';
+        document.head.appendChild(brandLogo);
+    }
+
     // ---- HOMEPAGE POLISH CSS ----
     if (document.querySelector('.home-section') && !document.querySelector('link[data-home-mobile-fix]')) {
         const mobileFix = document.createElement('link');
