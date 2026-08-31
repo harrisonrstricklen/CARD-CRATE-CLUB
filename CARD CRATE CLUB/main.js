@@ -1,5 +1,5 @@
 // ========================================
-// CARDCRATE CLUB — MAIN.JS
+// CARD CRATE CLUB — MAIN.JS
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -13,31 +13,55 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(mobileFix);
     }
 
+    // ---- SEO / BROWSER POLISH ----
+    if (!document.querySelector('link[rel="canonical"]')) {
+        const canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        canonical.href = 'https://cardcrateclub.com' + (window.location.pathname === '/' ? '/' : window.location.pathname);
+        document.head.appendChild(canonical);
+    }
+
+    if (!document.querySelector('link[rel="icon"]')) {
+        const icon = document.createElement('link');
+        icon.rel = 'icon';
+        icon.type = 'image/svg+xml';
+        icon.href = 'favicon.svg';
+        document.head.appendChild(icon);
+    }
+
+    document.querySelectorAll('a[target="_blank"]').forEach(link => {
+        link.rel = 'noopener noreferrer';
+    });
+
     // ---- NAVBAR SCROLL EFFECT ----
     const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            navbar.style.background = 'rgba(13,15,20,0.98)';
-            navbar.style.boxShadow = '0 4px 24px rgba(0,0,0,0.5)';
-        } else {
-            navbar.style.background = 'rgba(13,15,20,0.95)';
-            navbar.style.boxShadow = 'none';
-        }
-    });
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(13,15,20,0.98)';
+                navbar.style.boxShadow = '0 4px 24px rgba(0,0,0,0.5)';
+            } else {
+                navbar.style.background = 'rgba(13,15,20,0.95)';
+                navbar.style.boxShadow = 'none';
+            }
+        });
+    }
 
     // ---- HAMBURGER MENU ----
     const hamburger = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        mobileMenu.classList.toggle('active');
-    });
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+    }
 
     // ---- CLOSE MOBILE MENU ----
     window.closeMobileMenu = function() {
-        hamburger.classList.remove('active');
-        mobileMenu.classList.remove('active');
+        if (hamburger) hamburger.classList.remove('active');
+        if (mobileMenu) mobileMenu.classList.remove('active');
     };
 
     // ---- FAQ ACCORDION ----
@@ -47,10 +71,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelectorAll('.faq-question').forEach(q => {
             q.classList.remove('active');
-            q.nextElementSibling.classList.remove('active');
+            if (q.nextElementSibling) q.nextElementSibling.classList.remove('active');
         });
 
-        if (!isActive) {
+        if (!isActive && answer) {
             button.classList.add('active');
             answer.classList.add('active');
         }
@@ -65,9 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             const submitBtn = waitlistForm.querySelector('.btn-submit');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '⏳ Joining...';
-            submitBtn.disabled = true;
+            const originalText = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Joining...';
+                submitBtn.disabled = true;
+            }
 
             try {
                 const formData = new FormData(waitlistForm);
@@ -97,8 +123,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateCounter();
             } catch (error) {
                 console.error('Waitlist error:', error);
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
                 alert(error.message || 'Something went wrong. Please try again.');
             }
         });
@@ -108,50 +136,55 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCounter() {
         const counterFill = document.getElementById('counterFill');
         const spotsLeft = document.getElementById('spotsLeft');
-        
+
         if (counterFill && spotsLeft) {
-            const current = parseInt(spotsLeft.textContent);
+            const current = parseInt(spotsLeft.textContent, 10);
+            if (Number.isNaN(current)) return;
             const newCount = Math.max(current - 1, 0);
             const percentage = ((100 - newCount) / 100) * 100;
-            
+
             spotsLeft.textContent = newCount;
             counterFill.style.width = percentage + '%';
         }
     }
 
     // ---- SCROLL ANIMATIONS ----
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+    if ('IntersectionObserver' in window) {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        const animateElements = document.querySelectorAll(
+            '.feature-card, .step, .tier-card, .benefit, .faq-item, .social-card'
+        );
+
+        animateElements.forEach((el, index) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
+            observer.observe(el);
         });
-    }, observerOptions);
-
-    const animateElements = document.querySelectorAll(
-        '.feature-card, .step, .tier-card, .benefit, .faq-item, .social-card'
-    );
-
-    animateElements.forEach((el, index) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
-        observer.observe(el);
-    });
+    }
 
     // ---- SMOOTH SCROLL FOR ANCHOR LINKS ----
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const selector = this.getAttribute('href');
+            if (!selector || selector === '#') return;
+            const target = document.querySelector(selector);
             if (target) {
-                const navHeight = navbar.offsetHeight;
+                e.preventDefault();
+                const navHeight = navbar ? navbar.offsetHeight : 0;
                 const targetPosition = target.offsetTop - navHeight - 20;
                 window.scrollTo({ top: targetPosition, behavior: 'smooth' });
             }
@@ -160,19 +193,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ---- FOUNDING COUNTER ANIMATION ON SCROLL ----
     const counterSection = document.querySelector('.founding-counter');
-    if (counterSection) {
+    if (counterSection && 'IntersectionObserver' in window) {
         const counterObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const fill = document.getElementById('counterFill');
-                    if (fill) {
-                        fill.style.width = '23%';
-                    }
+                    if (fill) fill.style.width = '23%';
                 }
             });
         }, { threshold: 0.5 });
         counterObserver.observe(counterSection);
     }
-
-    console.log('🃏 CardCrate Club loaded successfully!');
 });
