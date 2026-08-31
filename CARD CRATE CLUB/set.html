@@ -49,13 +49,14 @@
     .card { background:var(--panel); border:1px solid var(--border); border-radius:15px; padding:9px;
       cursor:pointer; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; overflow:hidden; }
     .card:hover { transform:translateY(-4px); border-color:rgba(245,200,66,.3); box-shadow:0 14px 32px rgba(0,0,0,.27); }
-    .card-img-wrap { aspect-ratio:2.5/3.5; border-radius:10px; overflow:hidden; background:rgba(255,255,255,.025);
-      display:flex; align-items:center; justify-content:center; position:relative; }
+    .card-img-wrap { position:relative; aspect-ratio:2.5/3.5; border-radius:10px; overflow:hidden; background:rgba(255,255,255,.025);
+      display:flex; align-items:center; justify-content:center; }
     .card img { width:100%; height:100%; object-fit:contain; display:block; }
-    .art-state { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
-      padding:12px; color:var(--muted); font-size:.72rem; line-height:1.35; background:rgba(255,255,255,.018); }
-    .art-retry { border:1px solid rgba(245,200,66,.32); background:rgba(245,200,66,.10); color:var(--gold);
-      border-radius:999px; padding:7px 10px; font-weight:800; cursor:pointer; }
+    .img-state { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
+      padding:12px; color:var(--muted); font-size:.7rem; background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(245,200,66,.025)); }
+    .img-state.retrying { color:var(--gold); }
+    .img-retry { margin-top:7px; border:1px solid rgba(245,200,66,.35); background:rgba(245,200,66,.08);
+      color:var(--gold); border-radius:999px; padding:6px 9px; font-size:.68rem; font-weight:800; cursor:pointer; }
     .card-name { margin:9px 2px 2px; font-size:.78rem; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .card-number { margin:0 2px 2px; font-size:.68rem; color:var(--muted); }
     .empty { grid-column:1/-1; color:var(--muted); text-align:center; padding:30px; }
@@ -140,225 +141,179 @@
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  async function fetchSetWithRetry(maxAttempts = 6) {
+  // The set list itself is one API response, so keep retrying it independently
+  // from the artwork. A successful response is cached so a temporary TCGdex
+  // outage does not blank a set the user has already opened before.
+  async function fetchSetOnce(timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`https://api.tcgdex.net/v2/en/sets/${encodeURIComponent(setId)}`, {
+        signal: controller.signal,
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.cards) || !data.cards.length) throw new Error('No cards returned');
+      return data;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchSetWithRetry(maxAttempts = 12) {
     let lastError;
+    const cacheKey = `ccc-set-cache-v2:${setId}`;
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        statusEl.textContent = attempt === 1 ? 'Loading cards…' : `Still loading… retry ${attempt}/${maxAttempts}`;
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 9000);
-        const res = await fetch(`https://api.tcgdex.net/v2/en/sets/${encodeURIComponent(setId)}`, {
-          signal: controller.signal, cache: 'no-store'
-        });
-        clearTimeout(timer);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!data || !Array.isArray(data.cards) || !data.cards.length) throw new Error('No cards returned');
+        statusEl.textContent = attempt === 1
+          ? 'Loading card list…'
+          : `Card list connection retry ${attempt}/${maxAttempts}…`;
+
+        const data = await fetchSetOnce();
+        try { localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
         return data;
       } catch (err) {
         lastError = err;
-        if (attempt < maxAttempts) await sleep(Math.min(700 * attempt, 3000));
+        if (attempt < maxAttempts) {
+          // Exponential-ish backoff with a little randomness so repeated phone requests
+          // do not all hit the image/API host at exactly the same instant.
+          const delay = Math.min(650 * Math.pow(1.45, attempt - 1), 5000) + Math.floor(Math.random() * 350);
+          await sleep(delay);
+        }
       }
     }
-    throw lastError;
-  }
 
-  const ART_MAX_ATTEMPTS = 10;
-  const ART_CONCURRENCY = 8;
-  const artState = new Map();
-  let artQueue = [];
-  let activeArtLoads = 0;
-  let renderedOnce = false;
+    // If live access is temporarily down, use the most recent successful set list.
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      if (cached?.data?.cards?.length) {
+        statusEl.textContent = 'Using saved card list while the live service reconnects…';
+        return cached.data;
+      }
+    } catch (_) {}
 
-  function cardKey(card) {
-    return String(card.id || `${setId}-${card.localId}`);
+    throw lastError || new Error('Set could not be loaded');
   }
 
   function imageSources(card, quality = 'low') {
-    const base = String(card.image || '').replace(/\/$/, '');
-    if (!base) return [];
+    const base = (card.image || '').replace(/\/$/, '');
     const otherQuality = quality === 'high' ? 'low' : 'high';
+    const localId = String(card.localId ?? '').padStart(3, '0');
+
+    // Local files come first if you ever add them to GitHub. Remote TCGdex
+    // formats follow. Every URL is tried independently by each individual card.
     return [
-      `${base}/${quality}.webp`, `${base}/${quality}.png`, `${base}/${quality}.jpg`,
-      `${base}/${otherQuality}.webp`, `${base}/${otherQuality}.png`, `${base}/${otherQuality}.jpg`
-    ];
+      `images/cards/${setId}/${localId}.webp`,
+      `images/cards/${setId}/${localId}.png`,
+      base ? `${base}/${quality}.webp` : '',
+      base ? `${base}/${quality}.png` : '',
+      base ? `${base}/${quality}.jpg` : '',
+      base ? `${base}/${otherQuality}.webp` : '',
+      base ? `${base}/${otherQuality}.png` : ''
+    ].filter(Boolean);
   }
 
-  function withRetryToken(url, attempt) {
-    const joiner = url.includes('?') ? '&' : '?';
-    return `${url}${joiner}ccc_retry=${attempt}_${Date.now()}`;
-  }
-
-  function tryImageUrl(url, timeoutMs = 9000) {
+  function loadImageUrl(img, url, timeoutMs = 12000) {
     return new Promise((resolve, reject) => {
-      const probe = new Image();
       let finished = false;
-      const timer = setTimeout(() => finish(false, new Error('image timeout')), timeoutMs);
-      function finish(ok, value) {
+      const done = (ok, err) => {
         if (finished) return;
         finished = true;
         clearTimeout(timer);
-        probe.onload = null;
-        probe.onerror = null;
-        ok ? resolve(value) : reject(value);
-      }
-      probe.onload = () => finish(true, url);
-      probe.onerror = () => finish(false, new Error('image failed'));
-      probe.src = url;
+        img.onload = null;
+        img.onerror = null;
+        ok ? resolve(url) : reject(err || new Error('Image failed'));
+      };
+      const timer = setTimeout(() => done(false, new Error('Image timeout')), timeoutMs);
+      img.onload = () => done(true);
+      img.onerror = () => done(false, new Error('Image failed'));
+      img.src = url;
     });
   }
 
-  function updateArtProgress() {
-    const states = [...artState.values()];
-    if (!states.length) return;
-    const loaded = states.filter(s => s.status === 'loaded').length;
-    const failed = states.filter(s => s.status === 'failed').length;
-    const working = states.filter(s => s.status === 'queued' || s.status === 'loading').length;
+  async function loadCardImage(img, card, quality = 'low', stateEl = null, maxRounds = 4) {
+    // One card failing never affects another card. Each card cycles through all
+    // sources several times with cache-busting and increasing delays.
+    const sources = imageSources(card, quality);
+    let attempts = 0;
 
-    statusEl.style.display = 'flex';
-    if (loaded === states.length) {
-      statusEl.textContent = `All ${loaded} card images loaded.`;
-      setTimeout(() => {
-        if ([...artState.values()].every(s => s.status === 'loaded')) statusEl.style.display = 'none';
-      }, 1400);
-      return;
-    }
+    for (let round = 0; round < maxRounds; round++) {
+      for (let i = 0; i < sources.length; i++) {
+        attempts++;
+        if (stateEl) {
+          stateEl.classList.add('retrying');
+          stateEl.textContent = attempts === 1 ? 'Loading artwork…' : `Retrying artwork… (${attempts})`;
+        }
 
-    const bits = [`Card art: ${loaded} / ${states.length} loaded`];
-    if (working) bits.push(`${working} still trying`);
-    if (failed) bits.push(`${failed} need retry`);
-    statusEl.textContent = bits.join(' • ');
-  }
+        const isLocal = sources[i].startsWith('images/');
+        const separator = sources[i].includes('?') ? '&' : '?';
+        const url = (round === 0 || isLocal)
+          ? sources[i]
+          : `${sources[i]}${separator}ccc_retry=${round}_${i}_${Date.now()}`;
 
-  function updateCardArtDom(key) {
-    const state = artState.get(key);
-    if (!state) return;
-    document.querySelectorAll(`[data-card-key="${CSS.escape(key)}"]`).forEach(el => {
-      const img = el.querySelector('img');
-      const placeholder = el.querySelector('.art-state');
-      if (!img || !placeholder) return;
-
-      if (state.status === 'loaded' && state.url) {
-        img.src = state.url;
-        img.hidden = false;
-        placeholder.hidden = true;
-      } else if (state.status === 'failed') {
-        img.hidden = true;
-        placeholder.hidden = false;
-        placeholder.innerHTML = '<button class="art-retry" type="button">Retry image</button>';
-        const btn = placeholder.querySelector('button');
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          retryOneCard(key);
-        }, { once:true });
-      } else {
-        img.hidden = true;
-        placeholder.hidden = false;
-        const attempt = Math.max(1, state.attempt || 1);
-        placeholder.textContent = state.status === 'loading' ? `Loading art… attempt ${attempt}/${ART_MAX_ATTEMPTS}` : 'Waiting to load art…';
+        try {
+          await loadImageUrl(img, url);
+          if (stateEl) stateEl.remove();
+          return true;
+        } catch (_) {
+          // Keep trying this card only.
+        }
       }
-    });
-  }
 
-  function enqueueCard(card, force = false) {
-    const key = cardKey(card);
-    let state = artState.get(key);
-    if (!state) {
-      state = { card, status:'queued', attempt:0, url:'', queued:false };
-      artState.set(key, state);
-    }
-    if (!force && (state.status === 'loaded' || state.queued || state.status === 'loading')) return;
-    state.status = 'queued';
-    state.attempt = 0;
-    state.url = '';
-    state.queued = true;
-    artQueue.push(key);
-    updateCardArtDom(key);
-    updateArtProgress();
-    pumpArtQueue();
-  }
-
-  function retryOneCard(key) {
-    const state = artState.get(key);
-    if (!state) return;
-    enqueueCard(state.card, true);
-  }
-
-  async function loadOneCardArt(key) {
-    const state = artState.get(key);
-    if (!state) return;
-    state.queued = false;
-    state.status = 'loading';
-    const sources = imageSources(state.card, 'low');
-    if (!sources.length) {
-      state.status = 'failed';
-      updateCardArtDom(key);
-      updateArtProgress();
-      return;
-    }
-
-    for (let attempt = 1; attempt <= ART_MAX_ATTEMPTS; attempt++) {
-      state.attempt = attempt;
-      updateCardArtDom(key);
-      updateArtProgress();
-
-      const source = sources[(attempt - 1) % sources.length];
-      try {
-        const url = await tryImageUrl(withRetryToken(source, attempt));
-        state.status = 'loaded';
-        state.url = url;
-        updateCardArtDom(key);
-        updateArtProgress();
-        return;
-      } catch (err) {
-        if (attempt < ART_MAX_ATTEMPTS) await sleep(Math.min(350 + attempt * 250, 2200));
+      if (round < maxRounds - 1) {
+        await sleep(Math.min(700 * Math.pow(2, round), 4500) + Math.floor(Math.random() * 300));
       }
     }
 
-    state.status = 'failed';
-    updateCardArtDom(key);
-    updateArtProgress();
+    if (stateEl) {
+      stateEl.classList.remove('retrying');
+      stateEl.innerHTML = `Artwork still unavailable.<br><button type="button" class="img-retry">Try this card again</button>`;
+      stateEl.querySelector('.img-retry')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await loadCardImage(img, card, quality, stateEl, maxRounds);
+      }, { once:true });
+    }
+    return false;
   }
 
-  function pumpArtQueue() {
-    while (activeArtLoads < ART_CONCURRENCY && artQueue.length) {
-      const key = artQueue.shift();
-      activeArtLoads++;
-      loadOneCardArt(key).finally(() => {
-        activeArtLoads--;
-        pumpArtQueue();
-      });
-    }
+  function applyFallback(img, card, quality = 'low', stateEl = null) {
+    // Fire and forget so every image progresses independently.
+    loadCardImage(img, card, quality, stateEl).catch(() => {});
   }
 
   function render() {
-    if (renderedOnce) {
-      filterCards();
+    const q = searchEl.value.trim().toLowerCase();
+    const cards = allCards.filter(card => `${card.name || ''} ${card.localId || ''}`.toLowerCase().includes(q));
+    countEl.textContent = `${cards.length} of ${allCards.length} cards`;
+    gridEl.innerHTML = '';
+
+    if (!cards.length) {
+      gridEl.innerHTML = '<div class="empty">No cards match that search.</div>';
       return;
     }
-    renderedOnce = true;
-    gridEl.innerHTML = '';
+
     const frag = document.createDocumentFragment();
 
-    allCards.forEach(card => {
-      const key = cardKey(card);
+    cards.forEach(card => {
       const el = document.createElement('article');
       el.className = 'card';
       el.tabIndex = 0;
-      el.dataset.cardKey = key;
-      el.dataset.search = `${card.name || ''} ${card.localId || ''}`.toLowerCase();
 
       const wrap = document.createElement('div');
       wrap.className = 'card-img-wrap';
 
       const img = document.createElement('img');
+      img.loading = 'lazy';
       img.decoding = 'async';
       img.alt = card.name || `Card ${card.localId}`;
-      img.hidden = true;
 
-      const placeholder = document.createElement('div');
-      placeholder.className = 'art-state';
-      placeholder.textContent = 'Waiting to load art…';
+      const imgState = document.createElement('div');
+      imgState.className = 'img-state';
+      imgState.textContent = 'Waiting for artwork…';
+      applyFallback(img, card, 'low', imgState);
 
       const name = document.createElement('div');
       name.className = 'card-name';
@@ -369,7 +324,7 @@
       const official = setData?.cardCount?.official;
       number.textContent = official ? `#${card.localId} / ${official}` : `#${card.localId}`;
 
-      wrap.append(img, placeholder);
+      wrap.append(img, imgState);
       el.append(wrap, name, number);
 
       const open = () => openModal(card);
@@ -379,23 +334,9 @@
       });
 
       frag.appendChild(el);
-      artState.set(key, { card, status:'queued', attempt:0, url:'', queued:false });
     });
 
     gridEl.appendChild(frag);
-    filterCards();
-    allCards.forEach(card => enqueueCard(card));
-  }
-
-  function filterCards() {
-    const q = searchEl.value.trim().toLowerCase();
-    let visible = 0;
-    gridEl.querySelectorAll('.card').forEach(el => {
-      const show = !q || el.dataset.search.includes(q);
-      el.hidden = !show;
-      if (show) visible++;
-    });
-    countEl.textContent = `${visible} of ${allCards.length} cards`;
   }
 
   const modal = document.getElementById('modal');
@@ -407,20 +348,7 @@
     modalTitle.textContent = card.name || 'Card';
     modalSub.textContent = `#${card.localId}`;
     modalImg.alt = card.name || 'Card preview';
-    modalImg.removeAttribute('src');
-    const sources = imageSources(card, 'high');
-    (async () => {
-      for (let attempt = 1; attempt <= 6; attempt++) {
-        const source = sources[(attempt - 1) % Math.max(1, sources.length)];
-        if (!source) break;
-        try {
-          modalImg.src = await tryImageUrl(withRetryToken(source, attempt));
-          break;
-        } catch (e) {
-          if (attempt < 6) await sleep(250 * attempt);
-        }
-      }
-    })();
+    applyFallback(modalImg, card, 'high');
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -434,7 +362,7 @@
   document.getElementById('close-modal').addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-  searchEl.addEventListener('input', filterCards);
+  searchEl.addEventListener('input', render);
 
   async function init() {
     try {
@@ -468,7 +396,7 @@
         return String(a.localId).localeCompare(String(b.localId), undefined, {numeric:true});
       });
 
-      statusEl.textContent = 'Card list loaded. Loading each card image individually…';
+      statusEl.style.display = 'none';
       render();
     } catch (err) {
       console.error(err);
