@@ -4,6 +4,15 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    // ---- HOMEPAGE MOBILE LAYOUT FIX ----
+    if (document.querySelector('.home-section') && !document.querySelector('link[data-home-mobile-fix]')) {
+        const mobileFix = document.createElement('link');
+        mobileFix.rel = 'stylesheet';
+        mobileFix.href = 'home-mobile-fix.css';
+        mobileFix.dataset.homeMobileFix = 'true';
+        document.head.appendChild(mobileFix);
+    }
+
     // ---- NAVBAR SCROLL EFFECT ----
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
