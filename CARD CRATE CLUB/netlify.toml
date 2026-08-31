@@ -1,6 +1,12 @@
 [build]
   functions = "netlify/functions"
 
+[functions]
+  included_files = [
+    "card-data/all-cards-index.json",
+    "card-data/all-sets/index.json"
+  ]
+
 [[headers]]
   for = "/*"
   [headers.values]
