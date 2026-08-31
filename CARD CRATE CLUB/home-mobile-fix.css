@@ -1,4 +1,30 @@
 /* Homepage mobile layout fixes */
+
+/* Use real social platform emblems instead of emoji placeholders. */
+.social-card > span:first-of-type {
+  display: block;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 8px !important;
+  font-size: 0 !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.social-grid .social-card:nth-child(1) > span:first-of-type {
+  background-image: url("https://cdn.simpleicons.org/instagram/FFFFFF");
+}
+.social-grid .social-card:nth-child(2) > span:first-of-type {
+  background-image: url("https://cdn.simpleicons.org/tiktok/FFFFFF");
+}
+.social-grid .social-card:nth-child(3) > span:first-of-type {
+  background-image: url("https://cdn.simpleicons.org/discord/FFFFFF");
+}
+.social-grid .social-card:nth-child(4) > span:first-of-type {
+  background-image: url("https://cdn.simpleicons.org/x/FFFFFF");
+}
+
 @media (max-width: 560px) {
   .home-section {
     width: 100%;
@@ -13,7 +39,8 @@
   .tiers-grid,
   .founding-benefits,
   .social-grid,
-  .waitlist-box {
+  .waitlist-box,
+  .steps-container {
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -45,6 +72,45 @@
     min-width: 0;
   }
 
+  /* Stack How It Works vertically so the cards never get squeezed into thin columns. */
+  .steps-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .steps-container .step {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .steps-container .step-content {
+    min-height: 0 !important;
+    padding: 22px 20px !important;
+  }
+
+  .steps-container .step-content h3 {
+    font-size: 1.15rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .steps-container .step-content p {
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .steps-container .step-arrow {
+    align-self: center;
+    line-height: 1;
+    transform: rotate(90deg);
+    margin: -2px 0;
+  }
+
   .feature-card p,
   .tier-card p,
   .step-content p,
@@ -56,8 +122,31 @@
 
   .features-grid,
   .tiers-grid,
-  .founding-benefits,
-  .social-grid {
+  .founding-benefits {
     grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Keep socials compact on phones instead of four oversized full-width cards. */
+  .social-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .social-card {
+    padding: 20px 10px !important;
+  }
+
+  .social-card > span:first-of-type {
+    width: 34px;
+    height: 34px;
+  }
+
+  .social-name {
+    font-size: 0.9rem !important;
+  }
+
+  .social-handle,
+  .social-cta {
+    font-size: 0.72rem !important;
   }
 }
