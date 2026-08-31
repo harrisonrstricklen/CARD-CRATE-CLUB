@@ -1,5 +1,5 @@
 CARD CRATE CLUB — LOCAL CARD LIBRARY REPORT
-Total: 130/130 artwork files local
+Total: 295/295 artwork files local
 
-me02: 130/130 artwork files local
+me02.5: 295/295 artwork files local
 
