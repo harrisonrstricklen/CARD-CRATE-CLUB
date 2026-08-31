@@ -50,8 +50,12 @@
       cursor:pointer; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; overflow:hidden; }
     .card:hover { transform:translateY(-4px); border-color:rgba(245,200,66,.3); box-shadow:0 14px 32px rgba(0,0,0,.27); }
     .card-img-wrap { aspect-ratio:2.5/3.5; border-radius:10px; overflow:hidden; background:rgba(255,255,255,.025);
-      display:flex; align-items:center; justify-content:center; }
+      display:flex; align-items:center; justify-content:center; position:relative; }
     .card img { width:100%; height:100%; object-fit:contain; display:block; }
+    .art-state { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;
+      padding:12px; color:var(--muted); font-size:.72rem; line-height:1.35; background:rgba(255,255,255,.018); }
+    .art-retry { border:1px solid rgba(245,200,66,.32); background:rgba(245,200,66,.10); color:var(--gold);
+      border-radius:999px; padding:7px 10px; font-weight:800; cursor:pointer; }
     .card-name { margin:9px 2px 2px; font-size:.78rem; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .card-number { margin:0 2px 2px; font-size:.68rem; color:var(--muted); }
     .empty { grid-column:1/-1; color:var(--muted); text-align:center; padding:30px; }
@@ -159,52 +163,202 @@
     throw lastError;
   }
 
+  const ART_MAX_ATTEMPTS = 10;
+  const ART_CONCURRENCY = 8;
+  const artState = new Map();
+  let artQueue = [];
+  let activeArtLoads = 0;
+  let renderedOnce = false;
+
+  function cardKey(card) {
+    return String(card.id || `${setId}-${card.localId}`);
+  }
+
   function imageSources(card, quality = 'low') {
-    const base = card.image || '';
+    const base = String(card.image || '').replace(/\/$/, '');
+    if (!base) return [];
     const otherQuality = quality === 'high' ? 'low' : 'high';
     return [
       `${base}/${quality}.webp`, `${base}/${quality}.png`, `${base}/${quality}.jpg`,
-      `${base}/${otherQuality}.webp`, `${base}/${otherQuality}.png`
+      `${base}/${otherQuality}.webp`, `${base}/${otherQuality}.png`, `${base}/${otherQuality}.jpg`
     ];
   }
 
-  function applyFallback(img, card, quality = 'low') {
-    const urls = imageSources(card, quality);
-    let i = 0;
-    img.src = urls[0];
-    img.onerror = () => {
-      i++;
-      if (i < urls.length) img.src = urls[i];
-      else img.onerror = null;
-    };
+  function withRetryToken(url, attempt) {
+    const joiner = url.includes('?') ? '&' : '?';
+    return `${url}${joiner}ccc_retry=${attempt}_${Date.now()}`;
   }
 
-  function render() {
-    const q = searchEl.value.trim().toLowerCase();
-    const cards = allCards.filter(card => `${card.name || ''} ${card.localId || ''}`.toLowerCase().includes(q));
-    countEl.textContent = `${cards.length} of ${allCards.length} cards`;
-    gridEl.innerHTML = '';
+  function tryImageUrl(url, timeoutMs = 9000) {
+    return new Promise((resolve, reject) => {
+      const probe = new Image();
+      let finished = false;
+      const timer = setTimeout(() => finish(false, new Error('image timeout')), timeoutMs);
+      function finish(ok, value) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        probe.onload = null;
+        probe.onerror = null;
+        ok ? resolve(value) : reject(value);
+      }
+      probe.onload = () => finish(true, url);
+      probe.onerror = () => finish(false, new Error('image failed'));
+      probe.src = url;
+    });
+  }
 
-    if (!cards.length) {
-      gridEl.innerHTML = '<div class="empty">No cards match that search.</div>';
+  function updateArtProgress() {
+    const states = [...artState.values()];
+    if (!states.length) return;
+    const loaded = states.filter(s => s.status === 'loaded').length;
+    const failed = states.filter(s => s.status === 'failed').length;
+    const working = states.filter(s => s.status === 'queued' || s.status === 'loading').length;
+
+    statusEl.style.display = 'flex';
+    if (loaded === states.length) {
+      statusEl.textContent = `All ${loaded} card images loaded.`;
+      setTimeout(() => {
+        if ([...artState.values()].every(s => s.status === 'loaded')) statusEl.style.display = 'none';
+      }, 1400);
       return;
     }
 
+    const bits = [`Card art: ${loaded} / ${states.length} loaded`];
+    if (working) bits.push(`${working} still trying`);
+    if (failed) bits.push(`${failed} need retry`);
+    statusEl.textContent = bits.join(' • ');
+  }
+
+  function updateCardArtDom(key) {
+    const state = artState.get(key);
+    if (!state) return;
+    document.querySelectorAll(`[data-card-key="${CSS.escape(key)}"]`).forEach(el => {
+      const img = el.querySelector('img');
+      const placeholder = el.querySelector('.art-state');
+      if (!img || !placeholder) return;
+
+      if (state.status === 'loaded' && state.url) {
+        img.src = state.url;
+        img.hidden = false;
+        placeholder.hidden = true;
+      } else if (state.status === 'failed') {
+        img.hidden = true;
+        placeholder.hidden = false;
+        placeholder.innerHTML = '<button class="art-retry" type="button">Retry image</button>';
+        const btn = placeholder.querySelector('button');
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          retryOneCard(key);
+        }, { once:true });
+      } else {
+        img.hidden = true;
+        placeholder.hidden = false;
+        const attempt = Math.max(1, state.attempt || 1);
+        placeholder.textContent = state.status === 'loading' ? `Loading art… attempt ${attempt}/${ART_MAX_ATTEMPTS}` : 'Waiting to load art…';
+      }
+    });
+  }
+
+  function enqueueCard(card, force = false) {
+    const key = cardKey(card);
+    let state = artState.get(key);
+    if (!state) {
+      state = { card, status:'queued', attempt:0, url:'', queued:false };
+      artState.set(key, state);
+    }
+    if (!force && (state.status === 'loaded' || state.queued || state.status === 'loading')) return;
+    state.status = 'queued';
+    state.attempt = 0;
+    state.url = '';
+    state.queued = true;
+    artQueue.push(key);
+    updateCardArtDom(key);
+    updateArtProgress();
+    pumpArtQueue();
+  }
+
+  function retryOneCard(key) {
+    const state = artState.get(key);
+    if (!state) return;
+    enqueueCard(state.card, true);
+  }
+
+  async function loadOneCardArt(key) {
+    const state = artState.get(key);
+    if (!state) return;
+    state.queued = false;
+    state.status = 'loading';
+    const sources = imageSources(state.card, 'low');
+    if (!sources.length) {
+      state.status = 'failed';
+      updateCardArtDom(key);
+      updateArtProgress();
+      return;
+    }
+
+    for (let attempt = 1; attempt <= ART_MAX_ATTEMPTS; attempt++) {
+      state.attempt = attempt;
+      updateCardArtDom(key);
+      updateArtProgress();
+
+      const source = sources[(attempt - 1) % sources.length];
+      try {
+        const url = await tryImageUrl(withRetryToken(source, attempt));
+        state.status = 'loaded';
+        state.url = url;
+        updateCardArtDom(key);
+        updateArtProgress();
+        return;
+      } catch (err) {
+        if (attempt < ART_MAX_ATTEMPTS) await sleep(Math.min(350 + attempt * 250, 2200));
+      }
+    }
+
+    state.status = 'failed';
+    updateCardArtDom(key);
+    updateArtProgress();
+  }
+
+  function pumpArtQueue() {
+    while (activeArtLoads < ART_CONCURRENCY && artQueue.length) {
+      const key = artQueue.shift();
+      activeArtLoads++;
+      loadOneCardArt(key).finally(() => {
+        activeArtLoads--;
+        pumpArtQueue();
+      });
+    }
+  }
+
+  function render() {
+    if (renderedOnce) {
+      filterCards();
+      return;
+    }
+    renderedOnce = true;
+    gridEl.innerHTML = '';
     const frag = document.createDocumentFragment();
 
-    cards.forEach(card => {
+    allCards.forEach(card => {
+      const key = cardKey(card);
       const el = document.createElement('article');
       el.className = 'card';
       el.tabIndex = 0;
+      el.dataset.cardKey = key;
+      el.dataset.search = `${card.name || ''} ${card.localId || ''}`.toLowerCase();
 
       const wrap = document.createElement('div');
       wrap.className = 'card-img-wrap';
 
       const img = document.createElement('img');
-      img.loading = 'lazy';
       img.decoding = 'async';
       img.alt = card.name || `Card ${card.localId}`;
-      applyFallback(img, card, 'low');
+      img.hidden = true;
+
+      const placeholder = document.createElement('div');
+      placeholder.className = 'art-state';
+      placeholder.textContent = 'Waiting to load art…';
 
       const name = document.createElement('div');
       name.className = 'card-name';
@@ -215,7 +369,7 @@
       const official = setData?.cardCount?.official;
       number.textContent = official ? `#${card.localId} / ${official}` : `#${card.localId}`;
 
-      wrap.appendChild(img);
+      wrap.append(img, placeholder);
       el.append(wrap, name, number);
 
       const open = () => openModal(card);
@@ -225,9 +379,23 @@
       });
 
       frag.appendChild(el);
+      artState.set(key, { card, status:'queued', attempt:0, url:'', queued:false });
     });
 
     gridEl.appendChild(frag);
+    filterCards();
+    allCards.forEach(card => enqueueCard(card));
+  }
+
+  function filterCards() {
+    const q = searchEl.value.trim().toLowerCase();
+    let visible = 0;
+    gridEl.querySelectorAll('.card').forEach(el => {
+      const show = !q || el.dataset.search.includes(q);
+      el.hidden = !show;
+      if (show) visible++;
+    });
+    countEl.textContent = `${visible} of ${allCards.length} cards`;
   }
 
   const modal = document.getElementById('modal');
@@ -239,7 +407,20 @@
     modalTitle.textContent = card.name || 'Card';
     modalSub.textContent = `#${card.localId}`;
     modalImg.alt = card.name || 'Card preview';
-    applyFallback(modalImg, card, 'high');
+    modalImg.removeAttribute('src');
+    const sources = imageSources(card, 'high');
+    (async () => {
+      for (let attempt = 1; attempt <= 6; attempt++) {
+        const source = sources[(attempt - 1) % Math.max(1, sources.length)];
+        if (!source) break;
+        try {
+          modalImg.src = await tryImageUrl(withRetryToken(source, attempt));
+          break;
+        } catch (e) {
+          if (attempt < 6) await sleep(250 * attempt);
+        }
+      }
+    })();
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -253,7 +434,7 @@
   document.getElementById('close-modal').addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-  searchEl.addEventListener('input', render);
+  searchEl.addEventListener('input', filterCards);
 
   async function init() {
     try {
@@ -287,7 +468,7 @@
         return String(a.localId).localeCompare(String(b.localId), undefined, {numeric:true});
       });
 
-      statusEl.style.display = 'none';
+      statusEl.textContent = 'Card list loaded. Loading each card image individually…';
       render();
     } catch (err) {
       console.error(err);
