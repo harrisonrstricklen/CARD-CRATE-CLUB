@@ -1,0 +1,65 @@
+name: Sync Full Pokemon Card Database
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'CARD CRATE CLUB/tools/sync-full-pokemon-database.py'
+      - '.github/workflows/sync-full-pokemon-database.yml'
+  schedule:
+    - cron: '20 9 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-full-pokemon-database
+  cancel-in-progress: false
+
+jobs:
+  sync-database:
+    if: github.actor != 'github-actions[bot]' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out Card Crate Club
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download current Pokemon TCG source data
+        run: |
+          git clone --depth 1 https://github.com/PokemonTCG/pokemon-tcg-data.git /tmp/pokemon-tcg-data
+
+      - name: Build Card Crate Club full database
+        run: |
+          python 'CARD CRATE CLUB/tools/sync-full-pokemon-database.py' /tmp/pokemon-tcg-data
+
+      - name: Show generated database counts
+        run: |
+          cat 'CARD CRATE CLUB/card-data/database-report.json'
+
+      - name: Commit updated card database
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add 'CARD CRATE CLUB/card-data/all-sets' \
+                  'CARD CRATE CLUB/card-data/all-cards-index.json' \
+                  'CARD CRATE CLUB/card-data/database-report.json'
+
+          if git diff --cached --quiet; then
+            echo 'Full Pokemon database is already current.'
+            exit 0
+          fi
+
+          git commit -m 'Sync complete Pokemon card database'
+          git pull --rebase origin main
+          git push origin main
