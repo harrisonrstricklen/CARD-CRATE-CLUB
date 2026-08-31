@@ -25,6 +25,10 @@ function normalizeNumber(value) {
   return raw;
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function loadDatabase() {
   if (!cachedCards) {
     const parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
@@ -85,26 +89,39 @@ async function upstreamDexSearch(params) {
   return response.json();
 }
 
-// Local search stays fast/reliable. This second request only asks the API for
-// the exact IDs already selected locally, restoring live TCGplayer price data.
+// Local search stays reliable. Pricing gets several independent attempts with
+// increasing delays before we give up, so a transient API hiccup is far less
+// likely to leave a selected card without its TCGplayer market value.
 async function fetchLiveDetails(cards) {
   if (!cards.length) return new Map();
   const ids = cards.map(card => String(card.id || '').trim()).filter(Boolean);
   if (!ids.length) return new Map();
 
-  try {
-    const clauses = ids.map(id => `id:${id}`).join(' OR ');
-    const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(clauses)}&pageSize=${Math.min(ids.length, 48)}`;
-    const response = await fetch(apiUrl, { headers: apiHeaders() });
-    if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
-    const payload = await response.json();
-    return new Map((payload.data || []).map(card => [String(card.id), card]));
-  } catch (error) {
-    // Pricing should never break Add Card. Results still appear immediately
-    // from our local database and the UI can show that price is unavailable.
-    console.warn('Live TCGplayer pricing enrichment failed:', error);
-    return new Map();
+  const clauses = ids.map(id => `id:${id}`).join(' OR ');
+  const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(clauses)}&pageSize=${Math.min(ids.length, 48)}`;
+  const retryDelays = [0, 450, 1000, 2000];
+  let lastError = null;
+
+  for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+    if (retryDelays[attempt]) await sleep(retryDelays[attempt]);
+    try {
+      const response = await fetch(apiUrl, {
+        headers: apiHeaders(),
+        signal: AbortSignal.timeout(7000)
+      });
+      if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
+      const payload = await response.json();
+      const liveMap = new Map((payload.data || []).map(card => [String(card.id), card]));
+      if (liveMap.size) return liveMap;
+      throw new Error('Pricing API returned no matching cards');
+    } catch (error) {
+      lastError = error;
+      console.warn(`Live pricing attempt ${attempt + 1}/${retryDelays.length} failed:`, error.message || error);
+    }
   }
+
+  console.warn('Live TCGplayer pricing unavailable after retries:', lastError);
+  return new Map();
 }
 
 exports.handler = async function (event) {
@@ -187,7 +204,7 @@ exports.handler = async function (event) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
-      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-live-pricing' })
+      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-live-pricing-retries' })
     };
   } catch (error) {
     console.error('Local card database search failed:', error);
