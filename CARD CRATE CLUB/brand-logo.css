@@ -33,16 +33,6 @@
 .brand-lockup.nav-logo .brand-name { display:inline-block !important; font-size:1.08rem !important; font-weight:800; letter-spacing:.02em; color:#f0f0f0 !important; white-space:nowrap; }
 .brand-lockup.nav-logo .brand-emblem { display:inline-flex !important; width:60px; height:60px; flex:0 0 60px; align-items:center; justify-content:center; }
 
-/* Import page uses a label as the upload target. Labels are inline by default,
-   which caused the dashed border to fragment around the text. */
-.drop-zone {
-  display:block !important;
-  width:100% !important;
-  max-width:100% !important;
-  box-sizing:border-box !important;
-}
-.drop-zone input[type="file"] { display:none !important; }
-
 /* Loading screen: override every generic logo dimension with a viewport-sized mark. */
 #loading-overlay .loader-logo {
   display:flex !important;
@@ -87,6 +77,45 @@
 .brand-emblem > svg,
 .brand-emblem > img { display:none !important; }
 .brand-emblem::before { width:100%; height:100%; flex-basis:auto; }
+
+/* Collection import processing state. The import page disables these buttons while work is active,
+   so this gives users an unmistakable stay-on-page indicator without blocking the actual request. */
+body.member-page:has(#analyzeBtn:disabled)::before,
+body.member-page:has(#importBtn:disabled)::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:9997;
+  background:rgba(5,5,9,.82);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+body.member-page:has(#analyzeBtn:disabled)::after,
+body.member-page:has(#importBtn:disabled)::after {
+  position:fixed;
+  left:50%;
+  top:50%;
+  z-index:9998;
+  transform:translate(-50%,-50%);
+  width:min(440px,calc(100vw - 40px));
+  padding:78px 24px 26px;
+  border:1px solid rgba(245,200,66,.35);
+  border-radius:18px;
+  background:#16161f url('images/card-crate-club-logo.png?v=20260901-loading-fix') center 18px/54px 54px no-repeat;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+  color:#f0f0f0;
+  text-align:center;
+  font:800 1rem/1.5 'Inter',sans-serif;
+  white-space:pre-line;
+}
+body.member-page:has(#analyzeBtn:disabled)::after {
+  content:"Processing your collection…\A Matching every card against our database.\A Please keep this page open.";
+}
+body.member-page:has(#importBtn:disabled)::after {
+  content:"Importing your collection…\A Saving your matched cards securely.\A Please keep this page open.";
+}
+#analyzeBtn:disabled,
+#importBtn:disabled { cursor:wait !important; }
 
 @media (max-width:640px){
   .nav-logo::before { width:48px; height:48px; flex-basis:48px; }
