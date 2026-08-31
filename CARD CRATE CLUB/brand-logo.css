@@ -13,7 +13,10 @@
   width:60px;
   height:60px;
   flex:0 0 60px;
-  background:url('images/card-crate-club-logo.png?v=official-png-xl-20260831') center/contain no-repeat;
+  background-image:url('images/card-crate-club-logo.png?v=20260901-loading-fix');
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
   filter:none;
 }
 
@@ -30,9 +33,37 @@
 .brand-lockup.nav-logo .brand-name { display:inline-block !important; font-size:1.08rem !important; font-weight:800; letter-spacing:.02em; color:#f0f0f0 !important; white-space:nowrap; }
 .brand-lockup.nav-logo .brand-emblem { display:inline-flex !important; width:60px; height:60px; flex:0 0 60px; align-items:center; justify-content:center; }
 
-/* Loading screen — intentionally large, centered brand mark */
-.loader-logo { display:flex !important; align-items:center; justify-content:center; width:210px; height:210px; margin:0; padding:0; gap:0; font-size:0 !important; line-height:0 !important; letter-spacing:0 !important; color:transparent !important; text-transform:none; overflow:visible !important; }
-.loader-logo::before { width:200px; height:200px; flex:0 0 200px; animation:cccLogoPulse 1.6s ease-in-out infinite; }
+/* Loading screen: override every generic logo dimension with a viewport-sized mark. */
+#loading-overlay .loader-logo {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:min(440px,72vw) !important;
+  height:min(440px,72vw) !important;
+  min-width:260px !important;
+  min-height:260px !important;
+  margin:0 !important;
+  padding:0 !important;
+  gap:0 !important;
+  font-size:0 !important;
+  line-height:0 !important;
+  letter-spacing:0 !important;
+  color:transparent !important;
+  text-transform:none !important;
+  overflow:visible !important;
+}
+#loading-overlay .loader-logo::before {
+  content:"" !important;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  flex:0 0 100% !important;
+  background-image:url('images/card-crate-club-logo.png?v=20260901-loading-fix') !important;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  background-size:contain !important;
+  animation:cccLogoPulse 1.6s ease-in-out infinite;
+}
 .loader-logo span { display:none !important; }
 #loading-overlay .spinner { display:none !important; }
 @keyframes cccLogoPulse { 0%,100% { transform:scale(.96); opacity:.82; } 50% { transform:scale(1); opacity:1; } }
@@ -53,6 +84,10 @@
   .footer-brand-logo::before { width:50px; height:50px; flex-basis:50px; }
   .auth-logo-badge::before { width:100px; height:100px; flex-basis:100px; }
   .brand-lockup.nav-logo .brand-emblem { width:48px; height:48px; flex-basis:48px; }
-  .loader-logo { width:180px; height:180px; }
-  .loader-logo::before { width:170px; height:170px; flex-basis:170px; }
+  #loading-overlay .loader-logo {
+    width:min(360px,86vw) !important;
+    height:min(360px,86vw) !important;
+    min-width:250px !important;
+    min-height:250px !important;
+  }
 }
