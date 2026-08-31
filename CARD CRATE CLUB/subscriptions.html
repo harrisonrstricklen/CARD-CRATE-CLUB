@@ -30,32 +30,123 @@
   }
   .user-greeting span { color: var(--gold); font-weight: 700; }
 
-  /* ===== Set carousel ===== */
-  .sets-wrap { max-width: 1180px; margin: 0 auto; padding: 40px 20px; overflow-x: hidden; }
-  .carousel-wrapper { position: relative; overflow: hidden; border-radius: 16px; border: 1px solid var(--border); }
-  .carousel-track { display: flex; transition: transform 0.4s ease; }
-  .carousel-slide { min-width: 100%; position: relative; height: 300px; }
-  .carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .carousel-slide .img-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; background: linear-gradient(135deg, var(--dark3), var(--dark2)); }
-  .slide-art { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-  .slide-art-emoji { font-size: 6rem; filter: drop-shadow(0 0 30px rgba(245,200,66,0.3)); }
-  .slide-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.92)); padding: 2rem 1.5rem 1.5rem; }
-  .slide-badge { display: inline-block; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .slide-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; max-width: 100%; overflow-wrap: break-word; }
-  .slide-meta { color: #ccc; font-size: 0.8rem; max-width: 100%; overflow-wrap: break-word; }
-  .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); border: 1px solid var(--border); color: #fff; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; }
-  .carousel-btn:hover { background: rgba(245,200,66,0.2); border-color: var(--gold); }
-  .carousel-btn.prev { left: 12px; }
-  .carousel-btn.next { right: 12px; }
-  .thumbnails { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; padding-bottom: 6px; }
-  .thumb { min-width: 76px; height: 54px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: border-color 0.2s; }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .thumb.active { border-color: var(--gold); }
-  .set-details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
-  .set-stat { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
-  .set-stat-value { font-size: 1.1rem; font-weight: 800; color: var(--gold); }
-  .set-stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
-  .set-description { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 12px; color: #ccc; font-size: 0.85rem; line-height: 1.6; max-width: 100%; overflow-wrap: break-word; }
+  /* ===== Current sets — dashboard-style three-card fan ===== */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  .sets-wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 34px 20px 30px;
+    box-sizing: border-box;
+  }
+
+  .sets-scroll {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 10px;
+    box-sizing: border-box;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(245,200,66,.25) transparent;
+  }
+
+  .sets-scroll::-webkit-scrollbar { height: 4px; }
+  .sets-scroll::-webkit-scrollbar-thumb {
+    background: rgba(245,200,66,.25);
+    border-radius: 999px;
+  }
+
+  .set-card {
+    flex: 0 0 148px;
+    width: 148px;
+    max-width: 148px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: inherit;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform .2s ease, border-color .2s ease;
+    box-sizing: border-box;
+  }
+
+  .set-card:hover {
+    border-color: rgba(245,200,66,.45);
+    transform: translateY(-3px);
+  }
+
+  .set-art {
+    width: 100%;
+    height: 126px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 15%, rgba(245,200,66,.14), rgba(8,8,14,.98) 72%);
+  }
+
+  .top-card-fan {
+    position: relative;
+    width: 126px;
+    height: 112px;
+    margin-top: 8px;
+  }
+
+  .top-card-img {
+    position: absolute;
+    width: 61px;
+    height: 85px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: rgba(255,255,255,.03);
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.58));
+  }
+
+  .top-card-img.rank-1 { left: 32px; top: 6px; z-index: 3; transform: scale(1.08); }
+  .top-card-img.rank-2 { left: 6px; top: 15px; z-index: 2; transform: rotate(-10deg); }
+  .top-card-img.rank-3 { right: 6px; top: 15px; z-index: 1; transform: rotate(10deg); }
+
+  .set-loading, .set-unavailable {
+    color: var(--muted);
+    text-align: center;
+    font-size: .69rem;
+    line-height: 1.35;
+    padding: 0 12px;
+  }
+
+  .set-card-info { padding: 11px 10px 12px; min-width: 0; }
+
+  .set-card-info strong {
+    display: block;
+    font-size: .78rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 3px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .set-card-info span {
+    display: block;
+    color: var(--muted);
+    font-size: .68rem;
+    line-height: 1.3;
+  }
+
+  .sets-note {
+    color: var(--muted);
+    font-size: .78rem;
+    margin-top: 6px;
+  }
 
   /* ===== Tier cards ===== */
   .tiers-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; }
@@ -127,8 +218,40 @@
   }
   @media (max-width: 560px) {
     .tiers-grid { grid-template-columns: 1fr; }
-    .carousel-slide { height: 220px; }
   }
+
+  @media (max-width: 560px) {
+    .subs-hero { padding: 34px 16px 6px; }
+    .subs-hero h1 { font-size: 1.85rem; line-height: 1.08; }
+    .subs-hero p { font-size: .88rem; }
+
+    .sets-wrap { padding: 30px 16px 24px; }
+    .sets-scroll {
+      gap: 10px;
+      margin: 0;
+      padding-right: 2px;
+    }
+    .set-card {
+      flex-basis: 136px;
+      width: 136px;
+      max-width: 136px;
+    }
+    .set-art { height: 116px; }
+    .top-card-fan { width: 116px; height: 104px; }
+    .top-card-img { width: 57px; height: 79px; }
+    .top-card-img.rank-1 { left: 29px; top: 7px; }
+    .top-card-img.rank-2 { left: 4px; top: 15px; }
+    .top-card-img.rank-3 { right: 4px; top: 15px; }
+
+    .tiers-wrap,
+    .founding-wrap,
+    .manage-wrap,
+    .faq-wrap { padding-left: 16px; padding-right: 16px; }
+
+    .tier-card { width: 100%; min-width: 0; box-sizing: border-box; }
+    .section-title { max-width: 100%; overflow-wrap: anywhere; }
+  }
+
 </style>
 </head>
 <body>
@@ -192,74 +315,61 @@
     <p>Fresh packs, sealed boxes, and new releases — delivered monthly. Cancel or pause anytime, no contracts.</p>
   </section>
 
-  <!-- ========== CURRENT SETS CAROUSEL ========== -->
+  <!-- ========== CURRENT SETS — DASHBOARD STYLE ========== -->
   <section class="sets-wrap">
     <div class="section-title">🃏 Current Sets Available</div>
-    <div class="carousel-wrapper">
-      <button class="carousel-btn prev" onclick="changeSlide(-1)" aria-label="Previous set">‹</button>
-      <div class="carousel-track" id="carouselTrack">
-        <div class="carousel-slide">
-          <div class="slide-art" style="background: radial-gradient(circle at 30% 20%, #2a1a3e, #0a0a12 70%);">
-            <span class="slide-art-emoji">🌑</span>
-          </div>
-          <div class="slide-overlay">
-            <span class="slide-badge">🔥 Newest Release</span>
-            <div class="slide-title">Mega Evolution — Pitch Black</div>
-            <div class="slide-meta">ME5 • July 2026 • 120 Cards</div>
-          </div>
+
+    <div class="sets-scroll">
+      <a class="set-card" data-set-name="Pitch Black" href="set.html?set=me05">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Pitch Black</strong>
+          <span>ME5 • Jul 2026</span>
         </div>
-        <div class="carousel-slide">
-          <div class="slide-art" style="background: radial-gradient(circle at 70% 30%, #3a2a6e, #12122a 70%);">
-            <span class="slide-art-emoji">⚡</span>
-          </div>
-          <div class="slide-overlay">
-            <span class="slide-badge">✅ Available Now</span>
-            <div class="slide-title">Mega Evolution — Chaos Rising</div>
-            <div class="slide-meta">ME4 • May 2026 • 122 Cards</div>
-          </div>
+      </a>
+
+      <a class="set-card" data-set-name="Chaos Rising" href="set.html?set=me04">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Chaos Rising</strong>
+          <span>ME4 • May 2026</span>
         </div>
-        <div class="carousel-slide">
-          <div class="slide-art" style="background: radial-gradient(circle at 40% 30%, #123a4e, #0a1620 70%);">
-            <span class="slide-art-emoji">🔷</span>
-          </div>
-          <div class="slide-overlay">
-            <span class="slide-badge">✅ Available Now</span>
-            <div class="slide-title">Mega Evolution — Perfect Order</div>
-            <div class="slide-meta">ME3 • March 2026 • 124 Cards</div>
-          </div>
+      </a>
+
+      <a class="set-card" data-set-name="Perfect Order" href="set.html?set=me03">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Perfect Order</strong>
+          <span>ME3 • Mar 2026</span>
         </div>
-        <div class="carousel-slide">
-          <div class="slide-art" style="background: radial-gradient(circle at 60% 25%, #4a3a10, #1a1508 70%);">
-            <span class="slide-art-emoji">✨</span>
-          </div>
-          <div class="slide-overlay">
-            <span class="slide-badge">🔥 Fan Favorite</span>
-            <div class="slide-title">Mega Evolution — Ascended Heroes</div>
-            <div class="slide-meta">ME2.5 • January 2026 • 295 Cards</div>
-          </div>
+      </a>
+
+      <a class="set-card" data-set-name="Ascended Heroes" href="set.html?set=me02.5">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Ascended Heroes</strong>
+          <span>ME2.5 • Jan 2026</span>
         </div>
-        <div class="carousel-slide">
-          <div class="slide-art" style="background: radial-gradient(circle at 35% 25%, #4e1e12, #1c0c08 70%);">
-            <span class="slide-art-emoji">🔥</span>
-          </div>
-          <div class="slide-overlay">
-            <span class="slide-badge">✅ Available Now</span>
-            <div class="slide-title">Mega Evolution — Phantasmal Flames</div>
-            <div class="slide-meta">ME2 • November 2025 • 130 Cards</div>
-          </div>
+      </a>
+
+      <a class="set-card" data-set-name="Phantasmal Flames" href="set.html?set=me02">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Phantasmal Flames</strong>
+          <span>ME2 • Nov 2025</span>
         </div>
-      </div>
-      <button class="carousel-btn next" onclick="changeSlide(1)" aria-label="Next set">›</button>
+      </a>
+
+      <a class="set-card" data-set-name="Mega Evolution" href="set.html?set=me01">
+        <div class="set-art"><div class="set-loading">Loading cards…</div></div>
+        <div class="set-card-info">
+          <strong>Mega Evolution</strong>
+          <span>ME1 • Sep 2025</span>
+        </div>
+      </a>
     </div>
-    <div class="thumbnails" id="thumbnails">
-      <div class="thumb active" onclick="goToSlide(0)">🌑</div>
-      <div class="thumb" onclick="goToSlide(1)">⚡</div>
-      <div class="thumb" onclick="goToSlide(2)">🔷</div>
-      <div class="thumb" onclick="goToSlide(3)">✨</div>
-      <div class="thumb" onclick="goToSlide(4)">🔥</div>
-    </div>
-    <div class="set-details-grid" id="setDetailsGrid"></div>
-    <div class="set-description" id="setDescription"></div>
+
+    <div class="sets-note">Swipe to browse sets • Tap a set to view its cards</div>
   </section>
 
   <!-- ========== TIER CARDS ========== -->
@@ -507,48 +617,97 @@
   });
 </script>
 
-<!-- ===================== CAROUSEL + SET DETAILS + NAV SCRIPT ===================== -->
+<!-- ===================== CURRENT SET CARD ART + NAV SCRIPT ===================== -->
 <script>
-  const sets = [
-    { name: "Mega Evolution — Pitch Black", code: "ME5", date: "Jul 2026", cards: "120", description: "Pitch Black is led by Mega Darkrai ex, with Mega Zeraora ex, Mega Chandelure ex, and Mega Excadrill ex joining the fray in the newest Mega Evolution expansion." },
-    { name: "Mega Evolution — Chaos Rising", code: "ME4", date: "May 2026", cards: "122", description: "Chaos Rising centers on a crisis in Lumiose City, headlined by Mega Floette ex alongside Mega Greninja ex, Mega Pyroar ex, Mega Gallade ex, and Mega Dragalge ex." },
-    { name: "Mega Evolution — Perfect Order", code: "ME3", date: "Mar 2026", cards: "124", description: "The third set in the Mega Evolution series, continuing the return of Mega Evolution Pokémon ex with all-new artwork and mechanics." },
-    { name: "Mega Evolution — Ascended Heroes", code: "ME2.5", date: "Jan 2026", cards: "295", description: "A special expansion in the Mega Evolution series with an especially large 295-card checklist, packed with chase cards for collectors." },
-    { name: "Mega Evolution — Phantasmal Flames", code: "ME2", date: "Nov 2025", cards: "130", description: "The second set in the Mega Evolution series, following the debut set with new Mega Evolution Pokémon ex and premium illustration rares." }
-  ];
+  (() => {
+    const FEATURED_CARDS = {
+      'Pitch Black': [
+        { set: 'me05', id: '116', name: 'Featured Pitch Black card' },
+        { set: 'me05', id: '120', name: 'Featured Pitch Black card' },
+        { set: 'me05', id: '117', name: 'Featured Pitch Black card' }
+      ],
+      'Chaos Rising': [
+        { set: 'me04', id: '116', name: 'Featured Chaos Rising card' },
+        { set: 'me04', id: '122', name: 'Featured Chaos Rising card' },
+        { set: 'me04', id: '119', name: 'Featured Chaos Rising card' }
+      ],
+      'Perfect Order': [
+        { set: 'me03', id: '120', name: 'Featured Perfect Order card' },
+        { set: 'me03', id: '121', name: 'Featured Perfect Order card' },
+        { set: 'me03', id: '124', name: 'Featured Perfect Order card' }
+      ],
+      'Ascended Heroes': [
+        { set: 'me02.5', id: '293', name: 'Featured Ascended Heroes card' },
+        { set: 'me02.5', id: '294', name: 'Featured Ascended Heroes card' },
+        { set: 'me02.5', id: '295', name: 'Featured Ascended Heroes card' }
+      ],
+      'Phantasmal Flames': [
+        { set: 'me02', id: '125', name: 'Featured Phantasmal Flames card' },
+        { set: 'me02', id: '126', name: 'Featured Phantasmal Flames card' },
+        { set: 'me02', id: '130', name: 'Featured Phantasmal Flames card' }
+      ],
+      'Mega Evolution': [
+        { set: 'me01', id: '180', name: 'Featured Mega Evolution card' },
+        { set: 'me01', id: '181', name: 'Featured Mega Evolution card' },
+        { set: 'me01', id: '188', name: 'Featured Mega Evolution card' }
+      ]
+    };
 
-  let currentSlide = 0;
+    function sources(card) {
+      const base = `https://assets.tcgdex.net/en/me/${card.set}/${card.id}`;
+      return [
+        `${base}/high.webp`,
+        `${base}/low.webp`,
+        `${base}/high.png`,
+        `${base}/low.png`
+      ];
+    }
 
-  function updateSetDetails(index) {
-    const set = sets[index];
-    document.getElementById('setDetailsGrid').innerHTML = `
-      <div class="set-stat"><div class="set-stat-value">${set.cards}</div><div class="set-stat-label">Total Cards</div></div>
-      <div class="set-stat"><div class="set-stat-value">${set.code}</div><div class="set-stat-label">Set Code</div></div>
-      <div class="set-stat"><div class="set-stat-value">${set.date}</div><div class="set-stat-label">Released</div></div>
-    `;
-    document.getElementById('setDescription').textContent = set.description;
-  }
+    function attachFallback(img, card) {
+      const urls = sources(card);
+      let index = 0;
+      let attempts = 0;
 
-  function updateThumbs(index) {
-    document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('active', i === index));
-  }
+      const tryNext = () => {
+        if (index >= urls.length) {
+          // Run through the list again once with a cache buster.
+          if (attempts < 1) {
+            attempts++;
+            index = 0;
+          } else {
+            img.style.opacity = '.18';
+            return;
+          }
+        }
+        const suffix = attempts ? `?retry=${Date.now()}-${index}` : '';
+        img.src = urls[index++] + suffix;
+      };
 
-  function changeSlide(dir) {
-    currentSlide = (currentSlide + dir + sets.length) % sets.length;
-    document.getElementById('carouselTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
-    updateThumbs(currentSlide);
-    updateSetDetails(currentSlide);
-  }
+      img.onerror = tryNext;
+      tryNext();
+    }
 
-  function goToSlide(index) {
-    currentSlide = index;
-    document.getElementById('carouselTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
-    updateThumbs(currentSlide);
-    updateSetDetails(currentSlide);
-  }
+    function renderFeaturedCards(cardEl, cards) {
+      const art = cardEl.querySelector('.set-art');
+      if (!art || !cards || cards.length < 3) return;
 
-  let carouselTimer = setInterval(() => changeSlide(1), 6000);
-  updateSetDetails(0);
+      art.innerHTML = `
+        <div class="top-card-fan" aria-label="Three featured cards">
+          <img class="top-card-img rank-2" alt="${cards[1].name}" loading="eager">
+          <img class="top-card-img rank-1" alt="${cards[0].name}" loading="eager">
+          <img class="top-card-img rank-3" alt="${cards[2].name}" loading="eager">
+        </div>`;
+
+      const imgs = art.querySelectorAll('.top-card-img');
+      attachFallback(imgs[0], cards[1]);
+      attachFallback(imgs[1], cards[0]);
+      attachFallback(imgs[2], cards[2]);
+    }
+
+    document.querySelectorAll('.set-card[data-set-name]').forEach(cardEl => {
+      renderFeaturedCards(cardEl, FEATURED_CARDS[cardEl.dataset.setName]);
+    });
+  })();
 
   // FAQ accordion
   function toggleFaq(button) {
