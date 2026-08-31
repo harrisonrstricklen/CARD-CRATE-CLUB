@@ -1,0 +1,148 @@
+/* Mobile-first density improvements for My Collection only */
+@media (max-width: 640px) {
+  body.member-page main.wide-main {
+    padding: 18px 10px 92px;
+  }
+
+  body.member-page main.wide-main .page-title {
+    font-size: 1.55rem;
+    margin-bottom: 4px;
+  }
+
+  body.member-page main.wide-main .page-subtitle {
+    font-size: .78rem;
+    line-height: 1.35;
+    margin-bottom: 16px;
+  }
+
+  body.member-page main.wide-main .coll-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  body.member-page main.wide-main .coll-stats .stat-card {
+    min-width: 0;
+    padding: 9px 5px;
+    border-radius: 10px;
+  }
+
+  body.member-page main.wide-main .coll-stats .stat-icon {
+    font-size: 1rem;
+    margin-bottom: 3px;
+  }
+
+  body.member-page main.wide-main .coll-stats .stat-value {
+    font-size: .92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.member-page main.wide-main .coll-stats .stat-label {
+    font-size: .52rem;
+    line-height: 1.15;
+    letter-spacing: .02em;
+  }
+
+  body.member-page main.wide-main .toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  body.member-page main.wide-main .toolbar input[type="search"] {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  body.member-page main.wide-main .toolbar input[type="search"],
+  body.member-page main.wide-main .toolbar select {
+    min-width: 0;
+    width: 100%;
+    padding: 9px 8px;
+    font-size: .72rem;
+  }
+
+  body.member-page main.wide-main #addCardBtn {
+    padding: 9px 12px;
+    font-size: .72rem;
+    white-space: nowrap;
+  }
+
+  body.member-page main.wide-main .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  body.member-page main.wide-main .coll-card {
+    min-width: 0;
+    padding: 5px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  body.member-page main.wide-main .coll-card-img {
+    border-radius: 6px;
+    margin-bottom: 5px;
+  }
+
+  body.member-page main.wide-main .coll-card-name {
+    font-size: .64rem;
+    line-height: 1.15;
+    margin: 0 1px 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.member-page main.wide-main .coll-card-meta {
+    font-size: .52rem;
+    line-height: 1.15;
+    margin: 0 1px 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.member-page main.wide-main .coll-card-value {
+    font-size: .68rem;
+    margin-left: 1px;
+  }
+
+  body.member-page main.wide-main .coll-card-market {
+    font-size: .48rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 15px;
+  }
+
+  body.member-page main.wide-main .coll-card-qty {
+    top: 5px;
+    right: 5px;
+    padding: 1px 5px;
+    font-size: .52rem;
+  }
+
+  body.member-page main.wide-main .coll-card-del {
+    right: 4px;
+    bottom: 4px;
+    font-size: .62rem;
+    padding: 2px;
+  }
+
+  body.member-page main.wide-main + .mobile-nav,
+  body.member-page .mobile-nav {
+    font-size: .72rem;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 760px) {
+  body.member-page main.wide-main .card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
