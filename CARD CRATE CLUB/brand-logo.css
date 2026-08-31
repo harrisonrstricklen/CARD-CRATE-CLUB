@@ -33,6 +33,16 @@
 .brand-lockup.nav-logo .brand-name { display:inline-block !important; font-size:1.08rem !important; font-weight:800; letter-spacing:.02em; color:#f0f0f0 !important; white-space:nowrap; }
 .brand-lockup.nav-logo .brand-emblem { display:inline-flex !important; width:60px; height:60px; flex:0 0 60px; align-items:center; justify-content:center; }
 
+/* Import page uses a label as the upload target. Labels are inline by default,
+   which caused the dashed border to fragment around the text. */
+.drop-zone {
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+.drop-zone input[type="file"] { display:none !important; }
+
 /* Loading screen: override every generic logo dimension with a viewport-sized mark. */
 #loading-overlay .loader-logo {
   display:flex !important;
