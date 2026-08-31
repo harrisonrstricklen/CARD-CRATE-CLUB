@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
-"""Build Card Crate Club's local artwork library from existing card-data JSON files.
+"""Build Card Crate Club's local artwork library quickly and resume-safely.
 
-The script reads CARD CRATE CLUB/card-data/*.json, downloads one compact WebP
-image for each card, and stores it under card-images/<set>/<localId>.webp.
-It is resume-safe: existing non-empty images are skipped.
-
-Pass one or more set IDs on the command line to process only those sets, e.g.:
-    python build-local-card-library.py me01 me02
+Existing images are skipped. Missing cards are downloaded concurrently. Permanent
+HTTP failures such as 404/410 are never retried; only transient failures are.
 """
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import json
 import re
+import socket
 import sys
 import time
+import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "card-data"
 IMAGE_DIR = ROOT / "card-images"
 REPORT = ROOT / "card-library-report.txt"
-USER_AGENT = "CardCrateClub-LocalLibrary/1.0"
+USER_AGENT = "CardCrateClub-LocalLibrary/2.0"
+MAX_WORKERS = 12
+TIMEOUT = 12
+TRANSIENT_RETRIES = 2
 
 
 def safe_id(value):
@@ -28,39 +30,74 @@ def safe_id(value):
 
 
 def candidates(set_id, card):
+    """Return a small, deduplicated list of plausible low-res image URLs."""
     base = str(card.get("image") or "").rstrip("/")
     local_id = str(card.get("localId") or "").strip()
-    card_id = str(card.get("id") or "").strip()
     bases = []
     if base:
         bases.append(base)
     if local_id:
         bases.append(f"https://assets.tcgdex.net/en/me/{set_id}/{local_id}")
-    if card_id and card_id != local_id:
-        bases.append(f"https://assets.tcgdex.net/en/me/{set_id}/{card_id}")
 
-    out, seen = [], set()
+    out = []
+    seen = set()
     for b in bases:
-        if not b or b in seen:
-            continue
-        seen.add(b)
-        out.extend([
-            f"{b}/low.webp",
-            f"{b}/high.webp",
-        ])
+        url = f"{b}/low.webp"
+        if url not in seen:
+            seen.add(url)
+            out.append(url)
     return out
 
 
-def download(url, dest):
+def fetch_bytes(url):
     req = urllib.request.Request(
         url,
         headers={"User-Agent": USER_AGENT, "Accept": "image/webp,image/*"},
     )
-    with urllib.request.urlopen(req, timeout=30) as response:
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
         body = response.read()
     if len(body) < 1000:
         raise ValueError("download was unexpectedly small")
-    dest.write_bytes(body)
+    return body
+
+
+def try_url(url):
+    """Fetch once on permanent errors; retry only temporary network/server errors."""
+    for attempt in range(TRANSIENT_RETRIES + 1):
+        try:
+            return fetch_bytes(url), None
+        except urllib.error.HTTPError as exc:
+            if exc.code in (404, 410):
+                return None, f"HTTP {exc.code}"
+            if exc.code not in (408, 425, 429, 500, 502, 503, 504):
+                return None, f"HTTP {exc.code}"
+            last = f"HTTP {exc.code}"
+        except (urllib.error.URLError, socket.timeout, TimeoutError) as exc:
+            last = str(exc)
+        except Exception as exc:
+            return None, str(exc)
+
+        if attempt < TRANSIENT_RETRIES:
+            time.sleep(0.35 * (attempt + 1))
+    return None, last
+
+
+def download_card(set_id, card, set_dir):
+    local_id = safe_id(card.get("localId"))
+    dest = set_dir / f"{local_id}.webp"
+    if dest.exists() and dest.stat().st_size > 1000:
+        return local_id, True, "already local"
+
+    last_error = "no image URL"
+    for url in candidates(set_id, card):
+        body, error = try_url(url)
+        if body:
+            temp = dest.with_suffix(".tmp")
+            temp.write_bytes(body)
+            temp.replace(dest)
+            return local_id, True, "saved"
+        last_error = error or last_error
+    return local_id, False, last_error
 
 
 def selected_json_files():
@@ -80,73 +117,54 @@ def main():
     if not json_files:
         raise SystemExit("No card-data JSON files found")
 
-    report = []
-    total_cards = total_ok = 0
+    set_summaries = []
+    missing_lines = []
+    total_cards = 0
+    total_ok = 0
 
     for json_path in json_files:
         set_id = json_path.stem
         data = json.loads(json_path.read_text(encoding="utf-8"))
         cards = data.get("cards") or []
+        total_cards += len(cards)
         set_dir = IMAGE_DIR / set_id
         set_dir.mkdir(parents=True, exist_ok=True)
         set_ok = 0
 
-        print(f"\n=== {set_id}: {len(cards)} cards ===", flush=True)
-        for index, card in enumerate(cards, 1):
-            total_cards += 1
-            local_id = safe_id(card.get("localId"))
-            dest = set_dir / f"{local_id}.webp"
-            name = card.get("name") or local_id
-
-            if dest.exists() and dest.stat().st_size > 1000:
-                set_ok += 1
-                total_ok += 1
-                print(f"[{index}/{len(cards)}] {name}: already local", flush=True)
-                card["localImage"] = f"card-images/{set_id}/{local_id}.webp"
-                continue
-
-            success = False
-            for url in candidates(set_id, card):
-                for attempt in range(3):
-                    try:
-                        download(url, dest)
-                        success = True
-                        break
-                    except Exception as exc:
-                        if dest.exists():
-                            dest.unlink(missing_ok=True)
-                        print(
-                            f"[{index}/{len(cards)}] {name}: retry {attempt + 1} ({exc})",
-                            flush=True,
-                        )
-                        time.sleep(1 + attempt)
+        print(f"\n=== {set_id}: {len(cards)} cards; {MAX_WORKERS} workers ===", flush=True)
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            futures = {
+                pool.submit(download_card, set_id, card, set_dir): (index, card)
+                for index, card in enumerate(cards, 1)
+            }
+            completed = 0
+            for future in as_completed(futures):
+                index, card = futures[future]
+                completed += 1
+                local_id, success, status = future.result()
+                name = card.get("name") or local_id
                 if success:
-                    break
-
-            if success:
-                set_ok += 1
-                total_ok += 1
-                card["localImage"] = f"card-images/{set_id}/{local_id}.webp"
-                print(f"[{index}/{len(cards)}] {name}: saved", flush=True)
-            else:
-                card["localImage"] = ""
-                report.append(f"MISSING {set_id} #{local_id} {name}")
-                print(f"[{index}/{len(cards)}] {name}: MISSING", flush=True)
-
-            time.sleep(0.05)
+                    set_ok += 1
+                    total_ok += 1
+                    card["localImage"] = f"card-images/{set_id}/{local_id}.webp"
+                else:
+                    card["localImage"] = ""
+                    missing_lines.append(f"MISSING {set_id} #{local_id} {name} ({status})")
+                print(f"[{completed}/{len(cards)}] #{local_id} {name}: {status}", flush=True)
 
         json_path.write_text(
             json.dumps(data, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        report.insert(0, f"{set_id}: {set_ok}/{len(cards)} artwork files local")
+        set_summaries.append(f"{set_id}: {set_ok}/{len(cards)} artwork files local")
+        print(f"{set_id} finished: {set_ok}/{len(cards)} local", flush=True)
 
     header = [
         "CARD CRATE CLUB — LOCAL CARD LIBRARY REPORT",
         f"Total: {total_ok}/{total_cards} artwork files local",
         "",
     ]
-    REPORT.write_text("\n".join(header + report) + "\n", encoding="utf-8")
+    REPORT.write_text("\n".join(header + set_summaries + [""] + missing_lines) + "\n", encoding="utf-8")
     print(f"\nFinished: {total_ok}/{total_cards} images local", flush=True)
 
 
