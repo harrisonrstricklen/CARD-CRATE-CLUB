@@ -141,65 +141,20 @@
 
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  // The set list itself is one API response, so keep retrying it independently
-  // from the artwork. A successful response is cached so a temporary TCGdex
-  // outage does not blank a set the user has already opened before.
-  async function fetchSetOnce(timeoutMs = 15000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(`https://api.tcgdex.net/v2/en/sets/${encodeURIComponent(setId)}`, {
-        signal: controller.signal,
-        cache: 'no-store',
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data || !Array.isArray(data.cards) || !data.cards.length) throw new Error('No cards returned');
-      return data;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function fetchSetWithRetry(maxAttempts = 12) {
-    let lastError;
-    const cacheKey = `ccc-set-cache-v2:${setId}`;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        statusEl.textContent = attempt === 1
-          ? 'Loading card list…'
-          : `Card list connection retry ${attempt}/${maxAttempts}…`;
-
-        const data = await fetchSetOnce();
-        try { localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data })); } catch (_) {}
-        return data;
-      } catch (err) {
-        lastError = err;
-        if (attempt < maxAttempts) {
-          // Exponential-ish backoff with a little randomness so repeated phone requests
-          // do not all hit the image/API host at exactly the same instant.
-          const delay = Math.min(650 * Math.pow(1.45, attempt - 1), 5000) + Math.floor(Math.random() * 350);
-          await sleep(delay);
-        }
-      }
-    }
-
-    // If live access is temporarily down, use the most recent successful set list.
-    try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (cached?.data?.cards?.length) {
-        statusEl.textContent = 'Using saved card list while the live service reconnects…';
-        return cached.data;
-      }
-    } catch (_) {}
-
-    throw lastError || new Error('Set could not be loaded');
+  // The card list is now a LOCAL site file. No live API connection is needed
+  // before the grid can appear.
+  async function loadLocalSet() {
+    statusEl.textContent = 'Opening card list…';
+    const res = await fetch(`card-data/${encodeURIComponent(setId)}.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Local card data HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.cards) || !data.cards.length) throw new Error('Local card data is empty');
+    return data;
   }
 
   function imageSources(card, quality = 'low') {
-    const base = (card.image || '').replace(/\/$/, '');
+    const fallbackBase = `https://assets.tcgdex.net/en/me/${setId}/${encodeURIComponent(card.localId ?? '')}`;
+    const base = (card.image || fallbackBase).replace(/\/$/, '');
     const otherQuality = quality === 'high' ? 'low' : 'high';
     const localId = String(card.localId ?? '').padStart(3, '0');
 
@@ -366,7 +321,7 @@
 
   async function init() {
     try {
-      setData = await fetchSetWithRetry();
+      setData = await loadLocalSet();
       titleEl.textContent = setData.name || SET_NAMES[setId] || 'Pokémon Set';
       document.title = `${titleEl.textContent} | Card Crate Club`;
 
@@ -382,13 +337,7 @@
         release
       ].filter(Boolean).join(' • ');
 
-      if (setData.logo) {
-        logoEl.src = `${setData.logo}.webp`;
-        logoEl.alt = `${titleEl.textContent} logo`;
-        logoEl.hidden = false;
-        logoEl.onerror = () => { logoEl.onerror = null; logoEl.src = `${setData.logo}.png`; };
-      }
-
+      // Artwork loads independently after the local list is visible.
       allCards = setData.cards.slice().sort((a,b) => {
         const na = parseInt(String(a.localId).replace(/\D/g,''), 10);
         const nb = parseInt(String(b.localId).replace(/\D/g,''), 10);
@@ -400,7 +349,7 @@
       render();
     } catch (err) {
       console.error(err);
-      statusEl.innerHTML = `Couldn't load this set right now. <button class="retry" id="retry-btn">Try again</button>`;
+      statusEl.innerHTML = `The local card-data file wasn't found. <button class="retry" id="retry-btn">Try again</button>`;
       document.getElementById('retry-btn').addEventListener('click', () => {
         statusEl.textContent = 'Loading cards…';
         init();
