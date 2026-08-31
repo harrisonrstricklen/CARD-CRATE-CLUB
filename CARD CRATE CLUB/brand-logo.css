@@ -13,115 +13,34 @@
   width:38px;
   height:38px;
   flex:0 0 38px;
-  background:url('brand-mark.svg?v=approved-38deg-v2-20260831') center/contain no-repeat;
+  background:url('brand-mark.svg?v=shared-wedge-v3-20260831') center/contain no-repeat;
   filter:drop-shadow(0 3px 9px rgba(245,184,28,.16));
 }
 
-/* Shared member-page header: replace legacy CCC text with one official mark + wordmark. */
 .nav-logo,
-.footer-brand-logo {
-  display:inline-flex !important;
-  align-items:center;
-}
-
-.nav-logo {
-  gap:9px;
-  font-size:0 !important;
-  line-height:1;
-}
+.footer-brand-logo { display:inline-flex !important; align-items:center; }
+.nav-logo { gap:9px; font-size:0 !important; line-height:1; }
 .nav-logo > span { display:none !important; }
-.nav-logo::after {
-  content:'CARD CRATE CLUB' !important;
-  display:inline-block;
-  font-size:.92rem;
-  line-height:1;
-  font-weight:800;
-  letter-spacing:.045em;
-  color:#f0f0f0;
-  white-space:nowrap;
-}
-
+.nav-logo::after { content:'CARD CRATE CLUB' !important; display:inline-block; font-size:.92rem; line-height:1; font-weight:800; letter-spacing:.045em; color:#f0f0f0; white-space:nowrap; }
 .footer-brand-logo::after { content:'CARD CRATE CLUB' !important; }
-
-/* Dashboard already has an emblem container and brand-name element.
-   Use those elements directly so the generated header mark never duplicates. */
 .brand-lockup.nav-logo::before,
 .brand-lockup.nav-logo::after { display:none !important; }
 .brand-lockup.nav-logo { font-size:inherit !important; gap:10px; }
-.brand-lockup.nav-logo .brand-name {
-  display:inline-block !important;
-  font-size:.96rem !important;
-  font-weight:800;
-  letter-spacing:.02em;
-  color:#f0f0f0 !important;
-  white-space:nowrap;
-}
-.brand-lockup.nav-logo .brand-emblem {
-  display:inline-flex !important;
-  width:38px;
-  height:38px;
-  flex:0 0 38px;
-  align-items:center;
-  justify-content:center;
-}
-
-/* Loading screen: only the official logo, no CCC text, punctuation, or spinner. */
-.loader-logo {
-  display:flex !important;
-  align-items:center;
-  justify-content:center;
-  width:86px;
-  height:86px;
-  margin:0;
-  padding:0;
-  gap:0;
-  font-size:0 !important;
-  line-height:0 !important;
-  letter-spacing:0 !important;
-  color:transparent !important;
-  text-transform:none;
-}
-.loader-logo::before {
-  width:82px;
-  height:82px;
-  flex:0 0 82px;
-  animation:cccLogoPulse 1.6s ease-in-out infinite;
-}
+.brand-lockup.nav-logo .brand-name { display:inline-block !important; font-size:.96rem !important; font-weight:800; letter-spacing:.02em; color:#f0f0f0 !important; white-space:nowrap; }
+.brand-lockup.nav-logo .brand-emblem { display:inline-flex !important; width:38px; height:38px; flex:0 0 38px; align-items:center; justify-content:center; }
+.loader-logo { display:flex !important; align-items:center; justify-content:center; width:86px; height:86px; margin:0; padding:0; gap:0; font-size:0 !important; line-height:0 !important; letter-spacing:0 !important; color:transparent !important; text-transform:none; }
+.loader-logo::before { width:82px; height:82px; flex:0 0 82px; animation:cccLogoPulse 1.6s ease-in-out infinite; }
 .loader-logo span { display:none !important; }
 #loading-overlay .spinner { display:none !important; }
-@keyframes cccLogoPulse {
-  0%,100% { transform:scale(.96); opacity:.82; }
-  50% { transform:scale(1); opacity:1; }
-}
-
-/* Legacy square CCC badges become the official emblem. */
+@keyframes cccLogoPulse { 0%,100% { transform:scale(.96); opacity:.82; } 50% { transform:scale(1); opacity:1; } }
 .brand-mark,
-.auth-logo-badge {
-  font-size:0 !important;
-  color:transparent !important;
-  background:transparent !important;
-  border-radius:0 !important;
-  padding:0 !important;
-  display:inline-flex !important;
-  align-items:center;
-  justify-content:center;
-}
+.auth-logo-badge { font-size:0 !important; color:transparent !important; background:transparent !important; border-radius:0 !important; padding:0 !important; display:inline-flex !important; align-items:center; justify-content:center; }
 .brand-mark::before { width:36px; height:36px; flex-basis:36px; }
 .auth-logo-badge::before { width:72px; height:72px; flex-basis:72px; }
-
-/* Dashboard and other legacy inline emblems use the same canonical mark. */
-.brand-emblem {
-  position:relative;
-  display:inline-flex !important;
-  align-items:center;
-  justify-content:center;
-  color:transparent !important;
-  background:transparent !important;
-}
+.brand-emblem { position:relative; display:inline-flex !important; align-items:center; justify-content:center; color:transparent !important; background:transparent !important; }
 .brand-emblem > svg,
 .brand-emblem > img:not([src$='brand-mark.svg']) { display:none !important; }
 .brand-emblem::before { width:100%; height:100%; flex-basis:auto; }
-
 @media (max-width:640px){
   .nav-logo::before { width:32px; height:32px; flex-basis:32px; }
   .nav-logo::after { font-size:.8rem; }
