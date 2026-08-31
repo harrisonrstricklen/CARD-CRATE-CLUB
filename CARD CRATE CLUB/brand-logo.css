@@ -15,23 +15,75 @@
   filter:drop-shadow(0 3px 9px rgba(245,200,66,.14));
 }
 
+/* Shared member-page header: replace legacy CCC text with one official mark + wordmark. */
 .nav-logo,
-.footer-brand-logo { display:inline-flex !important; align-items:center; }
-.nav-logo::after { content:'CARD CRATE CLUB' !important; }
+.footer-brand-logo {
+  display:inline-flex !important;
+  align-items:center;
+}
+
+.nav-logo {
+  gap:9px;
+  font-size:0 !important;
+  line-height:1;
+}
+.nav-logo > span { display:none !important; }
+.nav-logo::after {
+  content:'CARD CRATE CLUB' !important;
+  display:inline-block;
+  font-size:.92rem;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.045em;
+  color:#f0f0f0;
+  white-space:nowrap;
+}
+
 .footer-brand-logo::after { content:'CARD CRATE CLUB' !important; }
 
+/* Dashboard already has an emblem container and brand-name element.
+   Disable nav-logo generated pieces there so the mark/wordmark never duplicate. */
+.brand-lockup.nav-logo::before,
+.brand-lockup.nav-logo::after { display:none !important; }
+.brand-lockup.nav-logo { font-size:inherit !important; gap:10px; }
+.brand-lockup.nav-logo .brand-name {
+  display:inline-block !important;
+  font-size:.96rem !important;
+  font-weight:800;
+  letter-spacing:.02em;
+  color:#f0f0f0 !important;
+  white-space:nowrap;
+}
+.brand-lockup.nav-logo .brand-emblem { flex:0 0 auto; }
+
+/* Loading screen: only the official logo, no CCC text, punctuation, or spinner. */
 .loader-logo {
   display:flex !important;
-  flex-direction:column;
   align-items:center;
-  gap:10px;
-  font-size:.82rem !important;
-  letter-spacing:.12em !important;
-  color:#f0f0f0 !important;
-  text-transform:uppercase;
+  justify-content:center;
+  width:86px;
+  height:86px;
+  margin:0;
+  padding:0;
+  gap:0;
+  font-size:0 !important;
+  line-height:0 !important;
+  letter-spacing:0 !important;
+  color:transparent !important;
+  text-transform:none;
 }
-.loader-logo::before { width:74px; height:74px; flex-basis:74px; }
-.loader-logo span { color:inherit !important; }
+.loader-logo::before {
+  width:82px;
+  height:82px;
+  flex:0 0 82px;
+  animation:cccLogoPulse 1.6s ease-in-out infinite;
+}
+.loader-logo span { display:none !important; }
+#loading-overlay .spinner { display:none !important; }
+@keyframes cccLogoPulse {
+  0%,100% { transform:scale(.96); opacity:.82; }
+  50% { transform:scale(1); opacity:1; }
+}
 
 /* Legacy square CCC badges become the official emblem. */
 .brand-mark,
@@ -63,6 +115,9 @@
 
 @media (max-width:640px){
   .nav-logo::before { width:32px; height:32px; flex-basis:32px; }
+  .nav-logo::after { font-size:.8rem; }
   .footer-brand-logo::before { width:34px; height:34px; flex-basis:34px; }
   .auth-logo-badge::before { width:62px; height:62px; flex-basis:62px; }
+  .loader-logo { width:76px; height:76px; }
+  .loader-logo::before { width:72px; height:72px; flex-basis:72px; }
 }
