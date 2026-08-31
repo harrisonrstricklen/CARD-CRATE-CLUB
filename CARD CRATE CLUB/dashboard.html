@@ -706,6 +706,23 @@
     .control-btn .control-icon { font-size: 1.2rem; display: block; margin-bottom: 6px; }
     .control-btn.danger:hover { border-color: rgba(230,57,70,0.5); background: rgba(230,57,70,0.06); }
 
+    .membership-manage-row {
+      background: linear-gradient(135deg, rgba(22,22,31,.96), rgba(26,26,36,.96));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .membership-manage-copy { display:flex; flex-direction:column; gap:3px; min-width:0; }
+    .membership-kicker { color:var(--gold); font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.09em; }
+    .membership-manage-copy strong { font-size:.9rem; font-weight:750; }
+    .membership-manage-copy > span:last-child { color:var(--muted); font-size:.74rem; }
+    .membership-manage-link { color:var(--gold); font-size:.78rem; font-weight:800; white-space:nowrap; padding:8px 10px; border-radius:9px; }
+    .membership-manage-link:hover { background:rgba(245,200,66,.08); }
+    @media (max-width:640px) {
+      .membership-manage-row { padding:14px; align-items:flex-start; }
+      .membership-manage-copy > span:last-child { display:none; }
+      .membership-manage-link { padding:6px 2px; }
+    }
+
     /* ========== ACTIVITY LIST ========== */
     .activity-section { margin-bottom: 24px; }
     .activity-list { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -878,16 +895,15 @@
         </div>
       </div>
 
-      <!-- Subscription Controls -->
+      <!-- Membership Management -->
       <div class="controls-section">
-        <div class="section-title">🔧 Subscription Controls</div>
-        <div class="controls-grid">
-          <a href="subscriptions.html" class="control-btn"><span class="control-icon">⬆️</span>Upgrade</a>
-          <a href="subscriptions.html" class="control-btn"><span class="control-icon">⬇️</span>Downgrade</a>
-          <button type="button" class="control-btn" id="btn-pause"><span class="control-icon">⏸️</span>Pause</button>
-          <button type="button" class="control-btn" id="btn-skip"><span class="control-icon">⏭️</span>Skip a Month</button>
-          <button type="button" class="control-btn danger" id="btn-cancel"><span class="control-icon">❌</span>Cancel</button>
-          <a href="account.html#preferences" class="control-btn"><span class="control-icon">🎯</span>Preferences</a>
+        <div class="membership-manage-row">
+          <div class="membership-manage-copy">
+            <span class="membership-kicker">Membership</span>
+            <strong>Manage your Card Crate Club plan</strong>
+            <span>Billing, plan changes and preferences in one place.</span>
+          </div>
+          <a href="subscriptions.html" class="membership-manage-link">Manage plan <span>→</span></a>
         </div>
       </div>
 
@@ -1340,38 +1356,5 @@
     })();
   </script>
 
-  <!-- ========== SUBSCRIPTION CONTROL MODALS ========== -->
-  <!-- NOTE: Pause/Skip/Cancel have no billing backend to actually call yet.
-       Rather than fake success, this modal is explicit that nothing is
-       connected — swap the confirm handler for a real API call once
-       Stripe + a backend function are wired up. -->
-  <script>
-    const modal        = document.getElementById('confirmModal');
-    const modalTitle    = document.getElementById('modalTitle');
-    const modalBody      = document.getElementById('modalBody');
-    const modalCancelBtn = document.getElementById('modalCancelBtn');
-    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-
-    const modalCopy = {
-      pause:  { title: 'Pause Subscription',  body: 'Pausing will skip your next billing cycle and crate shipment. 🔧 This isn\'t connected to billing yet — no changes have been made to your account.' },
-      skip:   { title: 'Skip Next Crate',     body: 'Skipping moves your next crate to the following month. 🔧 This isn\'t connected to billing yet — no changes have been made to your account.' },
-      cancel: { title: 'Cancel Subscription', body: 'Canceling ends your subscription at the end of the current billing period. 🔧 This isn\'t connected to billing yet — no changes have been made to your account.' }
-    };
-
-    function openModal(kind) {
-      const copy = modalCopy[kind];
-      modalTitle.textContent = copy.title;
-      modalBody.textContent = copy.body;
-      modal.classList.add('active');
-    }
-    function closeModal() { modal.classList.remove('active'); }
-
-    document.getElementById('btn-pause').addEventListener('click', () => openModal('pause'));
-    document.getElementById('btn-skip').addEventListener('click', () => openModal('skip'));
-    document.getElementById('btn-cancel').addEventListener('click', () => openModal('cancel'));
-    modalCancelBtn.addEventListener('click', closeModal);
-    modalConfirmBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  </script>
 </body>
 </html>

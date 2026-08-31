@@ -139,10 +139,7 @@
   titleEl.textContent = SET_NAMES[setId] || 'Pokémon Set';
   document.title = `${titleEl.textContent} | Card Crate Club`;
 
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-  // The card list is now a LOCAL site file. No live API connection is needed
-  // before the grid can appear.
+  // Card data and artwork are served from Card Crate Club's own local files.
   async function loadLocalSet() {
     statusEl.textContent = 'Opening card list…';
     const res = await fetch(`card-data/${encodeURIComponent(setId)}.json`, { cache: 'no-store' });
@@ -152,91 +149,26 @@
     return data;
   }
 
-  function imageSources(card, quality = 'low') {
-    const fallbackBase = `https://assets.tcgdex.net/en/me/${setId}/${encodeURIComponent(card.localId ?? '')}`;
-    const base = (card.image || fallbackBase).replace(/\/$/, '');
-    const otherQuality = quality === 'high' ? 'low' : 'high';
-    const localId = String(card.localId ?? '').padStart(3, '0');
-
-    // Local files come first if you ever add them to GitHub. Remote TCGdex
-    // formats follow. Every URL is tried independently by each individual card.
-    return [
-      `images/cards/${setId}/${localId}.webp`,
-      `images/cards/${setId}/${localId}.png`,
-      base ? `${base}/${quality}.webp` : '',
-      base ? `${base}/${quality}.png` : '',
-      base ? `${base}/${quality}.jpg` : '',
-      base ? `${base}/${otherQuality}.webp` : '',
-      base ? `${base}/${otherQuality}.png` : ''
-    ].filter(Boolean);
-  }
-
-  function loadImageUrl(img, url, timeoutMs = 12000) {
-    return new Promise((resolve, reject) => {
-      let finished = false;
-      const done = (ok, err) => {
-        if (finished) return;
-        finished = true;
-        clearTimeout(timer);
-        img.onload = null;
-        img.onerror = null;
-        ok ? resolve(url) : reject(err || new Error('Image failed'));
-      };
-      const timer = setTimeout(() => done(false, new Error('Image timeout')), timeoutMs);
-      img.onload = () => done(true);
-      img.onerror = () => done(false, new Error('Image failed'));
-      img.src = url;
-    });
-  }
-
-  async function loadCardImage(img, card, quality = 'low', stateEl = null, maxRounds = 4) {
-    // One card failing never affects another card. Each card cycles through all
-    // sources several times with cache-busting and increasing delays.
-    const sources = imageSources(card, quality);
-    let attempts = 0;
-
-    for (let round = 0; round < maxRounds; round++) {
-      for (let i = 0; i < sources.length; i++) {
-        attempts++;
-        if (stateEl) {
-          stateEl.classList.add('retrying');
-          stateEl.textContent = attempts === 1 ? 'Loading artwork…' : `Retrying artwork… (${attempts})`;
-        }
-
-        const isLocal = sources[i].startsWith('images/');
-        const separator = sources[i].includes('?') ? '&' : '?';
-        const url = (round === 0 || isLocal)
-          ? sources[i]
-          : `${sources[i]}${separator}ccc_retry=${round}_${i}_${Date.now()}`;
-
-        try {
-          await loadImageUrl(img, url);
-          if (stateEl) stateEl.remove();
-          return true;
-        } catch (_) {
-          // Keep trying this card only.
-        }
-      }
-
-      if (round < maxRounds - 1) {
-        await sleep(Math.min(700 * Math.pow(2, round), 4500) + Math.floor(Math.random() * 300));
-      }
-    }
-
-    if (stateEl) {
-      stateEl.classList.remove('retrying');
-      stateEl.innerHTML = `Artwork still unavailable.<br><button type="button" class="img-retry">Try this card again</button>`;
-      stateEl.querySelector('.img-retry')?.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await loadCardImage(img, card, quality, stateEl, maxRounds);
-      }, { once:true });
-    }
-    return false;
+  function localImage(card) {
+    if (card.localImage) return card.localImage;
+    const id = String(card.localId ?? '').replace(/[^A-Za-z0-9._-]+/g, '-');
+    return id ? `card-images/${setId}/${id}.webp` : '';
   }
 
   function applyFallback(img, card, quality = 'low', stateEl = null) {
-    // Fire and forget so every image progresses independently.
-    loadCardImage(img, card, quality, stateEl).catch(() => {});
+    const src = localImage(card);
+    if (!src) {
+      img.removeAttribute('src');
+      if (stateEl) stateEl.textContent = 'Artwork coming soon';
+      return;
+    }
+    if (stateEl) stateEl.textContent = 'Loading local artwork…';
+    img.onload = () => { if (stateEl) stateEl.remove(); };
+    img.onerror = () => {
+      img.removeAttribute('src');
+      if (stateEl) stateEl.textContent = 'Artwork coming soon';
+    };
+    img.src = src;
   }
 
   function render() {
@@ -267,7 +199,7 @@
 
       const imgState = document.createElement('div');
       imgState.className = 'img-state';
-      imgState.textContent = 'Waiting for artwork…';
+      imgState.textContent = 'Loading local artwork…';
       applyFallback(img, card, 'low', imgState);
 
       const name = document.createElement('div');
