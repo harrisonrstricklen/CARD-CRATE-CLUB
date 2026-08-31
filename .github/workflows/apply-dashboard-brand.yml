@@ -1,0 +1,49 @@
+name: Apply Dashboard Brand
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-dashboard-brand.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  brand-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Apply official logo assets to dashboard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('CARD CRATE CLUB/dashboard.html')
+          text = path.read_text(encoding='utf-8')
+
+          text = text.replace('<title>Dashboard — CardCrate Club</title>', '<title>Dashboard — Card Crate Club</title>')
+
+          brand_links = '  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>\n  <link rel="stylesheet" href="brand-logo.css"/>'
+          if 'href="brand-logo.css"' not in text:
+              needle = '  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>'
+              text = text.replace(needle, needle + '\n' + brand_links)
+
+          text = text.replace('<div class="loader-logo">Card Crate <span>Club</span></div>', '<div class="loader-logo">Card Crate Club</div>')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit dashboard branding
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "CARD CRATE CLUB/dashboard.html"
+          if git diff --cached --quiet; then
+            echo "Dashboard already uses official branding."
+          else
+            git commit -m "Use official nested-C logo on dashboard"
+            git push
+          fi
