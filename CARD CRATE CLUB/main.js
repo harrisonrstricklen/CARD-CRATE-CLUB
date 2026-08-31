@@ -77,24 +77,24 @@ document.addEventListener('DOMContentLoaded', function() {
             img.onerror = () => { if (img.parentElement) img.parentElement.style.display = 'none'; };
         });
 
-        // Clearly-labelled crate concept until real product photography is available.
+        // Clearly-labelled subscription crate concepts until real product photography is available.
         if (!document.querySelector('.crate-concept-section')) {
             const concept = document.createElement('section');
             concept.className = 'crate-concept-section';
-            concept.setAttribute('aria-label', 'Card Crate Club packaging concept');
+            concept.setAttribute('aria-label', 'Card Crate Club subscription crate concepts');
             concept.innerHTML = `
                 <div class="crate-concept-card">
                     <div class="crate-concept-copy">
                         <span class="crate-concept-kicker">Packaging Preview</span>
-                        <h2>Meet the <span>Card Crate</span></h2>
-                        <p>This is a concept rendering of the experience we're building: a clean black mailer, organized sealed packs, protective packing, and a branded insert that makes the shipment feel like a club delivery—not a box of loose product.</p>
+                        <h2>Choose Your <span>Card Crate</span></h2>
+                        <p>A look at how the core subscription sizes can scale with you. The 4, 8, and 12-pack concepts use the same black-and-gold Card Crate Club packaging, sized around the amount of sealed product inside.</p>
                         <div class="crate-concept-points">
-                            <span>Black branded mailer</span><span>Protective packing</span><span>Member insert</span><span>Organized product</span>
+                            <span>4 Pack Crate</span><span>8 Pack Crate</span><span>12 Pack Crate</span><span>Compact packaging</span>
                         </div>
                     </div>
                     <div class="crate-concept-art">
-                        <img src="images/card-crate-concept.png" alt="Concept rendering of an open Card Crate Club subscription box with sealed trading card packs and a branded insert" loading="lazy">
-                        <div class="crate-concept-caption">Concept rendering — final packaging, inserts, and product mix may vary.</div>
+                        <img src="images/card-crate-club-4-8-12-pack-crates.png" alt="Concept renderings of Card Crate Club 4 pack, 8 pack, and 12 pack subscription boxes" loading="lazy">
+                        <div class="crate-concept-caption">Concept rendering — final box dimensions, pack selection, and packaging may vary.</div>
                     </div>
                 </div>`;
             const announcement = document.querySelector('.announcement-bar');
