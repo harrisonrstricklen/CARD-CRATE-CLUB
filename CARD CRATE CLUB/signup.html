@@ -200,7 +200,9 @@
       });
 
       showMessage('🎉 Account created! Redirecting to onboarding...', 'success');
-      setTimeout(() => window.location.href = 'onboarding.html', 1200);
+      const requestedPlan = new URLSearchParams(window.location.search).get('plan');
+      const nextUrl = requestedPlan ? `onboarding.html?plan=${encodeURIComponent(requestedPlan)}` : 'onboarding.html';
+      setTimeout(() => window.location.href = nextUrl, 1200);
     } catch (err) {
       showMessage('❌ ' + (err.message || 'Could not create account.'), 'error');
     }

@@ -1037,6 +1037,30 @@
       timelineCard.innerHTML = html;
     }
 
+    async function openBillingPortal() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const btn = document.getElementById('manage-billing-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch('/.netlify/functions/create-portal-session', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok || !data.url) throw new Error(data.error || 'Could not open billing portal.');
+        window.location.href = data.url;
+      } catch (err) {
+        alert(err.message || 'Could not open billing portal.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Manage Billing →'; }
+      }
+    }
+
+    document.addEventListener('click', (event) => {
+      if (event.target?.id === 'manage-billing-btn') openBillingPortal();
+    });
+
     // ── Auth Guard ───────────────────────────────────────────────────
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -1082,14 +1106,16 @@
           // Subscription
           if (data.subscription && data.subscription.plan) {
             const sub = data.subscription;
+            const isActive = ['active', 'trialing'].includes(sub.status);
+            const statusLabel = isActive ? '✅ Active Plan' : `⚠️ ${sub.status || 'Billing status pending'}`;
             subCard.innerHTML = `
               <div class="sub-info">
-                <div class="sub-badge">✅ Active Plan</div>
-                <div class="sub-name">${sub.plan}</div>
+                <div class="sub-badge">${statusLabel}</div>
+                <div class="sub-name">${sub.plan || sub.planName || 'CardCrate Club'}</div>
                 <div class="sub-desc">${sub.description || 'Your current subscription'}</div>
               </div>
               <div class="sub-actions">
-                <a href="subscriptions.html" class="btn btn-outline btn-sm">Manage →</a>
+                <button type="button" class="btn btn-outline btn-sm" id="manage-billing-btn">Manage Billing →</button>
               </div>
             `;
 

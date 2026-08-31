@@ -181,22 +181,19 @@
       <div class="order-summary" id="orderSummary"></div>
 
       <div class="stripe-note">
-        🔧 <span><strong>Stripe integration pending.</strong> This is a UI preview — no payment method is being collected and nothing will be charged. The card field below will be replaced with a live Stripe Elements mount once billing is connected on the backend.</span>
-      </div>
-
-      <div class="card-field-mock">
-        <span>💳 Card number, expiry, CVC</span>
-        <span style="font-size:0.7rem;">Stripe Elements — not yet connected</span>
+        🔒 <span><strong>Secure checkout powered by Stripe.</strong> CardCrate Club never stores your card number. You’ll be sent to Stripe to enter payment details and then returned here after checkout.</span>
       </div>
 
       <label class="checkbox-row" style="margin-bottom:20px;">
         <input type="checkbox" id="agreeBilling" />
-        <span>I understand I'll be billed monthly for my selected plan once billing is live, and I can cancel anytime.</span>
+        <span>I understand this is a monthly recurring subscription and I can manage or cancel billing from my account.</span>
       </label>
+
+      <div id="checkoutMessage" style="display:none;margin-bottom:14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.82rem;color:var(--muted);"></div>
 
       <div class="nav-buttons">
         <button class="btn btn-outline" id="toStep3From4">← Back</button>
-        <button class="btn btn-gold" id="toStep5" disabled>Complete Setup</button>
+        <button class="btn btn-gold" id="startCheckout" disabled>Continue to Secure Checkout →</button>
       </div>
     </section>
 
@@ -231,20 +228,40 @@
   </main>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
+    authDomain: "cardcrate-club.firebaseapp.com",
+    projectId: "cardcrate-club",
+    storageBucket: "cardcrate-club.firebasestorage.app",
+    messagingSenderId: "261800955788",
+    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
+    measurementId: "G-5B8J0LWGKE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
   const totalSteps = 5;
   let currentStep = 1;
   let selectedPlan = null;
+  let currentUser = null;
+
   const planData = {
     'pack-club':      { name: 'Pack Club',      price: 24.99 },
     'trainer-club':   { name: 'Trainer Club',   price: 44.99 },
     'collector-club': { name: 'Collector Club', price: 64.99 },
-    'box-club':       { name: 'Box Club',       price: 149 }
+    'box-club':       { name: 'Box Club',       price: 149.00 }
   };
 
-  // Pre-select plan from ?plan= query param
   const params = new URLSearchParams(window.location.search);
   const preselect = params.get('plan');
+  const checkoutState = params.get('checkout');
 
   function renderStepIndicator() {
     const el = document.getElementById('stepIndicator');
@@ -266,34 +283,71 @@
     if (n === 5) renderWelcome();
   }
 
-  // ---- Step 1: plan selection ----
-  document.querySelectorAll('.plan-pick').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.plan-pick').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedPlan = card.dataset.plan;
-    });
-  });
-  if (preselect && planData[preselect]) {
-    const match = document.querySelector(`.plan-pick[data-plan="${preselect}"]`);
-    if (match) { match.classList.add('selected'); selectedPlan = preselect; }
+  function setSelectedPlan(planId) {
+    if (!planData[planId]) return;
+    document.querySelectorAll('.plan-pick').forEach(c => c.classList.toggle('selected', c.dataset.plan === planId));
+    selectedPlan = planId;
   }
 
+  function selectedPreferences() {
+    return [...document.querySelectorAll('.pref-tile.selected')].map(el => el.dataset.pref);
+  }
+
+  function shippingData() {
+    return {
+      fullName: document.getElementById('fullName').value.trim(),
+      address1: document.getElementById('addr1').value.trim(),
+      address2: document.getElementById('addr2').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      state: document.getElementById('state').value.trim(),
+      zip: document.getElementById('zip').value.trim(),
+      country: document.getElementById('country').value,
+      phone: document.getElementById('phone').value.trim()
+    };
+  }
+
+  async function saveOnboardingDraft() {
+    if (!currentUser || !selectedPlan) return;
+    await setDoc(doc(db, 'users', currentUser.uid), {
+      preferences: selectedPreferences(),
+      shipping: shippingData(),
+      onboarding: {
+        planId: selectedPlan,
+        planName: planData[selectedPlan].name,
+        status: 'checkout_pending',
+        updatedAt: serverTimestamp()
+      }
+    }, { merge: true });
+  }
+
+  function fillExistingData(data = {}) {
+    if (data.onboarding?.planId && planData[data.onboarding.planId] && !preselect) setSelectedPlan(data.onboarding.planId);
+    if (Array.isArray(data.preferences)) {
+      document.querySelectorAll('.pref-tile').forEach(tile => tile.classList.toggle('selected', data.preferences.includes(tile.dataset.pref)));
+    }
+    const ship = data.shipping || {};
+    const map = { fullName:'fullName', address1:'addr1', address2:'addr2', city:'city', state:'state', zip:'zip', country:'country', phone:'phone' };
+    Object.entries(map).forEach(([key,id]) => {
+      if (ship[key] !== undefined && document.getElementById(id)) document.getElementById(id).value = ship[key];
+    });
+  }
+
+  document.querySelectorAll('.plan-pick').forEach(card => {
+    card.addEventListener('click', () => setSelectedPlan(card.dataset.plan));
+  });
+  if (preselect && planData[preselect]) setSelectedPlan(preselect);
+
   document.getElementById('toStep2').addEventListener('click', () => {
-    if (!selectedPlan) { alert('Please choose a plan to continue.'); return; }
+    if (!selectedPlan) return alert('Please choose a plan to continue.');
     goToStep(2);
   });
 
-  // ---- Step 2: preferences ----
-  document.querySelectorAll('.pref-tile').forEach(tile => {
-    tile.addEventListener('click', () => tile.classList.toggle('selected'));
-  });
+  document.querySelectorAll('.pref-tile').forEach(tile => tile.addEventListener('click', () => tile.classList.toggle('selected')));
   document.getElementById('toStep1From2').addEventListener('click', () => goToStep(1));
   document.getElementById('toStep3').addEventListener('click', () => goToStep(3));
-
-  // ---- Step 3: shipping validation ----
   document.getElementById('toStep2From3').addEventListener('click', () => goToStep(2));
-  document.getElementById('toStep4').addEventListener('click', () => {
+
+  document.getElementById('toStep4').addEventListener('click', async () => {
     const required = ['fullName', 'addr1', 'city', 'state', 'zip', 'phone'];
     let valid = true;
     required.forEach(id => {
@@ -304,38 +358,118 @@
       if (hasError) valid = false;
     });
     if (!valid) return;
-    goToStep(4);
+
+    try {
+      await saveOnboardingDraft();
+      goToStep(4);
+    } catch (err) {
+      console.error(err);
+      alert('We could not save your shipping information. Please try again.');
+    }
   });
 
-  // ---- Step 4: order summary + payment gate ----
   function renderOrderSummary() {
     const plan = planData[selectedPlan] || { name: '—', price: 0 };
-    const shipping = 0; // Free shipping on every tier per current plans
-    const taxNote = 'Calculated at checkout';
     document.getElementById('orderSummary').innerHTML = `
       <div class="order-row"><span>${plan.name}</span><span class="gold">$${plan.price.toFixed(2)}</span></div>
       <div class="order-row"><span>Shipping</span><span>Free</span></div>
-      <div class="order-row"><span>Estimated Tax</span><span>${taxNote}</span></div>
-      <div class="order-row total"><span>Due Today</span><span class="gold">$${plan.price.toFixed(2)}${'*'}</span></div>
-      <p style="font-size:0.7rem;color:var(--muted);margin-top:8px;">*Final total including tax will be confirmed by Stripe at checkout once billing is connected.</p>
+      <div class="order-row"><span>Tax</span><span>Calculated by Stripe</span></div>
+      <div class="order-row total"><span>Monthly subtotal</span><span class="gold">$${plan.price.toFixed(2)}</span></div>
     `;
   }
 
   document.getElementById('toStep3From4').addEventListener('click', () => goToStep(3));
 
   const agreeBilling = document.getElementById('agreeBilling');
-  const toStep5Btn = document.getElementById('toStep5');
-  agreeBilling.addEventListener('change', () => { toStep5Btn.disabled = !agreeBilling.checked; });
+  const checkoutBtn = document.getElementById('startCheckout');
+  const checkoutMessage = document.getElementById('checkoutMessage');
+  agreeBilling.addEventListener('change', () => { checkoutBtn.disabled = !agreeBilling.checked; });
 
-  toStep5Btn.addEventListener('click', () => goToStep(5));
+  function showCheckoutMessage(text, isError = false) {
+    checkoutMessage.style.display = 'block';
+    checkoutMessage.textContent = text;
+    checkoutMessage.style.color = isError ? '#ff8e8e' : 'var(--muted)';
+  }
 
-  // ---- Step 5: welcome ----
+  checkoutBtn.addEventListener('click', async () => {
+    if (!currentUser || !selectedPlan) return;
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Opening secure checkout…';
+    showCheckoutMessage('Saving your setup and connecting to Stripe…');
+
+    try {
+      await saveOnboardingDraft();
+      const token = await currentUser.getIdToken();
+      const response = await fetch('/.netlify/functions/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ planId: selectedPlan })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || 'Checkout could not be started.');
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      showCheckoutMessage(err.message || 'Checkout could not be started.', true);
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = 'Continue to Secure Checkout →';
+    }
+  });
+
   function renderWelcome() {
-    const plan = planData[selectedPlan] || { name: '—' };
+    const plan = planData[selectedPlan] || { name: 'Your plan' };
     document.getElementById('welcomePlan').textContent = plan.name;
   }
 
-  renderStepIndicator();
+  async function waitForSubscription(uid) {
+    const welcomeSub = document.querySelector('[data-step="5"] .welcome-sub');
+    for (let i = 0; i < 10; i++) {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.subscription?.planId) setSelectedPlan(data.subscription.planId);
+        if (['active','trialing'].includes(data.subscription?.status)) {
+          welcomeSub.textContent = 'Payment confirmed. Your membership is active and your dashboard is ready.';
+          document.getElementById('foundingNote').textContent = data.foundingMember === true
+            ? `You’re Founding Member #${data.memberNumber}. Your Founding 100 spot is locked in.`
+            : 'Your membership is active. Founding 100 status is assigned automatically to eligible paid members.';
+          renderWelcome();
+          return;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+    welcomeSub.textContent = 'Checkout is complete. Stripe is confirming your subscription; your dashboard will update automatically.';
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      const planQuery = preselect ? `?plan=${encodeURIComponent(preselect)}` : '';
+      window.location.href = `signup.html${planQuery}`;
+      return;
+    }
+    currentUser = user;
+
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) fillExistingData(snap.data());
+      if (!document.getElementById('fullName').value) document.getElementById('fullName').value = user.displayName || '';
+    } catch (err) {
+      console.warn('Could not load onboarding data:', err);
+    }
+
+    if (checkoutState === 'success') {
+      goToStep(5);
+      await waitForSubscription(user.uid);
+    } else {
+      if (checkoutState === 'cancelled') {
+        goToStep(4);
+        showCheckoutMessage('Checkout was cancelled. Nothing was charged. You can try again when you’re ready.');
+      } else {
+        renderStepIndicator();
+      }
+    }
+  });
 </script>
 
 </body>
