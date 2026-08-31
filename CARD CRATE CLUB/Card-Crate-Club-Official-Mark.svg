@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
+  <title id="title">Card Crate Club official emblem</title>
+  <desc id="desc">Three nested hexagonal letter C bands in gold, each opened on the right by the same angular wedge.</desc>
+  <g fill="none" stroke="#F5C842" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M79 29 L50 12 L20 29 L20 71 L50 88 L79 71"/>
+    <path d="M69 36 L50 25 L34 35 L34 65 L50 75 L69 64"/>
+    <path d="M60 44 L50 38 L43 42 L43 58 L50 62 L60 56"/>
+  </g>
+</svg>
