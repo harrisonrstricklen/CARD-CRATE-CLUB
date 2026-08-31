@@ -3,231 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Community — CardCrate Club</title>
-<meta name="description" content="Join the CardCrate Club community — Discord, Pull of the Month, member spotlights, challenges, and leaderboards.">
+<title>Community — Card Crate Club</title>
+<meta name="description" content="Connect with the Card Crate Club collector community, follow official social channels, join challenges, and watch member features grow after launch.">
+<link rel="canonical" href="https://cardcrateclub.com/community.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Card Crate Club Community">
+<meta property="og:description" content="Follow Card Crate Club and connect with collectors across our community channels.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cardcrateclub.com/community.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
 <style>
-  .comm-hero { text-align: center; padding: 56px 20px 24px; }
-  .comm-hero h1 { font-size: 2.3rem; font-weight: 900; margin-bottom: 10px; }
-  .comm-hero p { color: var(--muted); max-width: 560px; margin: 0 auto; font-size: 0.95rem; }
-
-  .discord-cta {
-    max-width: 900px; margin: 0 auto 40px; padding: 0 20px;
-  }
-  .discord-panel {
-    background: linear-gradient(135deg, rgba(88,101,242,0.15), rgba(88,101,242,0.03));
-    border: 1px solid rgba(88,101,242,0.35); border-radius: var(--radius); padding: 28px 24px;
-    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
-  }
-  .discord-panel .icon { font-size: 2.4rem; }
-  .discord-panel-text { flex: 1; min-width: 220px; }
-  .discord-panel-text strong { display: block; font-size: 1.05rem; margin-bottom: 4px; }
-  .discord-panel-text span { font-size: 0.85rem; color: var(--muted); }
-  .btn-discord { background: #5865F2; color: #fff; }
-  .btn-discord:hover { opacity: 0.9; }
-
-  .comm-section { max-width: 1100px; margin: 0 auto 40px; padding: 0 20px; }
-  .spotlight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .spotlight-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
-  .spotlight-card .tag { display: inline-block; background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.3); color: var(--gold); font-size: 0.68rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; }
-  .spotlight-empty { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 20px 0; }
-
-  .challenge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .challenge-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; text-align: center; }
-  .challenge-card .icon { font-size: 1.6rem; margin-bottom: 8px; }
-  .challenge-card strong { display: block; font-size: 0.88rem; margin-bottom: 4px; }
-  .challenge-card span { font-size: 0.78rem; color: var(--muted); }
-
-  .leaderboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .leaderboard-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .leaderboard-head { padding: 16px 18px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 0.9rem; }
-
-  @media (max-width: 800px) {
-    .spotlight-grid, .leaderboard-grid { grid-template-columns: 1fr; }
-    .challenge-grid { grid-template-columns: 1fr 1fr; }
-  }
-  @media (max-width: 480px) { .challenge-grid { grid-template-columns: 1fr; } }
+  .comm-hero{text-align:center;padding:56px 20px 24px}.comm-hero h1{font-size:clamp(2rem,7vw,2.7rem);font-weight:900;margin-bottom:10px}.comm-hero p{color:var(--muted);max-width:580px;margin:0 auto;font-size:.95rem;line-height:1.6}
+  .social-hub{max-width:980px;margin:0 auto 42px;padding:0 20px}.social-hub-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.platform-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:24px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);transition:.2s}.platform-card:hover{transform:translateY(-3px);border-color:rgba(245,200,66,.38)}.platform-icon{width:38px;height:38px;display:block;margin-bottom:4px}.platform-card strong{font-size:.9rem}.platform-card span{font-size:.72rem;color:var(--muted)}.platform-card b{font-size:.72rem;color:var(--gold);margin-top:3px}.discord-panel{max-width:940px;margin:0 auto 40px;padding:26px 24px;background:linear-gradient(135deg,rgba(88,101,242,.13),rgba(88,101,242,.025));border:1px solid rgba(88,101,242,.3);border-radius:var(--radius);display:flex;align-items:center;gap:18px;flex-wrap:wrap}.discord-panel-text{flex:1;min-width:220px}.discord-panel-text strong{display:block;font-size:1rem;margin-bottom:4px}.discord-panel-text span{font-size:.84rem;color:var(--muted);line-height:1.5}.btn-discord{background:#5865F2;color:#fff}.comm-section{max-width:1100px;margin:0 auto 40px;padding:0 20px}.spotlight-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.spotlight-card,.challenge-card,.leaderboard-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)}.spotlight-card{padding:22px}.spotlight-card .tag{display:inline-block;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.28);color:var(--gold);font-size:.68rem;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;margin-bottom:12px}.spotlight-empty{text-align:center;color:var(--muted);font-size:.84rem;padding:20px 0;line-height:1.5}.challenge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.challenge-card{padding:18px;text-align:center}.challenge-card strong{display:block;font-size:.88rem;margin-bottom:5px}.challenge-card span{font-size:.76rem;color:var(--muted);line-height:1.45}.leaderboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.leaderboard-card{overflow:hidden}.leaderboard-head{padding:16px 18px;border-bottom:1px solid var(--border);font-weight:800;font-size:.9rem}.prelaunch-note{max-width:900px;margin:0 auto 55px;padding:0 20px;text-align:center;color:var(--muted);font-size:.76rem;line-height:1.55}@media(max-width:800px){.social-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.spotlight-grid,.leaderboard-grid{grid-template-columns:1fr}.challenge-grid{grid-template-columns:1fr 1fr}}@media(max-width:480px){.challenge-grid{grid-template-columns:1fr}.platform-card{padding:20px 10px}}
 </style>
 </head>
 <body>
-
-<div class="floating-bg">
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
-</div>
-
+<div class="floating-bg"><div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png" alt="" loading="lazy"/></div><div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png" alt="" loading="lazy"/></div><div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png" alt="" loading="lazy"/></div><div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png" alt="" loading="lazy"/></div></div>
 <div class="page-wrapper">
-  <header>
-    <a href="index.html" class="nav-logo">CCC<span>.</span></a>
-    <nav class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="how-it-works.html">How It Works</a>
-      <a href="subscriptions.html">Subscriptions</a>
-      <a href="founding-members.html">Founding 100</a>
-      <a href="rewards.html">Rewards</a>
-      <a href="community.html" class="active">Community</a>
-    </nav>
-    <div class="nav-right" id="navAuth">
-      <a href="login.html" style="padding:6px 12px;">Login</a>
-      <a href="signup.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join the Club</a>
-    </div>
-    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-  </header>
-
-  <div class="mobile-menu" id="mobileMenu">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="how-it-works.html">How It Works</a></li>
-      <li><a href="subscriptions.html">Subscriptions</a></li>
-      <li><a href="founding-members.html">Founding 100</a></li>
-      <li><a href="rewards.html">Rewards</a></li>
-      <li><a href="community.html">Community</a></li>
-      <li id="mobileAuth"><a href="login.html">Login</a></li>
-    </ul>
-  </div>
-
-  <section class="comm-hero">
-    <div class="page-title" style="margin-bottom:8px;">Join The <span class="gold">Community</span></div>
-    <p>Share pulls, trade tips, and connect with collectors who get the obsession.</p>
-  </section>
-
-  <section class="discord-cta">
-    <div class="discord-panel">
-      <div class="icon">💬</div>
-      <div class="discord-panel-text">
-        <strong>CardCrate Club Discord</strong>
-        <span>Pull threads, trade channels, giveaways, and direct access to the team.</span>
-      </div>
-      <a href="https://discord.gg/cardcrateclub" target="_blank" class="btn btn-discord btn-lg">Join Discord →</a>
-    </div>
-  </section>
-
-  <section class="comm-section">
-    <div class="section-title">🌟 Community Highlights</div>
-    <div class="spotlight-grid">
-      <div class="spotlight-card">
-        <span class="tag">🔥 Pull of the Month</span>
-        <div class="spotlight-empty">No featured pull yet — check back soon, or share yours in Discord to be considered.</div>
-      </div>
-      <div class="spotlight-card">
-        <span class="tag">⭐ Member Spotlight</span>
-        <div class="spotlight-empty">No spotlight yet — our first featured collector will appear here.</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="comm-section">
-    <div class="section-title">🎯 Community Challenges</div>
-    <div class="challenge-grid">
-      <div class="challenge-card"><div class="icon">📸</div><strong>Share Your Pulls</strong><span>Post in Discord for bonus coins</span></div>
-      <div class="challenge-card"><div class="icon">🎁</div><strong>Refer 3 Friends</strong><span>Unlock a referral milestone bonus</span></div>
-      <div class="challenge-card"><div class="icon">🏆</div><strong>Monthly Streak</strong><span>Stay subscribed all month for a bonus</span></div>
-    </div>
-  </section>
-
-  <section class="comm-section">
-    <div class="section-title">📊 Leaderboards</div>
-    <div class="leaderboard-grid">
-      <div class="leaderboard-card">
-        <div class="leaderboard-head">🎁 Referral Leaderboard</div>
-        <div class="empty-state">No referrals yet — be the first on the board. <a href="referrals.html" style="color:var(--gold);">Get your link →</a></div>
-      </div>
-      <div class="leaderboard-card">
-        <div class="leaderboard-head">🪙 Crate Coin Leaderboard</div>
-        <div class="empty-state">No coin totals yet — this fills in as members start earning.</div>
-      </div>
-    </div>
-  </section>
+<header><a href="index.html" class="nav-logo">CCC</a><nav class="nav-links"><a href="index.html">Home</a><a href="how-it-works.html">How It Works</a><a href="subscriptions.html">Subscriptions</a><a href="founding-members.html">Founding 100</a><a href="rewards.html">Rewards</a><a href="community.html" class="active">Community</a></nav><div class="nav-right" id="navAuth"><a href="login.html" style="padding:6px 12px;">Login</a><a href="index.html#waitlist" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join Waitlist</a></div><button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button></header>
+<div class="mobile-menu" id="mobileMenu"><ul><li><a href="index.html">Home</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="subscriptions.html">Subscriptions</a></li><li><a href="founding-members.html">Founding 100</a></li><li><a href="rewards.html">Rewards</a></li><li><a href="community.html">Community</a></li><li id="mobileAuth"><a href="login.html">Login</a></li><li><a href="index.html#waitlist">Join Waitlist</a></li></ul></div>
+<section class="comm-hero"><h1>Join The <span class="gold">Community</span></h1><p>Follow Card Crate Club, share pulls, compare collections, and connect with collectors as the community grows toward launch.</p></section>
+<section class="social-hub"><div class="social-hub-grid">
+<a class="platform-card" href="https://instagram.com/cardcrateclub" target="_blank" rel="noopener noreferrer"><img class="platform-icon" src="https://cdn.simpleicons.org/instagram/FFFFFF" alt="Instagram"><strong>Instagram</strong><span>@CardCrateClub</span><b>Follow Us</b></a>
+<a class="platform-card" href="https://tiktok.com/@cardcrateclub" target="_blank" rel="noopener noreferrer"><img class="platform-icon" src="https://cdn.simpleicons.org/tiktok/FFFFFF" alt="TikTok"><strong>TikTok</strong><span>@CardCrateClub</span><b>Watch Pulls</b></a>
+<a class="platform-card" href="https://discord.gg/cardcrateclub" target="_blank" rel="noopener noreferrer"><img class="platform-icon" src="https://cdn.simpleicons.org/discord/FFFFFF" alt="Discord"><strong>Discord</strong><span>Card Crate Club</span><b>Join Server</b></a>
+<a class="platform-card" href="https://x.com/cardcrateclub" target="_blank" rel="noopener noreferrer"><img class="platform-icon" src="https://cdn.simpleicons.org/x/FFFFFF" alt="X"><strong>X</strong><span>@CardCrateClub</span><b>Follow Us</b></a>
+</div></section>
+<section class="discord-panel"><img class="platform-icon" src="https://cdn.simpleicons.org/discord/FFFFFF" alt=""><div class="discord-panel-text"><strong>Card Crate Club Discord</strong><span>Planned home for pull threads, collection talk, community announcements, giveaways, and member discussion.</span></div><a href="https://discord.gg/cardcrateclub" target="_blank" rel="noopener noreferrer" class="btn btn-discord btn-lg">Open Discord</a></section>
+<section class="comm-section"><div class="section-title">Community Highlights</div><div class="spotlight-grid"><div class="spotlight-card"><span class="tag">Pull of the Month</span><div class="spotlight-empty">No featured pull yet. Once members start sharing, standout pulls can be featured here.</div></div><div class="spotlight-card"><span class="tag">Member Spotlight</span><div class="spotlight-empty">No spotlight yet. This area is ready for the first featured Card Crate Club collector.</div></div></div></section>
+<section class="comm-section"><div class="section-title">Community Challenges</div><div class="challenge-grid"><div class="challenge-card"><strong>Share Your Pulls</strong><span>Post eligible collection content for future community rewards.</span></div><div class="challenge-card"><strong>Refer Friends</strong><span>Referral milestones can unlock Crate Coin bonuses after the rewards program launches.</span></div><div class="challenge-card"><strong>Monthly Participation</strong><span>Future member challenges can reward consistent participation without requiring social spam.</span></div></div></section>
+<section class="comm-section"><div class="section-title">Leaderboards</div><div class="leaderboard-grid"><div class="leaderboard-card"><div class="leaderboard-head">Referral Leaderboard</div><div class="empty-state">No referrals yet. <a href="referrals.html" style="color:var(--gold);">Learn about referrals →</a></div></div><div class="leaderboard-card"><div class="leaderboard-head">Crate Coin Leaderboard</div><div class="empty-state">Coin totals will appear after the rewards system is active.</div></div></div></section>
+<div class="prelaunch-note">Social handles and community links should be treated as official only after the corresponding Card Crate Club account or invite has been activated. Community rewards and leaderboards are pre-launch features and may change.</div>
 </div>
-
-<!-- ===================== FOOTER ===================== -->
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <div class="footer-brand-logo">CCC<span>.</span></div>
-      <p class="footer-tagline">Stop Hunting. Start Collecting.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Explore</h4>
-      <ul>
-        <li><a href="how-it-works.html">How It Works</a></li>
-        <li><a href="subscriptions.html">Subscriptions</a></li>
-        <li><a href="founding-members.html">Founding 100</a></li>
-        <li><a href="community.html">Community</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Support</h4>
-      <ul>
-        <li><a href="faq.html">FAQ</a></li>
-        <li><a href="contact.html">Contact Us</a></li>
-        <li><a href="shipping-policy.html">Shipping Policy</a></li>
-        <li><a href="refund-policy.html">Refund Policy</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Legal</h4>
-      <ul>
-        <li><a href="privacy.html">Privacy Policy</a></li>
-        <li><a href="terms.html">Terms of Service</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>© 2025 CardCrate Club. All rights reserved.</p>
-    <p>CardCrate Club is an independent collector subscription service and is not affiliated with, sponsored by, or endorsed by Pokémon, The Pokémon Company, Nintendo, Game Freak, or Creatures Inc. All Pokémon trademarks are property of their respective owners.</p>
-  </div>
-</footer>
-
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
-    authDomain: "cardcrate-club.firebaseapp.com",
-    projectId: "cardcrate-club",
-    storageBucket: "cardcrate-club.firebasestorage.app",
-    messagingSenderId: "261800955788",
-    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
-    measurementId: "G-5B8J0LWGKE"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-
-  setPersistence(auth, browserLocalPersistence).then(() => {
-    onAuthStateChanged(auth, (user) => {
-      const navAuth = document.getElementById('navAuth');
-      const mobileAuth = document.getElementById('mobileAuth');
-      if (user) {
-        navAuth.innerHTML = `<a href="dashboard.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Dashboard</a>`;
-        mobileAuth.innerHTML = `<a href="dashboard.html">Dashboard</a>`;
-      } else {
-        navAuth.innerHTML = `<a href="login.html" style="padding:6px 12px;">Login</a><a href="signup.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join the Club</a>`;
-        mobileAuth.innerHTML = `<a href="login.html">Login</a>`;
-      }
-    });
-  });
-</script>
-
-<script>
-  const hamburger = document.getElementById('hamburger');
-  const mobileMenu = document.getElementById('mobileMenu');
-  hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); mobileMenu.classList.toggle('active'); });
-</script>
-
-</body>
-</html>
+<footer class="site-footer"><div class="footer-grid"><div class="footer-col"><div class="footer-brand-logo">CCC</div><p class="footer-tagline">Stop Hunting. Start Collecting.</p></div><div class="footer-col"><h4>Explore</h4><ul><li><a href="how-it-works.html">How It Works</a></li><li><a href="subscriptions.html">Subscriptions</a></li><li><a href="founding-members.html">Founding 100</a></li><li><a href="community.html">Community</a></li></ul></div><div class="footer-col"><h4>Support</h4><ul><li><a href="faq.html">FAQ</a></li><li><a href="contact.html">Contact Us</a></li><li><a href="shipping-policy.html">Shipping Policy</a></li><li><a href="refund-policy.html">Refund Policy</a></li></ul></div><div class="footer-col"><h4>Legal</h4><ul><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Service</a></li></ul></div></div><div class="footer-bottom"><p>© 2026 Card Crate Club. All rights reserved.</p><p>Card Crate Club is an independent collector subscription service and is not affiliated with, sponsored by, or endorsed by Pokémon, The Pokémon Company, Nintendo, Game Freak, or Creatures Inc. Pokémon trademarks are property of their respective owners.</p></div></footer>
+<script type="module">import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';import{getAuth,onAuthStateChanged,setPersistence,browserLocalPersistence}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';const firebaseConfig={apiKey:"AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",authDomain:"cardcrate-club.firebaseapp.com",projectId:"cardcrate-club",storageBucket:"cardcrate-club.firebasestorage.app",messagingSenderId:"261800955788",appId:"1:261800955788:web:3f07f4c60886b26d05d0a9",measurementId:"G-5B8J0LWGKE"};const app=initializeApp(firebaseConfig),auth=getAuth(app);setPersistence(auth,browserLocalPersistence).then(()=>onAuthStateChanged(auth,user=>{const nav=document.getElementById('navAuth'),mobile=document.getElementById('mobileAuth');if(user){nav.innerHTML='<a href="dashboard.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Dashboard</a>';mobile.innerHTML='<a href="dashboard.html">Dashboard</a>'}else{nav.innerHTML='<a href="login.html" style="padding:6px 12px;">Login</a><a href="index.html#waitlist" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join Waitlist</a>';mobile.innerHTML='<a href="login.html">Login</a>'}}));</script>
+<script>const hamburger=document.getElementById('hamburger'),mobileMenu=document.getElementById('mobileMenu');hamburger.addEventListener('click',()=>{hamburger.classList.toggle('active');mobileMenu.classList.toggle('active')});</script>
+</body></html>
