@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+<title id="title">Card Crate Club concept crate</title>
+<desc id="desc">Concept illustration of an open black Card Crate Club mailer with booster packs and a branded insert.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0a0a0f"/><stop offset="1" stop-color="#15151e"/></linearGradient>
+  <linearGradient id="box" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20202a"/><stop offset="1" stop-color="#09090d"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#d4a017"/><stop offset=".5" stop-color="#F5C842"/><stop offset="1" stop-color="#b67d08"/></linearGradient>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#000" flood-opacity=".62"/></filter>
+</defs>
+<rect width="1200" height="760" rx="36" fill="url(#bg)"/>
+<ellipse cx="620" cy="650" rx="430" ry="54" fill="#000" opacity=".42"/>
+<g filter="url(#shadow)">
+  <path d="M280 290 L445 118 Q466 98 495 103 L950 173 Q978 177 989 205 L1031 313 L845 374 L360 335 Z" fill="#14141b" stroke="#4a3c16" stroke-width="3"/>
+  <path d="M336 333 L845 374 L978 322 L934 607 Q929 636 895 641 L414 613 Q379 611 368 582 Z" fill="url(#box)" stroke="#6b5315" stroke-width="4"/>
+  <path d="M336 333 L845 374 L978 322 L933 409 L387 390 Z" fill="#0b0b10"/>
+  <path d="M387 390 L933 409 L895 601 L414 576 Z" fill="#101017"/>
+  <g opacity=".85"><path d="M409 407c72 24 145 19 213 3 79-18 154-9 279 17l-8 38c-111-22-199-30-276-13-77 17-147 18-216-4z" fill="#050507"/></g>
+  <g transform="translate(438 388) rotate(3)">
+    <g transform="translate(0 28) rotate(-8)"><rect width="116" height="196" rx="11" fill="#202938" stroke="#F5C842" stroke-opacity=".32"/><rect x="12" y="15" width="92" height="38" rx="8" fill="#284d7a"/><text x="58" y="40" text-anchor="middle" fill="#fff" font-family="Arial" font-size="14" font-weight="700">BOOSTER</text><circle cx="58" cy="108" r="33" fill="#4299F5" opacity=".5"/><text x="58" y="177" text-anchor="middle" fill="#ddd" font-family="Arial" font-size="11">SEALED PACK</text></g>
+    <g transform="translate(118 2) rotate(-2)"><rect width="116" height="196" rx="11" fill="#352136" stroke="#F5C842" stroke-opacity=".32"/><rect x="12" y="15" width="92" height="38" rx="8" fill="#67345f"/><text x="58" y="40" text-anchor="middle" fill="#fff" font-family="Arial" font-size="14" font-weight="700">BOOSTER</text><circle cx="58" cy="108" r="33" fill="#d95e96" opacity=".48"/><text x="58" y="177" text-anchor="middle" fill="#ddd" font-family="Arial" font-size="11">SEALED PACK</text></g>
+    <g transform="translate(242 16) rotate(4)"><rect width="116" height="196" rx="11" fill="#273323" stroke="#F5C842" stroke-opacity=".32"/><rect x="12" y="15" width="92" height="38" rx="8" fill="#3e6641"/><text x="58" y="40" text-anchor="middle" fill="#fff" font-family="Arial" font-size="14" font-weight="700">BOOSTER</text><circle cx="58" cy="108" r="33" fill="#42F587" opacity=".35"/><text x="58" y="177" text-anchor="middle" fill="#ddd" font-family="Arial" font-size="11">SEALED PACK</text></g>
+    <g transform="translate(365 30) rotate(9)"><rect width="116" height="196" rx="11" fill="#392827" stroke="#F5C842" stroke-opacity=".32"/><rect x="12" y="15" width="92" height="38" rx="8" fill="#7b4a2c"/><text x="58" y="40" text-anchor="middle" fill="#fff" font-family="Arial" font-size="14" font-weight="700">BOOSTER</text><circle cx="58" cy="108" r="33" fill="#f58b42" opacity=".42"/><text x="58" y="177" text-anchor="middle" fill="#ddd" font-family="Arial" font-size="11">SEALED PACK</text></g>
+  </g>
+  <g transform="translate(544 465) rotate(4)"><rect width="245" height="128" rx="10" fill="#08080c" stroke="#F5C842" stroke-width="2"/><text x="122" y="35" text-anchor="middle" fill="#F5C842" font-family="Arial" font-size="14" font-weight="700" letter-spacing="2">CARD CRATE CLUB</text><text x="122" y="64" text-anchor="middle" fill="#fff" font-family="Arial" font-size="20" font-weight="800">THANK YOU</text><text x="122" y="88" text-anchor="middle" fill="#aaa" font-family="Arial" font-size="11">Built for collectors.</text><text x="122" y="106" text-anchor="middle" fill="#aaa" font-family="Arial" font-size="11">Packed with purpose.</text></g>
+  <g transform="translate(554 190)"><path d="M31 0h70l21 29v86H8V29z" fill="none" stroke="url(#gold)" stroke-width="5"/><path d="M20 29h90" stroke="#F5C842" stroke-width="4"/><text x="65" y="79" text-anchor="middle" fill="#F5C842" font-family="Arial" font-size="32" font-weight="900">CCC</text><text x="65" y="105" text-anchor="middle" fill="#ddd" font-family="Arial" font-size="10" letter-spacing="2">CARD CRATE CLUB</text></g>
+  <text x="665" y="613" text-anchor="middle" fill="#F5C842" font-family="Arial" font-size="15" font-weight="700" letter-spacing="5">OPEN · COLLECT · ENJOY</text>
+</g>
+<g transform="translate(70 80)"><rect width="156" height="42" rx="21" fill="#16161f" stroke="#F5C842" stroke-opacity=".45"/><text x="78" y="27" text-anchor="middle" fill="#F5C842" font-family="Arial" font-size="13" font-weight="700" letter-spacing="1.5">CONCEPT RENDERING</text></g>
+<text x="72" y="680" fill="#f0f0f0" font-family="Arial" font-size="36" font-weight="900">Your crate. Your collection.</text>
+<text x="72" y="719" fill="#8e8e99" font-family="Arial" font-size="17">Final packaging, inserts, and product mix may vary.</text>
+</svg>
