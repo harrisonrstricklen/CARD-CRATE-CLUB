@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                     <div class="crate-concept-art">
-                        <img src="crate-concept.svg" alt="Concept rendering of an open Card Crate Club subscription box" loading="lazy">
+                        <img src="images/card-crate-concept.png" alt="Concept rendering of an open Card Crate Club subscription box with sealed trading card packs and a branded insert" loading="lazy">
                         <div class="crate-concept-caption">Concept rendering — final packaging, inserts, and product mix may vary.</div>
                     </div>
                 </div>`;
