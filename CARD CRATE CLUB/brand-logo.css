@@ -3,6 +3,8 @@
 .footer-brand-logo::before,
 .loader-logo::before,
 .brand-mark::before,
+.auth-logo-badge::before,
+.brand-emblem::before,
 .ccc-brand-mark {
   content:"";
   display:inline-block;
@@ -29,20 +31,38 @@
   text-transform:uppercase;
 }
 .loader-logo::before { width:74px; height:74px; flex-basis:74px; }
+.loader-logo span { color:inherit !important; }
 
-/* Legacy square CCC badges are converted to the emblem. */
-.brand-mark {
+/* Legacy square CCC badges become the official emblem. */
+.brand-mark,
+.auth-logo-badge {
   font-size:0 !important;
   color:transparent !important;
   background:transparent !important;
   border-radius:0 !important;
+  padding:0 !important;
   display:inline-flex !important;
   align-items:center;
   justify-content:center;
 }
 .brand-mark::before { width:36px; height:36px; flex-basis:36px; }
+.auth-logo-badge::before { width:72px; height:72px; flex-basis:72px; }
+
+/* Dashboard and other legacy inline emblems use the same canonical mark. */
+.brand-emblem {
+  position:relative;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  color:transparent !important;
+  background:transparent !important;
+}
+.brand-emblem > svg,
+.brand-emblem > img:not([src$='brand-mark.svg']) { display:none !important; }
+.brand-emblem::before { width:100%; height:100%; flex-basis:auto; }
 
 @media (max-width:640px){
   .nav-logo::before { width:32px; height:32px; flex-basis:32px; }
   .footer-brand-logo::before { width:34px; height:34px; flex-basis:34px; }
+  .auth-logo-badge::before { width:62px; height:62px; flex-basis:62px; }
 }
