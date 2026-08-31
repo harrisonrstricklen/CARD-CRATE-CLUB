@@ -74,12 +74,23 @@
   .tier-features li::before { content: '✓'; color: var(--gold); font-weight: 700; flex-shrink: 0; }
 
   /* ===== Comparison table ===== */
-  .compare-wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 60px; overflow-x: auto; }
+  .compare-wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 60px; position: relative; }
+  .compare-scroll-hint { display: none; font-size: 0.78rem; color: var(--gold); margin-bottom: 10px; text-align: center; }
+  .compare-scroll-area { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; border-radius: var(--radius); }
+  .compare-scroll-area::after {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 36px;
+    background: linear-gradient(90deg, transparent, var(--dark) 90%);
+    pointer-events: none;
+  }
   .compare-table { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .compare-table th, .compare-table td { padding: 12px 14px; text-align: center; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
   .compare-table th:first-child, .compare-table td:first-child { text-align: left; color: #ccc; }
   .compare-table thead th { background: var(--dark3); color: var(--gold); font-weight: 800; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .compare-table td.check { color: var(--gold); font-weight: 700; }
+  @media (max-width: 700px) {
+    .compare-scroll-hint { display: block; }
+    .compare-scroll-area::after { display: block; }
+  }
   .compare-table td.dash { color: var(--muted); }
   .compare-table tbody tr:last-child td { border-bottom: none; }
 
@@ -337,6 +348,8 @@
   <!-- ========== COMPARISON TABLE ========== -->
   <section class="compare-wrap">
     <div class="section-title">⚖️ Compare Plans</div>
+    <p class="compare-scroll-hint">← Swipe to see all 4 plans →</p>
+    <div class="compare-scroll-area">
     <table class="compare-table">
       <thead>
         <tr>
@@ -359,6 +372,7 @@
         <tr><td>AI Card Evaluator</td><td class="dash">Locked</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- ========== FOUNDING 100 ========== -->
