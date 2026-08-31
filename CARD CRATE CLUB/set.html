@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08080e">
+  <title>Set Gallery | Card Crate Club</title>
+  <style>
+    :root {
+      --bg:#08080e; --panel:#111119; --gold:#f5c842; --gold2:#d4a017;
+      --text:#f5f5f7; --muted:#9b9baa; --border:rgba(255,255,255,.08);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; color:var(--text);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(245,200,66,.08), transparent 30%),
+        radial-gradient(circle at 85% 28%, rgba(99,77,255,.07), transparent 25%),
+        var(--bg);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .topbar { position:sticky; top:0; z-index:20; backdrop-filter:blur(18px);
+      background:rgba(8,8,14,.82); border-bottom:1px solid var(--border); }
+    .topbar-inner { max-width:1180px; margin:auto; padding:14px 18px;
+      display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .brand { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; font-weight:900; }
+    .brand-mark { width:36px; height:36px; border-radius:11px; display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#15120a; }
+    .back { text-decoration:none; color:var(--muted); border:1px solid var(--border);
+      border-radius:999px; padding:8px 12px; font-size:.86rem; }
+    main { max-width:1180px; margin:auto; padding:28px 18px 70px; }
+    .hero { background:linear-gradient(145deg,rgba(245,200,66,.08),rgba(255,255,255,.025));
+      border:1px solid var(--border); border-radius:22px; padding:24px; display:flex;
+      align-items:center; gap:22px; min-height:150px; }
+    .set-logo-wrap { width:170px; min-width:130px; height:95px; display:flex; align-items:center; justify-content:center; }
+    #set-logo { max-width:100%; max-height:88px; object-fit:contain; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45)); }
+    .eyebrow { color:var(--gold); text-transform:uppercase; letter-spacing:.14em; font-size:.7rem; font-weight:900; }
+    h1 { margin:4px 0 8px; font-size:clamp(1.7rem,5vw,3rem); line-height:1; }
+    .meta { color:var(--muted); font-size:.9rem; }
+    .controls { margin:20px 0 16px; display:flex; gap:10px; align-items:center; }
+    .search { flex:1; width:100%; background:var(--panel); color:var(--text); border:1px solid var(--border);
+      border-radius:13px; outline:none; padding:13px 15px; font-size:1rem; }
+    .count { white-space:nowrap; color:var(--muted); font-size:.82rem; }
+    .status { min-height:46px; display:flex; align-items:center; justify-content:center; color:var(--muted);
+      border:1px dashed var(--border); border-radius:14px; margin-top:16px; }
+    .retry { margin-left:10px; border:0; border-radius:999px; background:var(--gold); color:#15120a;
+      font-weight:800; padding:8px 13px; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:14px; margin-top:14px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:15px; padding:9px;
+      cursor:pointer; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; overflow:hidden; }
+    .card:hover { transform:translateY(-4px); border-color:rgba(245,200,66,.3); box-shadow:0 14px 32px rgba(0,0,0,.27); }
+    .card-img-wrap { aspect-ratio:2.5/3.5; border-radius:10px; overflow:hidden; background:rgba(255,255,255,.025);
+      display:flex; align-items:center; justify-content:center; }
+    .card img { width:100%; height:100%; object-fit:contain; display:block; }
+    .card-name { margin:9px 2px 2px; font-size:.78rem; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .card-number { margin:0 2px 2px; font-size:.68rem; color:var(--muted); }
+    .empty { grid-column:1/-1; color:var(--muted); text-align:center; padding:30px; }
+    .modal { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.84); display:none; align-items:center;
+      justify-content:center; padding:22px; backdrop-filter:blur(8px); }
+    .modal.open { display:flex; }
+    .modal-card { position:relative; width:min(92vw,470px); text-align:center; }
+    .modal img { width:100%; max-height:78vh; object-fit:contain; filter:drop-shadow(0 16px 30px rgba(0,0,0,.6)); }
+    .modal-title { margin-top:10px; font-weight:800; }
+    .modal-sub { color:var(--muted); font-size:.8rem; margin-top:3px; }
+    .close { position:absolute; right:-4px; top:-8px; width:38px; height:38px; border:1px solid rgba(255,255,255,.16);
+      background:rgba(15,15,20,.9); color:white; border-radius:50%; font-size:1.25rem; cursor:pointer; z-index:3; }
+    @media (max-width:600px) {
+      main { padding:18px 12px 55px; } .topbar-inner { padding:11px 12px; }
+      .hero { padding:18px 14px; gap:10px; min-height:120px; }
+      .set-logo-wrap { width:110px; min-width:100px; height:75px; } #set-logo { max-height:68px; }
+      .meta { font-size:.78rem; } .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .card { padding:7px; border-radius:12px; } .controls { align-items:stretch; flex-direction:column; }
+      .count { padding-left:3px; } .brand span:last-child { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">CCC</span><span>Card Crate Club</span></a>
+      <a class="back" href="dashboard.html">← Dashboard</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="set-logo-wrap"><img id="set-logo" alt="" hidden></div>
+      <div>
+        <div class="eyebrow">Pokémon TCG Set</div>
+        <h1 id="set-title">Loading set…</h1>
+        <div class="meta" id="set-meta">Getting the full card list.</div>
+      </div>
+    </section>
+
+    <div class="controls">
+      <input id="search" class="search" type="search" placeholder="Search cards in this set…" autocomplete="off">
+      <div class="count" id="visible-count"></div>
+    </div>
+
+    <div id="status" class="status">Loading cards…</div>
+    <section id="grid" class="grid" aria-live="polite"></section>
+  </main>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="Card preview">
+    <div class="modal-card">
+      <button class="close" id="close-modal" aria-label="Close">×</button>
+      <img id="modal-img" alt="">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-sub" id="modal-sub"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const SET_NAMES = {
+    'me05':'Pitch Black', 'me04':'Chaos Rising', 'me03':'Perfect Order',
+    'me02.5':'Ascended Heroes', 'me02':'Phantasmal Flames', 'me01':'Mega Evolution'
+  };
+
+  const params = new URLSearchParams(location.search);
+  const setId = params.get('set') || 'me05';
+
+  const titleEl = document.getElementById('set-title');
+  const metaEl = document.getElementById('set-meta');
+  const logoEl = document.getElementById('set-logo');
+  const gridEl = document.getElementById('grid');
+  const statusEl = document.getElementById('status');
+  const searchEl = document.getElementById('search');
+  const countEl = document.getElementById('visible-count');
+
+  let allCards = [];
+  let setData = null;
+
+  titleEl.textContent = SET_NAMES[setId] || 'Pokémon Set';
+  document.title = `${titleEl.textContent} | Card Crate Club`;
+
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  async function fetchSetWithRetry(maxAttempts = 6) {
+    let lastError;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        statusEl.textContent = attempt === 1 ? 'Loading cards…' : `Still loading… retry ${attempt}/${maxAttempts}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 9000);
+        const res = await fetch(`https://api.tcgdex.net/v2/en/sets/${encodeURIComponent(setId)}`, {
+          signal: controller.signal, cache: 'no-store'
+        });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data || !Array.isArray(data.cards) || !data.cards.length) throw new Error('No cards returned');
+        return data;
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxAttempts) await sleep(Math.min(700 * attempt, 3000));
+      }
+    }
+    throw lastError;
+  }
+
+  function imageSources(card, quality = 'low') {
+    const base = card.image || '';
+    const otherQuality = quality === 'high' ? 'low' : 'high';
+    return [
+      `${base}/${quality}.webp`, `${base}/${quality}.png`, `${base}/${quality}.jpg`,
+      `${base}/${otherQuality}.webp`, `${base}/${otherQuality}.png`
+    ];
+  }
+
+  function applyFallback(img, card, quality = 'low') {
+    const urls = imageSources(card, quality);
+    let i = 0;
+    img.src = urls[0];
+    img.onerror = () => {
+      i++;
+      if (i < urls.length) img.src = urls[i];
+      else img.onerror = null;
+    };
+  }
+
+  function render() {
+    const q = searchEl.value.trim().toLowerCase();
+    const cards = allCards.filter(card => `${card.name || ''} ${card.localId || ''}`.toLowerCase().includes(q));
+    countEl.textContent = `${cards.length} of ${allCards.length} cards`;
+    gridEl.innerHTML = '';
+
+    if (!cards.length) {
+      gridEl.innerHTML = '<div class="empty">No cards match that search.</div>';
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+
+    cards.forEach(card => {
+      const el = document.createElement('article');
+      el.className = 'card';
+      el.tabIndex = 0;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'card-img-wrap';
+
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.alt = card.name || `Card ${card.localId}`;
+      applyFallback(img, card, 'low');
+
+      const name = document.createElement('div');
+      name.className = 'card-name';
+      name.textContent = card.name || 'Unknown card';
+
+      const number = document.createElement('div');
+      number.className = 'card-number';
+      const official = setData?.cardCount?.official;
+      number.textContent = official ? `#${card.localId} / ${official}` : `#${card.localId}`;
+
+      wrap.appendChild(img);
+      el.append(wrap, name, number);
+
+      const open = () => openModal(card);
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+
+      frag.appendChild(el);
+    });
+
+    gridEl.appendChild(frag);
+  }
+
+  const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modal-img');
+  const modalTitle = document.getElementById('modal-title');
+  const modalSub = document.getElementById('modal-sub');
+
+  function openModal(card) {
+    modalTitle.textContent = card.name || 'Card';
+    modalSub.textContent = `#${card.localId}`;
+    modalImg.alt = card.name || 'Card preview';
+    applyFallback(modalImg, card, 'high');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    modalImg.removeAttribute('src');
+  }
+
+  document.getElementById('close-modal').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  searchEl.addEventListener('input', render);
+
+  async function init() {
+    try {
+      setData = await fetchSetWithRetry();
+      titleEl.textContent = setData.name || SET_NAMES[setId] || 'Pokémon Set';
+      document.title = `${titleEl.textContent} | Card Crate Club`;
+
+      const total = setData.cardCount?.total ?? setData.cards.length;
+      const official = setData.cardCount?.official;
+      const release = setData.releaseDate
+        ? new Date(`${setData.releaseDate}T00:00:00`).toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'})
+        : '';
+
+      metaEl.textContent = [
+        official ? `${official} numbered cards` : `${setData.cards.length} cards`,
+        total && total !== official ? `${total} including secret cards` : '',
+        release
+      ].filter(Boolean).join(' • ');
+
+      if (setData.logo) {
+        logoEl.src = `${setData.logo}.webp`;
+        logoEl.alt = `${titleEl.textContent} logo`;
+        logoEl.hidden = false;
+        logoEl.onerror = () => { logoEl.onerror = null; logoEl.src = `${setData.logo}.png`; };
+      }
+
+      allCards = setData.cards.slice().sort((a,b) => {
+        const na = parseInt(String(a.localId).replace(/\D/g,''), 10);
+        const nb = parseInt(String(b.localId).replace(/\D/g,''), 10);
+        if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+        return String(a.localId).localeCompare(String(b.localId), undefined, {numeric:true});
+      });
+
+      statusEl.style.display = 'none';
+      render();
+    } catch (err) {
+      console.error(err);
+      statusEl.innerHTML = `Couldn't load this set right now. <button class="retry" id="retry-btn">Try again</button>`;
+      document.getElementById('retry-btn').addEventListener('click', () => {
+        statusEl.textContent = 'Loading cards…';
+        init();
+      });
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
