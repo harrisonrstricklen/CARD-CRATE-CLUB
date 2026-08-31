@@ -4,10 +4,14 @@
 The script reads CARD CRATE CLUB/card-data/*.json, downloads one compact WebP
 image for each card, and stores it under card-images/<set>/<localId>.webp.
 It is resume-safe: existing non-empty images are skipped.
+
+Pass one or more set IDs on the command line to process only those sets, e.g.:
+    python build-local-card-library.py me01 me02
 """
 from pathlib import Path
 import json
 import re
+import sys
 import time
 import urllib.request
 
@@ -48,7 +52,10 @@ def candidates(set_id, card):
 
 
 def download(url, dest):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "image/webp,image/*"})
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": USER_AGENT, "Accept": "image/webp,image/*"},
+    )
     with urllib.request.urlopen(req, timeout=30) as response:
         body = response.read()
     if len(body) < 1000:
@@ -56,9 +63,20 @@ def download(url, dest):
     dest.write_bytes(body)
 
 
+def selected_json_files():
+    requested = [safe_id(value) for value in sys.argv[1:] if str(value).strip()]
+    if requested:
+        files = [DATA_DIR / f"{set_id}.json" for set_id in requested]
+        missing = [path.name for path in files if not path.exists()]
+        if missing:
+            raise SystemExit(f"Missing card-data file(s): {', '.join(missing)}")
+        return files
+    return sorted(DATA_DIR.glob("*.json"))
+
+
 def main():
     IMAGE_DIR.mkdir(exist_ok=True)
-    json_files = sorted(DATA_DIR.glob("*.json"))
+    json_files = selected_json_files()
     if not json_files:
         raise SystemExit("No card-data JSON files found")
 
@@ -73,7 +91,7 @@ def main():
         set_dir.mkdir(parents=True, exist_ok=True)
         set_ok = 0
 
-        print(f"\n=== {set_id}: {len(cards)} cards ===")
+        print(f"\n=== {set_id}: {len(cards)} cards ===", flush=True)
         for index, card in enumerate(cards, 1):
             total_cards += 1
             local_id = safe_id(card.get("localId"))
@@ -83,7 +101,7 @@ def main():
             if dest.exists() and dest.stat().st_size > 1000:
                 set_ok += 1
                 total_ok += 1
-                print(f"[{index}/{len(cards)}] {name}: already local")
+                print(f"[{index}/{len(cards)}] {name}: already local", flush=True)
                 card["localImage"] = f"card-images/{set_id}/{local_id}.webp"
                 continue
 
@@ -97,7 +115,10 @@ def main():
                     except Exception as exc:
                         if dest.exists():
                             dest.unlink(missing_ok=True)
-                        print(f"[{index}/{len(cards)}] {name}: retry {attempt + 1} ({exc})")
+                        print(
+                            f"[{index}/{len(cards)}] {name}: retry {attempt + 1} ({exc})",
+                            flush=True,
+                        )
                         time.sleep(1 + attempt)
                 if success:
                     break
@@ -106,16 +127,18 @@ def main():
                 set_ok += 1
                 total_ok += 1
                 card["localImage"] = f"card-images/{set_id}/{local_id}.webp"
-                print(f"[{index}/{len(cards)}] {name}: saved")
+                print(f"[{index}/{len(cards)}] {name}: saved", flush=True)
             else:
                 card["localImage"] = ""
                 report.append(f"MISSING {set_id} #{local_id} {name}")
-                print(f"[{index}/{len(cards)}] {name}: MISSING")
+                print(f"[{index}/{len(cards)}] {name}: MISSING", flush=True)
 
             time.sleep(0.05)
 
-        # Persist exact local paths into the existing database.
-        json_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json_path.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         report.insert(0, f"{set_id}: {set_ok}/{len(cards)} artwork files local")
 
     header = [
@@ -124,7 +147,7 @@ def main():
         "",
     ]
     REPORT.write_text("\n".join(header + report) + "\n", encoding="utf-8")
-    print(f"\nFinished: {total_ok}/{total_cards} images local")
+    print(f"\nFinished: {total_ok}/{total_cards} images local", flush=True)
 
 
 if __name__ == "__main__":
