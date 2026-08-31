@@ -1,0 +1,63 @@
+/* Homepage mobile layout fixes */
+@media (max-width: 560px) {
+  .home-section {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    overflow: hidden;
+  }
+
+  .section-header,
+  .features-grid,
+  .tiers-grid,
+  .founding-benefits,
+  .social-grid,
+  .waitlist-box {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .home-section .section-title {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    font-size: clamp(1.9rem, 10vw, 2.45rem) !important;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .home-section .section-title::after {
+    display: none !important;
+  }
+
+  .feature-card,
+  .tier-card,
+  .step,
+  .step-content,
+  .founding-panel,
+  .waitlist-right,
+  .social-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .feature-card p,
+  .tier-card p,
+  .step-content p,
+  .waitlist-left p,
+  .section-subtitle {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .features-grid,
+  .tiers-grid,
+  .founding-benefits,
+  .social-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
