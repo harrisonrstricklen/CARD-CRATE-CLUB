@@ -1,9 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Search Card Crate Club's generated 20k+ card database locally instead of
-// depending on the Pokemon TCG API for every Add Card search. This makes name,
-// set and card-number searches fast and removes the old public-API failure mode.
+// Search Card Crate Club's generated card database locally, then enrich the
+// small result set with live TCGplayer pricing from the Pokemon TCG API.
 const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
 const SETS_PATH = path.resolve(__dirname, '../../card-data/all-sets/index.json');
 let cachedCards = null;
@@ -49,7 +48,6 @@ function scoreCard(card, query, tokens, setQuery) {
     if (name === query) score += 1000;
     else if (name.startsWith(query)) score += 700;
     else if (name.includes(query)) score += 500;
-
     for (const token of tokens) {
       if (name === token) score += 120;
       else if (name.startsWith(token)) score += 80;
@@ -65,8 +63,13 @@ function scoreCard(card, query, tokens, setQuery) {
     else if (setName.startsWith(setQuery)) score += 180;
     else if (setName.includes(setQuery)) score += 100;
   }
-
   return score;
+}
+
+function apiHeaders() {
+  const headers = {};
+  if (process.env.POKEMONTCG_API_KEY) headers['X-Api-Key'] = process.env.POKEMONTCG_API_KEY;
+  return headers;
 }
 
 async function upstreamDexSearch(params) {
@@ -77,11 +80,31 @@ async function upstreamDexSearch(params) {
   if (params.set) clauses.push(`set.name:"${params.set}*"`);
   const queryString = clauses.join(' ');
   const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryString)}&pageSize=48&orderBy=-set.releaseDate`;
-  const headers = {};
-  if (process.env.POKEMONTCG_API_KEY) headers['X-Api-Key'] = process.env.POKEMONTCG_API_KEY;
-  const response = await fetch(apiUrl, { headers });
+  const response = await fetch(apiUrl, { headers: apiHeaders() });
   if (!response.ok) throw new Error(`Upstream API returned ${response.status}`);
   return response.json();
+}
+
+// Local search stays fast/reliable. This second request only asks the API for
+// the exact IDs already selected locally, restoring live TCGplayer price data.
+async function fetchLiveDetails(cards) {
+  if (!cards.length) return new Map();
+  const ids = cards.map(card => String(card.id || '').trim()).filter(Boolean);
+  if (!ids.length) return new Map();
+
+  try {
+    const clauses = ids.map(id => `id:${id}`).join(' OR ');
+    const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(clauses)}&pageSize=${Math.min(ids.length, 48)}`;
+    const response = await fetch(apiUrl, { headers: apiHeaders() });
+    if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
+    const payload = await response.json();
+    return new Map((payload.data || []).map(card => [String(card.id), card]));
+  } catch (error) {
+    // Pricing should never break Add Card. Results still appear immediately
+    // from our local database and the UI can show that price is unavailable.
+    console.warn('Live TCGplayer pricing enrichment failed:', error);
+    return new Map();
+  }
 }
 
 exports.handler = async function (event) {
@@ -92,30 +115,15 @@ exports.handler = async function (event) {
   const setRaw = (params.set || '').trim();
 
   if (!nameRaw && !dexRaw && !numberRaw) {
-    return {
-      statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Provide "q" (name), "dex" (Pokédex number), and/or "number" (card number).' })
-    };
+    return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Provide "q" (name), "dex" (Pokédex number), and/or "number" (card number).' }) };
   }
 
-  // The current compact local index does not yet carry Pokédex numbers. Keep
-  // that specialist search available through the upstream API while every
-  // normal name/set/card-number search uses our local database.
   if (dexRaw) {
     try {
       const data = await upstreamDexSearch({ q: nameRaw, dex: dexRaw, number: numberRaw, set: setRaw });
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
-        body: JSON.stringify(data)
-      };
+      return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }, body: JSON.stringify(data) };
     } catch (error) {
-      return {
-        statusCode: 502,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Pokédex-number search is temporarily unavailable. Name and card-number searches still work locally.' })
-      };
+      return { statusCode: 502, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Pokédex-number search is temporarily unavailable. Name and card-number searches still work locally.' }) };
     }
   }
 
@@ -125,20 +133,17 @@ exports.handler = async function (event) {
     const tokens = query ? query.split(' ').filter(Boolean) : [];
     const setQuery = normalize(setRaw);
     const wantedNumber = normalizeNumber(numberRaw);
-
     const matches = [];
+
     for (const card of cards) {
       const cardName = normalize(card.name);
       const cardSet = normalize(card.setName);
       const cardNumber = normalizeNumber(card.number);
       const haystack = `${cardName} ${cardSet} ${normalize(card.number)}`;
-
       if (wantedNumber && cardNumber !== wantedNumber) continue;
       if (setQuery && !cardSet.includes(setQuery)) continue;
       if (tokens.length && !tokens.every(token => haystack.includes(token))) continue;
-
-      const score = scoreCard(card, query, tokens, setQuery);
-      matches.push({ card, score });
+      matches.push({ card, score: scoreCard(card, query, tokens, setQuery) });
     }
 
     matches.sort((a, b) => {
@@ -150,43 +155,42 @@ exports.handler = async function (event) {
       return String(a.card.name || '').localeCompare(String(b.card.name || ''));
     });
 
-    const data = matches.slice(0, 48).map(({ card }) => {
+    const selected = matches.slice(0, 48).map(({ card }) => card);
+    const liveDetails = await fetchLiveDetails(selected);
+
+    const data = selected.map(card => {
       const set = sets.get(String(card.setId)) || {};
+      const live = liveDetails.get(String(card.id));
       return {
         id: card.id,
         name: card.name,
         number: card.number,
-        rarity: card.rarity || null,
-        supertype: card.supertype || null,
+        rarity: card.rarity || live?.rarity || null,
+        supertype: card.supertype || live?.supertype || null,
         set: {
           id: card.setId,
           name: card.setName,
-          series: set.series || '',
-          printedTotal: set.printedTotal || null,
-          total: set.total || null,
-          releaseDate: set.releaseDate || ''
+          series: set.series || live?.set?.series || '',
+          printedTotal: set.printedTotal || live?.set?.printedTotal || null,
+          total: set.total || live?.set?.total || null,
+          releaseDate: set.releaseDate || live?.set?.releaseDate || ''
         },
         images: {
-          small: card.image || '',
-          large: card.image || ''
-        }
+          small: live?.images?.small || card.image || '',
+          large: live?.images?.large || card.image || ''
+        },
+        tcgplayer: live?.tcgplayer || null,
+        cardmarket: live?.cardmarket || null
       };
     });
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300'
-      },
-      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'card-crate-club-local-database' })
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
+      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-live-pricing' })
     };
   } catch (error) {
     console.error('Local card database search failed:', error);
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Could not search the local card database. Please try again.' })
-    };
+    return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Could not search the local card database. Please try again.' }) };
   }
 };
