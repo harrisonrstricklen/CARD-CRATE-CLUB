@@ -473,18 +473,67 @@
     }
 
     .set-card img {
-      width: 100%;
-      height: 90px;
-      object-fit: cover;
+      display: block;
     }
 
     .set-art {
       width: 100%;
-      height: 90px;
+      height: 112px;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.8rem;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 15%, rgba(245,200,66,0.12), rgba(8,8,14,0.96) 72%);
+    }
+
+    .top-card-fan {
+      position: relative;
+      width: 116px;
+      height: 104px;
+      margin-top: 6px;
+    }
+
+    .top-card-img {
+      position: absolute;
+      width: 58px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 4px;
+      filter: drop-shadow(0 5px 6px rgba(0,0,0,0.55));
+      background: rgba(255,255,255,0.03);
+      transition: transform 0.2s ease;
+    }
+
+    .top-card-img.rank-1 { left: 29px; top: 8px; z-index: 3; transform: rotate(0deg) scale(1.08); }
+    .top-card-img.rank-2 { left: 4px;  top: 15px; z-index: 2; transform: rotate(-10deg); }
+    .top-card-img.rank-3 { right: 4px; top: 15px; z-index: 1; transform: rotate(10deg); }
+
+    .set-card:hover .top-card-img.rank-1 { transform: translateY(-3px) scale(1.1); }
+    .set-card:hover .top-card-img.rank-2 { transform: translate(-2px,-1px) rotate(-12deg); }
+    .set-card:hover .top-card-img.rank-3 { transform: translate(2px,-1px) rotate(12deg); }
+
+    .set-loading, .set-unavailable {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.66rem;
+      line-height: 1.35;
+      padding: 0 12px;
+    }
+
+    .top-card-price {
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      z-index: 5;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(8,8,12,0.88);
+      border: 1px solid rgba(245,200,66,0.35);
+      color: var(--gold);
+      font-size: 0.58rem;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
     }
 
     .set-card-info {
@@ -896,48 +945,48 @@
         <div class="section-title">🔥 Current Sets</div>
         <div class="sets-scroll">
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 30% 20%, #2a1a3e, #0a0a12 70%);">🌑</div>
+          <div class="set-card" data-set-name="Pitch Black">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Pitch Black</strong>
               <span>Jul 2026</span>
             </div>
           </div>
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 70% 30%, #3a2a6e, #12122a 70%);">⚡</div>
+          <div class="set-card" data-set-name="Chaos Rising">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Chaos Rising</strong>
               <span>May 2026</span>
             </div>
           </div>
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 40% 30%, #123a4e, #0a1620 70%);">🔷</div>
+          <div class="set-card" data-set-name="Perfect Order">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Perfect Order</strong>
               <span>Mar 2026</span>
             </div>
           </div>
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 60% 25%, #4a3a10, #1a1508 70%);">✨</div>
+          <div class="set-card" data-set-name="Ascended Heroes">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Ascended Heroes</strong>
               <span>Jan 2026</span>
             </div>
           </div>
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 35% 25%, #4e1e12, #1c0c08 70%);">🔥</div>
+          <div class="set-card" data-set-name="Phantasmal Flames">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Phantasmal Flames</strong>
               <span>Nov 2025</span>
             </div>
           </div>
 
-          <div class="set-card">
-            <div class="set-art" style="background: radial-gradient(circle at 45% 25%, #123a2e, #081c14 70%);">💎</div>
+          <div class="set-card" data-set-name="Mega Evolution">
+            <div class="set-art"><div class="set-loading">Loading top cards…</div></div>
             <div class="set-card-info">
               <strong>Mega Evolution</strong>
               <span>Sep 2025</span>
@@ -1202,6 +1251,158 @@
       window.location.href = 'login.html';
     });
 
+  </script>
+
+
+  <!-- ========== CURRENT SETS: TOP 3 MARKET-VALUE CARDS ========== -->
+  <script>
+    (() => {
+      const API = 'https://api.tcgdex.net/v2/en';
+      const CACHE_KEY = 'ccc-current-sets-top-cards-v1';
+      const CACHE_MS = 24 * 60 * 60 * 1000;
+      const MAX_CONCURRENT = 12;
+
+      const normalize = (value = '') => value
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      function readCache() {
+        try {
+          const raw = localStorage.getItem(CACHE_KEY);
+          if (!raw) return {};
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function writeCache(cache) {
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (_) {}
+      }
+
+      function bestUsdMarket(card) {
+        const tcg = card?.pricing?.tcgplayer;
+        if (!tcg) return 0;
+        let best = 0;
+        for (const [key, value] of Object.entries(tcg)) {
+          if (!value || typeof value !== 'object') continue;
+          const market = Number(value.marketPrice);
+          if (Number.isFinite(market) && market > best) best = market;
+        }
+        return best;
+      }
+
+      function imageUrl(base) {
+        if (!base) return '';
+        return `${base.replace(/\/$/, '')}/low.webp`;
+      }
+
+      async function fetchJSON(url) {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error(`TCGdex ${response.status}`);
+        return response.json();
+      }
+
+      async function mapWithConcurrency(items, worker, limit = MAX_CONCURRENT) {
+        const results = new Array(items.length);
+        let next = 0;
+        async function runner() {
+          while (next < items.length) {
+            const i = next++;
+            try { results[i] = await worker(items[i], i); } catch (_) { results[i] = null; }
+          }
+        }
+        await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
+        return results;
+      }
+
+      async function resolveSet(setName, allSets) {
+        const wanted = normalize(setName);
+        return allSets.find(s => normalize(s.name) === wanted)
+          || allSets.find(s => normalize(s.name).includes(wanted) || wanted.includes(normalize(s.name)));
+      }
+
+      async function getTopCards(setName, allSets) {
+        const cache = readCache();
+        const cached = cache[setName];
+        if (cached && Date.now() - cached.savedAt < CACHE_MS && Array.isArray(cached.cards) && cached.cards.length >= 3) {
+          return cached.cards;
+        }
+
+        const setBrief = await resolveSet(setName, allSets);
+        if (!setBrief) throw new Error(`Set not found: ${setName}`);
+
+        const set = await fetchJSON(`${API}/sets/${encodeURIComponent(setBrief.id)}`);
+        const briefs = Array.isArray(set.cards) ? set.cards : [];
+        if (!briefs.length) throw new Error(`No cards found: ${setName}`);
+
+        // TCGdex includes market prices on full card responses. Fetch card details
+        // with a small concurrency limit, then keep the three highest TCGplayer
+        // market prices across all available variants.
+        const fullCards = await mapWithConcurrency(briefs, c => fetchJSON(`${API}/cards/${encodeURIComponent(c.id)}`));
+        const ranked = fullCards
+          .filter(Boolean)
+          .map(card => ({
+            id: card.id,
+            name: card.name,
+            image: imageUrl(card.image),
+            price: bestUsdMarket(card)
+          }))
+          .filter(card => card.image && card.price > 0)
+          .sort((a, b) => b.price - a.price)
+          .slice(0, 3);
+
+        if (ranked.length < 3) throw new Error(`Not enough priced cards: ${setName}`);
+
+        cache[setName] = { savedAt: Date.now(), cards: ranked };
+        writeCache(cache);
+        return ranked;
+      }
+
+      function renderTopCards(cardEl, cards) {
+        const art = cardEl.querySelector('.set-art');
+        art.innerHTML = `
+          <div class="top-card-fan" aria-label="Three highest market-value cards">
+            <img class="top-card-img rank-2" src="${cards[1].image}" alt="${cards[1].name}" loading="lazy">
+            <img class="top-card-img rank-1" src="${cards[0].image}" alt="${cards[0].name}" loading="lazy">
+            <img class="top-card-img rank-3" src="${cards[2].image}" alt="${cards[2].name}" loading="lazy">
+            <span class="top-card-price">#1 $${cards[0].price.toFixed(2)}</span>
+          </div>`;
+        art.title = `Top 3 by TCGplayer market value: 1) ${cards[0].name} $${cards[0].price.toFixed(2)}, 2) ${cards[1].name} $${cards[1].price.toFixed(2)}, 3) ${cards[2].name} $${cards[2].price.toFixed(2)}`;
+      }
+
+      function renderUnavailable(cardEl) {
+        cardEl.querySelector('.set-art').innerHTML = '<div class="set-unavailable">Card pricing is still being indexed for this set.</div>';
+      }
+
+      async function initCurrentSets() {
+        const cards = [...document.querySelectorAll('.set-card[data-set-name]')];
+        if (!cards.length) return;
+
+        let allSets;
+        try {
+          allSets = await fetchJSON(`${API}/sets`);
+        } catch (error) {
+          console.warn('Could not load TCGdex sets:', error);
+          cards.forEach(renderUnavailable);
+          return;
+        }
+
+        // Load left-to-right so the first cards visible on mobile populate first.
+        for (const cardEl of cards) {
+          try {
+            const top = await getTopCards(cardEl.dataset.setName, allSets);
+            renderTopCards(cardEl, top);
+          } catch (error) {
+            console.warn(`Could not load top cards for ${cardEl.dataset.setName}:`, error);
+            renderUnavailable(cardEl);
+          }
+        }
+      }
+
+      initCurrentSets();
+    })();
   </script>
 
   <!-- ========== SUBSCRIPTION CONTROL MODALS ========== -->
