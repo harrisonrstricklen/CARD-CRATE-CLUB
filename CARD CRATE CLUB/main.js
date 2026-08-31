@@ -36,13 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const answer = button.nextElementSibling;
         const isActive = button.classList.contains('active');
 
-        // Close all
         document.querySelectorAll('.faq-question').forEach(q => {
             q.classList.remove('active');
             q.nextElementSibling.classList.remove('active');
         });
 
-        // Open clicked if it was closed
         if (!isActive) {
             button.classList.add('active');
             answer.classList.add('active');
@@ -58,28 +56,41 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             const submitBtn = waitlistForm.querySelector('.btn-submit');
+            const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '⏳ Joining...';
             submitBtn.disabled = true;
 
             try {
                 const formData = new FormData(waitlistForm);
-                const response = await fetch('/', {
+                const payload = Object.fromEntries(formData.entries());
+
+                const response = await fetch('/.netlify/functions/join-waitlist', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(formData).toString()
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
-                if (response.ok) {
-                    waitlistForm.style.display = 'none';
-                    formSuccess.style.display = 'block';
-                    updateCounter();
-                } else {
-                    throw new Error('Form submission failed');
+                let result = {};
+                try { result = await response.json(); } catch (_) {}
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Form submission failed');
                 }
+
+                waitlistForm.style.display = 'none';
+                if (formSuccess) {
+                    formSuccess.style.display = 'block';
+                    if (result.alreadyJoined) {
+                        const message = formSuccess.querySelector('p');
+                        if (message) message.textContent = "You're already on the waitlist — we'll keep you posted!";
+                    }
+                }
+                updateCounter();
             } catch (error) {
-                submitBtn.innerHTML = '👑 Claim My Founding Spot';
+                console.error('Waitlist error:', error);
+                submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
-                alert('Something went wrong. Please try again or email hello@cardcrateclub.com');
+                alert(error.message || 'Something went wrong. Please try again.');
             }
         });
     }
@@ -114,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, observerOptions);
 
-    // Animate elements on scroll
     const animateElements = document.querySelectorAll(
         '.feature-card, .step, .tier-card, .benefit, .faq-item, .social-card'
     );
