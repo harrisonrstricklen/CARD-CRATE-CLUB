@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
+  <title id="title">Card Crate Club emblem</title>
+  <desc id="desc">Three nested angular letter C shapes in gold.</desc>
+  <g fill="none" stroke="#F5C842" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M82 18H39L17 33V67L39 82H82" stroke-width="9"/>
+    <path d="M72 33H47L32 43V57L47 67H72" stroke-width="8"/>
+    <path d="M62 46H52L44 50L52 54H62" stroke-width="7"/>
+  </g>
+</svg>
