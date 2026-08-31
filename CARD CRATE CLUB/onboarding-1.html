@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Up Your Subscription — CardCrate Club</title>
+<meta name="description" content="Finish setting up your CardCrate Club subscription — pick preferences, add shipping, and get ready for your first crate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .onboard-shell { max-width: 680px; margin: 0 auto; padding: 36px 20px 80px; width: 100%; }
+
+  /* Step indicator */
+  .step-indicator { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 32px; }
+  .step-dot { width: 30px; height: 30px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+  .step-dot.active { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border-color: var(--gold); }
+  .step-dot.done { background: rgba(245,200,66,0.15); color: var(--gold); border-color: rgba(245,200,66,0.4); }
+  .step-line { width: 24px; height: 1px; background: var(--border); }
+  .step-line.done { background: rgba(245,200,66,0.5); }
+
+  .onboard-step { display: none; }
+  .onboard-step.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .step-heading { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; text-align: center; }
+  .step-sub { color: var(--muted); font-size: 0.88rem; text-align: center; margin-bottom: 28px; }
+
+  /* Step 1: plan picker */
+  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .plan-pick { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all 0.2s; }
+  .plan-pick:hover { border-color: rgba(245,200,66,0.4); }
+  .plan-pick.selected { border-color: var(--gold); background: rgba(245,200,66,0.08); box-shadow: 0 0 0 1px var(--gold); }
+  .plan-pick-name { font-weight: 800; font-size: 0.95rem; }
+  .plan-pick-price { color: var(--gold); font-weight: 800; font-size: 1.1rem; margin: 4px 0; }
+  .plan-pick-desc { color: var(--muted); font-size: 0.76rem; }
+
+  /* Step 2: preference tiles */
+  .pref-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }
+  .pref-tile { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .pref-tile:hover { border-color: rgba(245,200,66,0.4); }
+  .pref-tile.selected { border-color: var(--gold); background: rgba(245,200,66,0.08); }
+  .pref-tile-icon { font-size: 1.5rem; margin-bottom: 6px; }
+  .pref-tile-label { font-size: 0.82rem; font-weight: 600; }
+
+  /* Step 4: payment */
+  .order-summary { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+  .order-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; color: #ccc; }
+  .order-row.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 1rem; color: var(--text); }
+  .order-row .gold { color: var(--gold); }
+
+  .stripe-note { background: rgba(66,153,245,0.08); border: 1px solid rgba(66,153,245,0.3); border-radius: 10px; padding: 12px 14px; font-size: 0.78rem; color: #a8cbf0; margin-bottom: 20px; display: flex; gap: 8px; align-items: flex-start; }
+
+  .card-field-mock { background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* Step 5: welcome */
+  .welcome-hero { text-align: center; padding: 20px 0 8px; }
+  .welcome-icon { font-size: 3rem; margin-bottom: 12px; }
+  .welcome-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 6px; }
+  .welcome-title .gold { color: var(--gold); }
+  .welcome-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .welcome-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+
+  .nav-buttons { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+  .nav-buttons .btn { flex: 1; }
+
+  @media (max-width: 480px) {
+    .plan-grid, .pref-grid, .welcome-stats { grid-template-columns: 1fr 1fr; }
+    .step-line { width: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== FLOATING POKEMON CARDS BACKGROUND ========== -->
+<div class="floating-bg">
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
+  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
+</div>
+
+<div class="page-wrapper">
+  <header>
+    <a href="index.html" class="nav-logo">CCC<span>.</span></a>
+    <span style="font-size:0.8rem;color:var(--muted);font-weight:600;">Subscription Setup</span>
+  </header>
+
+  <main class="onboard-shell">
+
+    <div class="step-indicator" id="stepIndicator"></div>
+
+    <!-- ===== STEP 1: CHOOSE SUBSCRIPTION ===== -->
+    <section class="onboard-step active" data-step="1">
+      <h1 class="step-heading">Choose Your Crate</h1>
+      <p class="step-sub">Pick the tier that fits your collecting style. You can change this anytime later.</p>
+      <div class="plan-grid" id="planGrid">
+        <div class="plan-pick" data-plan="pack-club" data-price="24.99">
+          <div class="plan-pick-name">🎴 Pack Club</div>
+          <div class="plan-pick-price">$24.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
+          <div class="plan-pick-desc">5 packs, 1 set, casual collectors</div>
+        </div>
+        <div class="plan-pick" data-plan="trainer-club" data-price="44.99">
+          <div class="plan-pick-name">🏋️ Trainer Club</div>
+          <div class="plan-pick-price">$44.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
+          <div class="plan-pick-desc">10 packs, 2 sets, guaranteed rare</div>
+        </div>
+        <div class="plan-pick" data-plan="collector-club" data-price="64.99">
+          <div class="plan-pick-name">🏆 Collector Club</div>
+          <div class="plan-pick-price">$64.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
+          <div class="plan-pick-desc">15 packs, any set, sealed ETB</div>
+        </div>
+        <div class="plan-pick" data-plan="box-club" data-price="149">
+          <div class="plan-pick-name">📦 Box Club</div>
+          <div class="plan-pick-price">$149<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
+          <div class="plan-pick-desc">1 sealed booster box, your set</div>
+        </div>
+      </div>
+      <div class="nav-buttons">
+        <a href="subscriptions.html" class="btn btn-outline">← Back to Plans</a>
+        <button class="btn btn-gold" id="toStep2">Continue</button>
+      </div>
+    </section>
+
+    <!-- ===== STEP 2: COLLECTOR PREFERENCES ===== -->
+    <section class="onboard-step" data-step="2">
+      <h1 class="step-heading">Collector Preferences</h1>
+      <p class="step-sub">Pick as many as you like — we'll use these to curate your crates.</p>
+      <div class="pref-grid" id="prefGrid">
+        <div class="pref-tile" data-pref="newest"><div class="pref-tile-icon">🆕</div><div class="pref-tile-label">Newest Sets</div></div>
+        <div class="pref-tile" data-pref="specific"><div class="pref-tile-icon">🎯</div><div class="pref-tile-label">Specific Sets</div></div>
+        <div class="pref-tile" data-pref="chase"><div class="pref-tile-icon">💎</div><div class="pref-tile-label">Chase Cards</div></div>
+        <div class="pref-tile" data-pref="sealed"><div class="pref-tile-icon">📦</div><div class="pref-tile-label">Sealed Products</div></div>
+        <div class="pref-tile" data-pref="art"><div class="pref-tile-icon">🎨</div><div class="pref-tile-label">Art Cards</div></div>
+        <div class="pref-tile" data-pref="competitive"><div class="pref-tile-icon">⚔️</div><div class="pref-tile-label">Competitive</div></div>
+        <div class="pref-tile" data-pref="surprise" style="grid-column: span 2;"><div class="pref-tile-icon">🎲</div><div class="pref-tile-label">Surprise Me</div></div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn btn-outline" id="toStep1From2">← Back</button>
+        <button class="btn btn-gold" id="toStep3">Continue</button>
+      </div>
+    </section>
+
+    <!-- ===== STEP 3: SHIPPING ===== -->
+    <section class="onboard-step" data-step="3">
+      <h1 class="step-heading">Shipping Information</h1>
+      <p class="step-sub">Where should we send your crates?</p>
+      <form id="shippingForm" novalidate>
+        <div class="form-group" id="g-fullName"><label for="fullName">Full Name</label><input type="text" id="fullName" required /><div class="field-error">Required.</div></div>
+        <div class="form-group" id="g-addr1"><label for="addr1">Address Line 1</label><input type="text" id="addr1" required /><div class="field-error">Required.</div></div>
+        <div class="form-group"><label for="addr2">Address Line 2 (optional)</label><input type="text" id="addr2" /></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;">
+          <div class="form-group" id="g-city"><label for="city">City</label><input type="text" id="city" required /><div class="field-error">Required.</div></div>
+          <div class="form-group" id="g-state"><label for="state">State</label><input type="text" id="state" required /><div class="field-error">Required.</div></div>
+          <div class="form-group" id="g-zip"><label for="zip">ZIP</label><input type="text" id="zip" required /><div class="field-error">Required.</div></div>
+        </div>
+        <div class="form-group"><label for="country">Country</label>
+          <select id="country"><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option><option>Other</option></select>
+        </div>
+        <div class="form-group" id="g-phone"><label for="phone">Phone Number</label><input type="tel" id="phone" placeholder="For shipping updates" required /><div class="field-error">Required.</div></div>
+      </form>
+      <div class="nav-buttons">
+        <button class="btn btn-outline" id="toStep2From3">← Back</button>
+        <button class="btn btn-gold" id="toStep4">Continue</button>
+      </div>
+    </section>
+
+    <!-- ===== STEP 4: PAYMENT ===== -->
+    <section class="onboard-step" data-step="4">
+      <h1 class="step-heading">Payment</h1>
+      <p class="step-sub">Review your order and add a payment method.</p>
+
+      <div class="order-summary" id="orderSummary"></div>
+
+      <div class="stripe-note">
+        🔧 <span><strong>Stripe integration pending.</strong> This is a UI preview — no payment method is being collected and nothing will be charged. The card field below will be replaced with a live Stripe Elements mount once billing is connected on the backend.</span>
+      </div>
+
+      <div class="card-field-mock">
+        <span>💳 Card number, expiry, CVC</span>
+        <span style="font-size:0.7rem;">Stripe Elements — not yet connected</span>
+      </div>
+
+      <label class="checkbox-row" style="margin-bottom:20px;">
+        <input type="checkbox" id="agreeBilling" />
+        <span>I understand I'll be billed monthly for my selected plan once billing is live, and I can cancel anytime.</span>
+      </label>
+
+      <div class="nav-buttons">
+        <button class="btn btn-outline" id="toStep3From4">← Back</button>
+        <button class="btn btn-gold" id="toStep5" disabled>Complete Setup</button>
+      </div>
+    </section>
+
+    <!-- ===== STEP 5: WELCOME ===== -->
+    <section class="onboard-step" data-step="5">
+      <div class="welcome-hero">
+        <div class="welcome-icon">🎉</div>
+        <h1 class="welcome-title">Welcome to <span class="gold">CardCrate Club</span></h1>
+        <p class="welcome-sub">Your subscription setup is complete. Here's what's next.</p>
+      </div>
+
+      <div class="founding-banner" style="margin-bottom:20px;">
+        <div class="founding-icon">🏆</div>
+        <div class="founding-text">
+          <strong>Founding Member Status</strong>
+          <p id="foundingNote">Your Founding Member number will be assigned once billing goes live — first 100 subscribers lock it in.</p>
+        </div>
+      </div>
+
+      <div class="welcome-stats">
+        <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value" id="welcomePlan">—</div><div class="stat-label">Your Tier</div></div>
+        <div class="stat-card"><div class="stat-icon">🚚</div><div class="stat-value">TBD</div><div class="stat-label">Next Crate</div></div>
+        <div class="stat-card"><div class="stat-icon">🪙</div><div class="stat-value">0</div><div class="stat-label">Crate Coins</div></div>
+        <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-value">Pending</div><div class="stat-label">Member #</div></div>
+      </div>
+
+      <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-bottom:24px;">Crate Coins begin accruing after your first billed crate. Your next-crate date is confirmed once payment is connected.</p>
+
+      <a href="dashboard.html" class="btn btn-gold btn-block btn-lg">Go to My Dashboard →</a>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const totalSteps = 5;
+  let currentStep = 1;
+  let selectedPlan = null;
+  const planData = {
+    'pack-club':      { name: 'Pack Club',      price: 24.99 },
+    'trainer-club':   { name: 'Trainer Club',   price: 44.99 },
+    'collector-club': { name: 'Collector Club', price: 64.99 },
+    'box-club':       { name: 'Box Club',       price: 149 }
+  };
+
+  // Pre-select plan from ?plan= query param
+  const params = new URLSearchParams(window.location.search);
+  const preselect = params.get('plan');
+
+  function renderStepIndicator() {
+    const el = document.getElementById('stepIndicator');
+    let html = '';
+    for (let i = 1; i <= totalSteps; i++) {
+      const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
+      html += `<div class="step-dot ${cls}">${i < currentStep ? '✓' : i}</div>`;
+      if (i < totalSteps) html += `<div class="step-line ${i < currentStep ? 'done' : ''}"></div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function goToStep(n) {
+    currentStep = n;
+    document.querySelectorAll('.onboard-step').forEach(s => s.classList.toggle('active', Number(s.dataset.step) === n));
+    renderStepIndicator();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (n === 4) renderOrderSummary();
+    if (n === 5) renderWelcome();
+  }
+
+  // ---- Step 1: plan selection ----
+  document.querySelectorAll('.plan-pick').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.plan-pick').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedPlan = card.dataset.plan;
+    });
+  });
+  if (preselect && planData[preselect]) {
+    const match = document.querySelector(`.plan-pick[data-plan="${preselect}"]`);
+    if (match) { match.classList.add('selected'); selectedPlan = preselect; }
+  }
+
+  document.getElementById('toStep2').addEventListener('click', () => {
+    if (!selectedPlan) { alert('Please choose a plan to continue.'); return; }
+    goToStep(2);
+  });
+
+  // ---- Step 2: preferences ----
+  document.querySelectorAll('.pref-tile').forEach(tile => {
+    tile.addEventListener('click', () => tile.classList.toggle('selected'));
+  });
+  document.getElementById('toStep1From2').addEventListener('click', () => goToStep(1));
+  document.getElementById('toStep3').addEventListener('click', () => goToStep(3));
+
+  // ---- Step 3: shipping validation ----
+  document.getElementById('toStep2From3').addEventListener('click', () => goToStep(2));
+  document.getElementById('toStep4').addEventListener('click', () => {
+    const required = ['fullName', 'addr1', 'city', 'state', 'zip', 'phone'];
+    let valid = true;
+    required.forEach(id => {
+      const input = document.getElementById(id);
+      const hasError = input.value.trim().length === 0;
+      const group = document.getElementById('g-' + id);
+      if (group) group.classList.toggle('has-error', hasError);
+      if (hasError) valid = false;
+    });
+    if (!valid) return;
+    goToStep(4);
+  });
+
+  // ---- Step 4: order summary + payment gate ----
+  function renderOrderSummary() {
+    const plan = planData[selectedPlan] || { name: '—', price: 0 };
+    const shipping = 0; // Free shipping on every tier per current plans
+    const taxNote = 'Calculated at checkout';
+    document.getElementById('orderSummary').innerHTML = `
+      <div class="order-row"><span>${plan.name}</span><span class="gold">$${plan.price.toFixed(2)}</span></div>
+      <div class="order-row"><span>Shipping</span><span>Free</span></div>
+      <div class="order-row"><span>Estimated Tax</span><span>${taxNote}</span></div>
+      <div class="order-row total"><span>Due Today</span><span class="gold">$${plan.price.toFixed(2)}${'*'}</span></div>
+      <p style="font-size:0.7rem;color:var(--muted);margin-top:8px;">*Final total including tax will be confirmed by Stripe at checkout once billing is connected.</p>
+    `;
+  }
+
+  document.getElementById('toStep3From4').addEventListener('click', () => goToStep(3));
+
+  const agreeBilling = document.getElementById('agreeBilling');
+  const toStep5Btn = document.getElementById('toStep5');
+  agreeBilling.addEventListener('change', () => { toStep5Btn.disabled = !agreeBilling.checked; });
+
+  toStep5Btn.addEventListener('click', () => goToStep(5));
+
+  // ---- Step 5: welcome ----
+  function renderWelcome() {
+    const plan = planData[selectedPlan] || { name: '—' };
+    document.getElementById('welcomePlan').textContent = plan.name;
+  }
+
+  renderStepIndicator();
+</script>
+
+</body>
+</html>
