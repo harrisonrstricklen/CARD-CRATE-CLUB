@@ -1254,31 +1254,82 @@
   </script>
 
 
-  <!-- ========== CURRENT SETS: LOCAL FEATURED CARD ART ========== -->
+  <!-- ========== CURRENT SETS: DIRECT FEATURED CARD ART ========== -->
   <script>
     (() => {
-      // Card art is stored with the site so the dashboard never depends on
-      // TCGdex/TCGplayer being reachable in the visitor's browser.
+      // These are direct TCGdex CDN image URLs — no pricing/API request is needed.
+      // Each card automatically falls back through WebP/PNG and high/low quality.
       const FEATURED_CARDS = {
-        'Pitch Black': ['pitch-black-1.webp', 'pitch-black-2.webp', 'pitch-black-3.webp'],
-        'Chaos Rising': ['chaos-rising-1.webp', 'chaos-rising-2.webp', 'chaos-rising-3.webp'],
-        'Perfect Order': ['perfect-order-1.webp', 'perfect-order-2.webp', 'perfect-order-3.webp'],
-        'Ascended Heroes': ['ascended-heroes-1.webp', 'ascended-heroes-2.webp', 'ascended-heroes-3.webp'],
-        'Phantasmal Flames': ['phantasmal-flames-1.webp', 'phantasmal-flames-2.webp', 'phantasmal-flames-3.webp'],
-        'Mega Evolution': ['mega-evolution-1.webp', 'mega-evolution-2.webp', 'mega-evolution-3.webp']
+        'Pitch Black': [
+          { set: 'me05', id: '116', name: 'Mega Darkrai ex' },
+          { set: 'me05', id: '120', name: 'Mega Darkrai ex' },
+          { set: 'me05', id: '117', name: 'Morpeko ex' }
+        ],
+        'Chaos Rising': [
+          { set: 'me04', id: '116', name: 'Mega Greninja ex' },
+          { set: 'me04', id: '122', name: 'Mega Greninja ex' },
+          { set: 'me04', id: '119', name: 'Featured Chaos Rising card' }
+        ],
+        'Perfect Order': [
+          { set: 'me03', id: '120', name: 'Featured Perfect Order card' },
+          { set: 'me03', id: '121', name: 'Featured Perfect Order card' },
+          { set: 'me03', id: '124', name: 'Featured Perfect Order card' }
+        ],
+        'Ascended Heroes': [
+          { set: 'me02.5', id: '293', name: 'Featured Ascended Heroes card' },
+          { set: 'me02.5', id: '294', name: 'Featured Ascended Heroes card' },
+          { set: 'me02.5', id: '295', name: 'Featured Ascended Heroes card' }
+        ],
+        'Phantasmal Flames': [
+          { set: 'me02', id: '125', name: 'Featured Phantasmal Flames card' },
+          { set: 'me02', id: '126', name: 'Featured Phantasmal Flames card' },
+          { set: 'me02', id: '130', name: 'Featured Phantasmal Flames card' }
+        ],
+        'Mega Evolution': [
+          { set: 'me01', id: '180', name: 'Featured Mega Evolution card' },
+          { set: 'me01', id: '181', name: 'Featured Mega Evolution card' },
+          { set: 'me01', id: '188', name: 'Featured Mega Evolution card' }
+        ]
       };
 
-      const CARD_DIR = 'images/cards/';
+      function sources(card) {
+        const base = `https://assets.tcgdex.net/en/me/${card.set}/${card.id}`;
+        return [
+          `${base}/high.webp`,
+          `${base}/low.webp`,
+          `${base}/high.png`,
+          `${base}/low.png`
+        ];
+      }
 
-      function renderFeaturedCards(cardEl, files) {
+      function attachFallback(img, card) {
+        const urls = sources(card);
+        let index = 0;
+        img.src = urls[index];
+        img.onerror = () => {
+          index += 1;
+          if (index < urls.length) {
+            // Small cache-buster makes a genuine retry instead of reusing a failed response.
+            img.src = `${urls[index]}?retry=${index}`;
+          } else {
+            img.style.display = 'none';
+          }
+        };
+      }
+
+      function renderFeaturedCards(cardEl, cards) {
         const art = cardEl.querySelector('.set-art');
-        if (!art || !files || files.length < 3) return;
+        if (!art || !cards || cards.length < 3) return;
         art.innerHTML = `
           <div class="top-card-fan" aria-label="Three featured cards">
-            <img class="top-card-img rank-2" src="${CARD_DIR}${files[1]}" alt="Featured card" loading="eager">
-            <img class="top-card-img rank-1" src="${CARD_DIR}${files[0]}" alt="Featured card" loading="eager">
-            <img class="top-card-img rank-3" src="${CARD_DIR}${files[2]}" alt="Featured card" loading="eager">
+            <img class="top-card-img rank-2" alt="${cards[1].name}" loading="eager">
+            <img class="top-card-img rank-1" alt="${cards[0].name}" loading="eager">
+            <img class="top-card-img rank-3" alt="${cards[2].name}" loading="eager">
           </div>`;
+        const imgs = art.querySelectorAll('.top-card-img');
+        attachFallback(imgs[0], cards[1]);
+        attachFallback(imgs[1], cards[0]);
+        attachFallback(imgs[2], cards[2]);
       }
 
       document.querySelectorAll('.set-card[data-set-name]').forEach(cardEl => {
