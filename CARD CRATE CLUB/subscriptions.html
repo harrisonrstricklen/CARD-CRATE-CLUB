@@ -75,21 +75,28 @@
 
   /* ===== Comparison table ===== */
   .compare-wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 60px; position: relative; }
-  .compare-scroll-hint { display: none; font-size: 0.78rem; color: var(--gold); margin-bottom: 10px; text-align: center; }
   .compare-scroll-area { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; border-radius: var(--radius); }
-  .compare-scroll-area::after {
-    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 36px;
-    background: linear-gradient(90deg, transparent, var(--dark) 90%);
-    pointer-events: none;
-  }
   .compare-table { width: 100%; min-width: 640px; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .compare-table th, .compare-table td { padding: 12px 14px; text-align: center; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
   .compare-table th:first-child, .compare-table td:first-child { text-align: left; color: #ccc; }
   .compare-table thead th { background: var(--dark3); color: var(--gold); font-weight: 800; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .compare-table td.check { color: var(--gold); font-weight: 700; }
+
+  /* Mobile: replace the wide scrolling table with stacked cards so nothing
+     on the page can ever be wider than the screen. */
+  .compare-mobile { display: none; }
   @media (max-width: 700px) {
-    .compare-scroll-hint { display: block; }
-    .compare-scroll-area::after { display: block; }
+    .compare-scroll-area { display: none; }
+    .compare-mobile { display: block; }
+    .compare-mobile-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+    .compare-mobile-card.popular { border-color: var(--gold); }
+    .compare-mobile-card h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; color: var(--gold); }
+    .compare-mobile-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.82rem; border-bottom: 1px solid var(--border); }
+    .compare-mobile-row:last-child { border-bottom: none; }
+    .compare-mobile-row span:first-child { color: var(--muted); }
+    .compare-mobile-row span:last-child { font-weight: 600; }
+    .compare-mobile-row .check { color: var(--gold); font-weight: 700; }
+    .compare-mobile-row .dash { color: var(--muted); }
   }
   .compare-table td.dash { color: var(--muted); }
   .compare-table tbody tr:last-child td { border-bottom: none; }
@@ -348,7 +355,6 @@
   <!-- ========== COMPARISON TABLE ========== -->
   <section class="compare-wrap">
     <div class="section-title">⚖️ Compare Plans</div>
-    <p class="compare-scroll-hint">← Swipe to see all 4 plans →</p>
     <div class="compare-scroll-area">
     <table class="compare-table">
       <thead>
@@ -373,7 +379,61 @@
       </tbody>
     </table>
     </div>
+
+    <!-- Mobile-only stacked version — shown instead of the table below 700px,
+         so nothing on this page is ever wider than the screen. -->
+    <div class="compare-mobile">
+      <div class="compare-mobile-card">
+        <h4>🎴 Pack Club</h4>
+        <div class="compare-mobile-row"><span>Monthly Price</span><span>$24.99</span></div>
+        <div class="compare-mobile-row"><span>Booster Packs</span><span>5</span></div>
+        <div class="compare-mobile-row"><span>Set Choice</span><span>1 set</span></div>
+        <div class="compare-mobile-row"><span>Bonus Promo Cards</span><span>1</span></div>
+        <div class="compare-mobile-row"><span>Guaranteed Rare+</span><span class="dash">—</span></div>
+        <div class="compare-mobile-row"><span>Free Shipping</span><span class="check">✓</span></div>
+        <div class="compare-mobile-row"><span>Early Access</span><span class="dash">—</span></div>
+        <div class="compare-mobile-row"><span>Discord Access</span><span class="dash">—</span></div>
+        <div class="compare-mobile-row"><span>AI Card Evaluator</span><span class="dash">Locked</span></div>
+      </div>
+      <div class="compare-mobile-card popular">
+        <h4>🏋️ Trainer Club</h4>
+        <div class="compare-mobile-row"><span>Monthly Price</span><span>$44.99</span></div>
+        <div class="compare-mobile-row"><span>Booster Packs</span><span>10</span></div>
+        <div class="compare-mobile-row"><span>Set Choice</span><span>Up to 2</span></div>
+        <div class="compare-mobile-row"><span>Bonus Promo Cards</span><span>2</span></div>
+        <div class="compare-mobile-row"><span>Guaranteed Rare+</span><span class="check">✓</span></div>
+        <div class="compare-mobile-row"><span>Free Shipping</span><span class="check">✓</span></div>
+        <div class="compare-mobile-row"><span>Early Access</span><span class="check">✓</span></div>
+        <div class="compare-mobile-row"><span>Discord Access</span><span class="check">Member</span></div>
+        <div class="compare-mobile-row"><span>AI Card Evaluator</span><span class="check">✓</span></div>
+      </div>
+      <div class="compare-mobile-card">
+        <h4>🏆 Collector Club</h4>
+        <div class="compare-mobile-row"><span>Monthly Price</span><span>$64.99</span></div>
+        <div class="compare-mobile-row"><span>Booster Packs</span><span>15</span></div>
+        <div class="compare-mobile-row"><span>Set Choice</span><span>Any set</span></div>
+        <div class="compare-mobile-row"><span>Bonus Promo Cards</span><span>3</span></div>
+        <div class="compare-mobile-row"><span>Guaranteed Rare+</span><span class="check">2×</span></div>
+        <div class="compare-mobile-row"><span>Free Shipping</span><span class="check">Priority</span></div>
+        <div class="compare-mobile-row"><span>Early Access</span><span class="check">First picks</span></div>
+        <div class="compare-mobile-row"><span>Discord Access</span><span class="check">VIP</span></div>
+        <div class="compare-mobile-row"><span>AI Card Evaluator</span><span class="check">✓</span></div>
+      </div>
+      <div class="compare-mobile-card">
+        <h4>📦 Box Club</h4>
+        <div class="compare-mobile-row"><span>Monthly Price</span><span>$149</span></div>
+        <div class="compare-mobile-row"><span>Booster Packs</span><span class="dash">Sealed box</span></div>
+        <div class="compare-mobile-row"><span>Set Choice</span><span>1 set</span></div>
+        <div class="compare-mobile-row"><span>Bonus Promo Cards</span><span>2</span></div>
+        <div class="compare-mobile-row"><span>Guaranteed Rare+</span><span class="dash">—</span></div>
+        <div class="compare-mobile-row"><span>Free Shipping</span><span class="check">Priority</span></div>
+        <div class="compare-mobile-row"><span>Early Access</span><span class="check">✓</span></div>
+        <div class="compare-mobile-row"><span>Discord Access</span><span class="check">VIP</span></div>
+        <div class="compare-mobile-row"><span>AI Card Evaluator</span><span class="check">✓</span></div>
+      </div>
+    </div>
   </section>
+
 
   <!-- ========== FOUNDING 100 ========== -->
   <section class="founding-wrap">
