@@ -13,8 +13,8 @@
   width:38px;
   height:38px;
   flex:0 0 38px;
-  background:url('brand-mark.svg?v=uniform-spacing-v4-20260831') center/contain no-repeat;
-  filter:drop-shadow(0 3px 9px rgba(245,184,28,.16));
+  background:url('images/card-crate-club-logo.png?v=official-png-20260831') center/contain no-repeat;
+  filter:none;
 }
 
 .nav-logo,
@@ -39,7 +39,7 @@
 .auth-logo-badge::before { width:72px; height:72px; flex-basis:72px; }
 .brand-emblem { position:relative; display:inline-flex !important; align-items:center; justify-content:center; color:transparent !important; background:transparent !important; }
 .brand-emblem > svg,
-.brand-emblem > img:not([src$='brand-mark.svg']) { display:none !important; }
+.brand-emblem > img { display:none !important; }
 .brand-emblem::before { width:100%; height:100%; flex-basis:auto; }
 @media (max-width:640px){
   .nav-logo::before { width:32px; height:32px; flex-basis:32px; }
