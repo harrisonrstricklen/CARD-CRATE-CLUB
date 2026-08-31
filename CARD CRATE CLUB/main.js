@@ -30,13 +30,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(canonical);
     }
 
-    if (!document.querySelector('link[rel="icon"]')) {
-        const icon = document.createElement('link');
-        icon.rel = 'icon';
-        icon.type = 'image/svg+xml';
-        icon.href = 'favicon.svg';
-        document.head.appendChild(icon);
-    }
+    // Force the official nested-C favicon everywhere and bust old browser favicon caches.
+    document.querySelectorAll('link[rel~="icon"], link[rel="shortcut icon"]').forEach(icon => icon.remove());
+    const icon = document.createElement('link');
+    icon.rel = 'icon';
+    icon.type = 'image/svg+xml';
+    icon.href = 'favicon.svg?v=ccc-official-20260831';
+    document.head.appendChild(icon);
 
     document.querySelectorAll('a[target="_blank"]').forEach(link => {
         link.rel = 'noopener noreferrer';
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (!isActive && answer) {
             button.classList.add('active');
-            answer.classList.add('active');
+            if (answer) answer.classList.add('active');
         }
     };
 
