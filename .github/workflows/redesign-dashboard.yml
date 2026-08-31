@@ -1,0 +1,33 @@
+name: Redesign Dashboard
+
+on:
+  push:
+    paths:
+      - 'CARD CRATE CLUB/tools/redesign-dashboard.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  redesign:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply dashboard redesign
+        run: python 'CARD CRATE CLUB/tools/redesign-dashboard.py'
+      - name: Commit redesigned dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB/dashboard.html'
+          if git diff --cached --quiet; then
+            echo 'No dashboard changes needed.'
+          else
+            git commit -m 'Redesign dashboard with collection preview and CCC emblem'
+            git push
+          fi
