@@ -50,23 +50,24 @@ async function requireUser(event) {
 const PLANS = {
   'pack-club': {
     name: 'Pack Club',
-    price: 24.99,
-    priceEnv: 'STRIPE_PRICE_PACK_CLUB'
+    price: 29.99,
+    packs: 4
   },
   'trainer-club': {
     name: 'Trainer Club',
-    price: 44.99,
-    priceEnv: 'STRIPE_PRICE_TRAINER_CLUB'
+    price: 54.99,
+    packs: 8
   },
   'collector-club': {
     name: 'Collector Club',
-    price: 64.99,
-    priceEnv: 'STRIPE_PRICE_COLLECTOR_CLUB'
+    price: 74.99,
+    packs: 12
   },
   'box-club': {
     name: 'Box Club',
     price: 149.00,
-    priceEnv: 'STRIPE_PRICE_BOX_CLUB'
+    packs: 0,
+    sealed: true
   }
 };
 
