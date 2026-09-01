@@ -1,17 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 
-const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
+const INDEX_PATH_EN = path.resolve(__dirname, '../../card-data/all-cards-index.json');
+const INDEX_PATH_JA = path.resolve(__dirname, '../../card-data/all-cards-index-ja.json');
 let cache = null;
 
 function norm(value) {
   return String(value || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFKC')
     .toLowerCase()
     .replace(/[’‘]/g, "'")
     .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9' -]+/g, ' ')
+    // Preserve Japanese and other Unicode letters/numbers. The previous
+    // ASCII-only cleanup erased Japanese names completely.
+    .replace(/[^\p{L}\p{N}' -]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -40,10 +42,23 @@ function pushMap(map, key, card) {
   else map.set(key, [card]);
 }
 
+function readCards(file, language) {
+  if (!fs.existsSync(file)) return [];
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return (Array.isArray(parsed.cards) ? parsed.cards : []).map(card => ({
+    ...card,
+    language: card.language || language
+  }));
+}
+
 function loadIndex() {
   if (cache) return cache;
-  const parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
-  const cards = Array.isArray(parsed.cards) ? parsed.cards : [];
+  const cards = [
+    ...readCards(INDEX_PATH_EN, 'en'),
+    ...readCards(INDEX_PATH_JA, 'ja')
+  ];
+  if (!cards.length) throw new Error('No card indexes are available');
+
   const byNumber = new Map();
   const byName = new Map();
   const bySet = new Map();
@@ -76,8 +91,8 @@ function setScore(card, rowSet) {
   const rs = norm(rowSet);
   if (!rs) return 0;
   if (card.__set === rs || card.__setId === rs) return 420;
-  if (card.__set.includes(rs) || rs.includes(card.__set)) return 220;
-  const sim = tokenSimilarity(card.__set, rs);
+  if (card.__set && (card.__set.includes(rs) || rs.includes(card.__set))) return 220;
+  const sim = card.__set ? tokenSimilarity(card.__set, rs) : 0;
   if (sim >= .8) return 170;
   if (sim >= .55) return 90;
   return -100;
@@ -113,21 +128,17 @@ function candidatePool(index, row) {
   const rn = baseName(row.name);
   const rs = norm(row.set);
   const seen = new Map();
-  const add = list => (list || []).forEach(card => seen.set(card.id, card));
+  const add = list => (list || []).forEach(card => seen.set(`${card.language}:${card.id}`, card));
 
-  // Exact card number is the strongest narrowing signal and normally leaves
-  // only a few dozen cards across all sets instead of scanning 20k cards.
   if (rnum) add(index.byNumber.get(rnum));
   if (rn) add(index.byName.get(rn));
   if (rs) add(index.bySet.get(rs));
 
-  // If exact indexes did not find enough candidates, use a small name-based
-  // expansion rather than a full fuzzy pass through the whole database.
   if (seen.size < 3 && rn) {
     const firstToken = rn.split(' ')[0];
     for (const [name, cards] of index.byName) {
       if (name === rn || name.startsWith(firstToken) || rn.startsWith(name.split(' ')[0])) add(cards);
-      if (seen.size > 180) break;
+      if (seen.size > 220) break;
     }
   }
 
@@ -135,7 +146,18 @@ function candidatePool(index, row) {
 }
 
 function cardOut(card) {
-  return { id: card.id, name: card.name, setId: card.setId, setName: card.setName, number: card.number, rarity: card.rarity || '', image: card.image || '' };
+  return {
+    id: card.id,
+    sourceId: card.sourceId || card.id,
+    name: card.name,
+    setId: card.setId,
+    setName: card.setName,
+    number: card.number,
+    rarity: card.rarity || '',
+    image: card.image || '',
+    imageLarge: card.imageLarge || card.image || '',
+    language: card.language || 'en'
+  };
 }
 
 function matchRow(index, row, i) {
@@ -146,7 +168,7 @@ function matchRow(index, row, i) {
     .map(card => ({ card, score: score(card, row) }))
     .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
+    .slice(0, 8);
 
   if (!ranked.length) return { index: i, status: 'unmatched', row, match: null, alternatives: [] };
 
@@ -191,7 +213,11 @@ exports.handler = async function(event) {
     const index = loadIndex();
     const results = rows.map((row, i) => matchRow(index, row, i));
     const counts = results.reduce((a, r) => { a[r.status]++; return a; }, { matched: 0, review: 0, unmatched: 0 });
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body: JSON.stringify({ results, counts }) };
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      body: JSON.stringify({ results, counts, databaseCards: index.cards.length })
+    };
   } catch (err) {
     console.error('Collection import matcher failed:', err);
     return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Collection matcher failed', detail: err.message }) };
