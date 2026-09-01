@@ -2,13 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
 let cachedCards = null;
 let cardsPromise = null;
 
 function fetchJson(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Card-Crate-Club-Importer' } }, res => {
+    const req = https.get(url, { headers: { 'User-Agent': 'Card-Crate-Club-Importer' }, timeout: 15000 }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
         fetchJson(res.headers.location).then(resolve, reject);
@@ -26,8 +25,30 @@ function fetchJson(url) {
         try { resolve(JSON.parse(body)); }
         catch (err) { reject(new Error(`Card database JSON could not be parsed: ${err.message}`)); }
       });
-    }).on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error('Card database request timed out')));
+    req.on('error', reject);
   });
+}
+
+function tryLocalDatabase() {
+  const candidates = [
+    path.resolve(__dirname, '../../card-data/all-cards-index.json'),
+    path.resolve(__dirname, '../card-data/all-cards-index.json'),
+    path.resolve(process.cwd(), 'CARD CRATE CLUB/card-data/all-cards-index.json'),
+    path.resolve(process.cwd(), 'card-data/all-cards-index.json')
+  ];
+
+  for (const file of candidates) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (Array.isArray(parsed?.cards) && parsed.cards.length) return parsed;
+    } catch (err) {
+      console.warn(`Could not load card index from ${file}:`, err.message);
+    }
+  }
+  return null;
 }
 
 async function loadCards(event) {
@@ -35,17 +56,14 @@ async function loadCards(event) {
   if (cardsPromise) return cardsPromise;
 
   cardsPromise = (async () => {
-    let parsed = null;
+    let parsed = tryLocalDatabase();
 
-    // First try the bundled/local copy. This is fastest when Netlify includes it.
-    try {
-      parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
-    } catch (localErr) {
-      // Netlify does not always bundle files outside the functions folder.
-      // Fall back to the copy already published with the website.
-      const host = event?.headers?.['x-forwarded-host'] || event?.headers?.host;
-      if (!host) throw localErr;
-      parsed = await fetchJson(`https://${host}/card-data/all-cards-index.json`);
+    if (!parsed) {
+      const headers = event?.headers || {};
+      const host = headers['x-forwarded-host'] || headers.host;
+      const proto = headers['x-forwarded-proto'] || 'https';
+      if (!host) throw new Error('Card database was not bundled and request host is unavailable');
+      parsed = await fetchJson(`${proto}://${host}/card-data/all-cards-index.json`);
     }
 
     const cards = Array.isArray(parsed?.cards) ? parsed.cards : [];
@@ -165,6 +183,44 @@ function confidence(best, second, row) {
   return 'review';
 }
 
+function cardOut({ card }) {
+  return {
+    id: card.id,
+    name: card.name,
+    setId: card.setId,
+    setName: card.setName,
+    number: card.number,
+    rarity: card.rarity || '',
+    image: card.image || ''
+  };
+}
+
+function matchOneRow(cards, row, index) {
+  try {
+    const candidates = [];
+    for (const card of cards) {
+      const s = score(card, row);
+      if (s >= 0) candidates.push({ card, score: s });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    const top = candidates.slice(0, 6);
+    if (!top.length) return { index, status: 'unmatched', row, match: null, alternatives: [] };
+
+    const level = confidence(top[0], top[1], row);
+    return {
+      index,
+      status: level === 'review' ? 'review' : 'matched',
+      confidence: level,
+      row,
+      match: cardOut(top[0]),
+      alternatives: top.slice(1).map(cardOut)
+    };
+  } catch (err) {
+    console.error(`Collection matcher failed on row ${index}:`, err);
+    return { index, status: 'unmatched', row, match: null, alternatives: [], error: 'Row could not be matched' };
+  }
+}
+
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'POST required' }) };
@@ -191,37 +247,7 @@ exports.handler = async function(event) {
     };
   }
 
-  const results = rows.map((row, index) => {
-    const candidates = [];
-    for (const card of cards) {
-      const s = score(card, row);
-      if (s >= 0) candidates.push({ card, score: s });
-    }
-    candidates.sort((a, b) => b.score - a.score);
-    const top = candidates.slice(0, 6);
-    if (!top.length) return { index, status: 'unmatched', row, match: null, alternatives: [] };
-
-    const level = confidence(top[0], top[1], row);
-    const cardOut = ({ card }) => ({
-      id: card.id,
-      name: card.name,
-      setId: card.setId,
-      setName: card.setName,
-      number: card.number,
-      rarity: card.rarity || '',
-      image: card.image || ''
-    });
-
-    return {
-      index,
-      status: level === 'review' ? 'review' : 'matched',
-      confidence: level,
-      row,
-      match: cardOut(top[0]),
-      alternatives: top.slice(1).map(cardOut)
-    };
-  });
-
+  const results = rows.map((row, index) => matchOneRow(cards, row, index));
   const counts = results.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;
     return acc;
