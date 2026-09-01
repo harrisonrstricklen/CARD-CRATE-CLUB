@@ -76,7 +76,7 @@
   <section class="import-card" id="reviewSection" style="display:none">
     <h3>2. Review matches</h3>
     <div class="summary">
-      <div class="sum-card"><b id="sumRows">0</b><span>Rows</span></div>
+      <div class="sum-card"><b id="sumRows">0</b><span>Rows Found</span></div>
       <div class="sum-card"><b id="sumMatched">0</b><span>Matched</span></div>
       <div class="sum-card"><b id="sumReview">0</b><span>Needs Review</span></div>
       <div class="sum-card"><b id="sumUnmatched">0</b><span>Unmatched</span></div>
@@ -105,8 +105,11 @@ import { getFirestore, collection, doc, writeBatch, serverTimestamp } from "http
 
 const firebaseConfig={apiKey:"AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",authDomain:"cardcrate-club.firebaseapp.com",projectId:"cardcrate-club",storageBucket:"cardcrate-club.firebasestorage.app",messagingSenderId:"261800955788",appId:"1:261800955788:web:3f07f4c60886b26d05d0a9",measurementId:"G-5B8J0LWGKE"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-let currentUser=null,sourceText='',matchedResults=[];
+let currentUser=null,sourceText='',matchedResults=[],analysisRun=0;
 const $=id=>document.getElementById(id);
+const MATCH_BATCH_SIZE=40;
+const RETRY_BASE_MS=1200;
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 onAuthStateChanged(auth,user=>{
   if(!user){location.href='login.html';return;}
@@ -146,46 +149,132 @@ function normalizeRows(text){
   }).filter(r=>r.name||r.number);
 }
 
+async function requestMatchBatch(chunk,start){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),30000);
+  try{
+    const res=await fetch('/.netlify/functions/match-collection-import',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rows:chunk}),
+      signal:controller.signal
+    });
+    if(!res.ok){
+      let detail='';
+      try{const body=await res.json();detail=body?.detail||body?.error||''}catch{}
+      throw new Error(`Matcher HTTP ${res.status}${detail?`: ${detail}`:''}`);
+    }
+    const data=await res.json();
+    if(!Array.isArray(data.results))throw new Error('Matcher returned no results');
+    return data.results.map(r=>({...r,index:r.index+start}));
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+function mergeResults(results){
+  const byIndex=new Map(matchedResults.map(r=>[r.index,r]));
+  for(const incoming of results){
+    const existing=byIndex.get(incoming.index);
+    if(existing&&Object.prototype.hasOwnProperty.call(existing,'selectedMatch'))incoming.selectedMatch=existing.selectedMatch;
+    byIndex.set(incoming.index,incoming);
+  }
+  matchedResults=[...byIndex.values()].sort((a,b)=>a.index-b.index);
+}
+
 async function analyze(){
   const text=sourceText||$('pasteBox').value;
   const rows=normalizeRows(text);
   if(!rows.length){$('parseStatus').textContent='No usable card rows found. Make sure the file includes a card name or card number.';return;}
-  $('analyzeBtn').disabled=true;$('parseStatus').textContent=`Matching ${rows.length} rows against the Card Crate Club database…`;
+
+  const run=++analysisRun;
+  $('analyzeBtn').disabled=true;
+  $('analyzeBtn').textContent='Analyzing…';
+  $('parseStatus').textContent=`Starting ${rows.length} rows… successful cards will appear as they are found.`;
   matchedResults=[];
+  $('reviewSection').style.display='none';
+  $('results').innerHTML='';
+
+  let queue=[];
+  for(let start=0;start<rows.length;start+=MATCH_BATCH_SIZE){
+    queue.push({start,chunk:rows.slice(start,start+MATCH_BATCH_SIZE),attempt:0});
+  }
+
+  let processed=0;
+  let retryRound=0;
+
   try{
-    for(let start=0;start<rows.length;start+=500){
-      const chunk=rows.slice(start,start+500);
-      const res=await fetch('/.netlify/functions/match-collection-import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:chunk})});
-      if(!res.ok)throw new Error('Matcher failed');
-      const data=await res.json();
-      matchedResults.push(...(data.results||[]).map(r=>({...r,index:r.index+start})));
-      $('parseStatus').textContent=`Matched ${Math.min(start+500,rows.length)} of ${rows.length} rows…`;
+    while(queue.length&&run===analysisRun){
+      const nextQueue=[];
+      for(const job of queue){
+        if(run!==analysisRun)return;
+        try{
+          const found=await requestMatchBatch(job.chunk,job.start);
+          mergeResults(found);
+          processed+=job.chunk.length;
+          renderReview(false);
+          $('parseStatus').textContent=`Found results for ${processed} of ${rows.length} rows. ${nextQueue.length?'Some batches are queued to retry.':''}`;
+        }catch(err){
+          console.warn(`Batch ${job.start+1}-${job.start+job.chunk.length} failed`,err);
+          const attempt=job.attempt+1;
+          if(attempt>=2&&job.chunk.length>8){
+            const half=Math.ceil(job.chunk.length/2);
+            nextQueue.push({start:job.start,chunk:job.chunk.slice(0,half),attempt});
+            nextQueue.push({start:job.start+half,chunk:job.chunk.slice(half),attempt});
+          }else{
+            nextQueue.push({...job,attempt});
+          }
+          $('parseStatus').textContent=`Found ${matchedResults.length} of ${rows.length} rows so far. Retrying ${nextQueue.reduce((n,j)=>n+j.chunk.length,0)} rows that did not respond…`;
+        }
+      }
+
+      if(!nextQueue.length)break;
+      queue=nextQueue;
+      retryRound++;
+      const wait=Math.min(RETRY_BASE_MS*Math.max(1,retryRound),8000);
+      $('parseStatus').textContent=`Showing ${matchedResults.length} rows found so far. ${queue.reduce((n,j)=>n+j.chunk.length,0)} rows are retrying automatically…`;
+      await sleep(wait);
     }
-    renderReview();$('parseStatus').textContent='Review the matches below before importing.';
-  }catch(err){$('parseStatus').textContent='Could not analyze the collection. Please try again.';console.error(err)}finally{$('analyzeBtn').disabled=false}
+
+    if(run!==analysisRun)return;
+    renderReview(false);
+    $('parseStatus').textContent=`Analysis complete — ${matchedResults.length} rows returned. Review the matches below before importing.`;
+  }catch(err){
+    console.error(err);
+    if(matchedResults.length){
+      renderReview(false);
+      $('parseStatus').textContent=`Showing ${matchedResults.length} rows found before an unexpected error. You can still review and import these matches.`;
+    }else{
+      $('parseStatus').textContent='The matcher is not responding yet. Please run Analyze Collection again.';
+    }
+  }finally{
+    if(run===analysisRun){$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection';}
+  }
 }
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderReview(){
+function renderReview(shouldScroll=true){
   const counts={matched:0,review:0,unmatched:0};matchedResults.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);
   $('sumRows').textContent=matchedResults.length;$('sumMatched').textContent=counts.matched;$('sumReview').textContent=counts.review;$('sumUnmatched').textContent=counts.unmatched;
   $('results').innerHTML=matchedResults.map((r,i)=>{
     const m=r.match, badge=r.status==='matched'?'match':r.status;
     const choices=[m,...(r.alternatives||[])].filter(Boolean);
-    const select=r.status==='review'&&choices.length?`<select class="review-select" data-i="${i}">${choices.map((c,j)=>`<option value="${j}">${esc(c.name)} — ${esc(c.setName)} #${esc(c.number)}</option>`).join('')}<option value="skip">Skip this row</option></select>`:'';
+    const selected=r.selectedMatch;
+    const select=r.status==='review'&&choices.length?`<select class="review-select" data-i="${i}">${choices.map((c,j)=>`<option value="${j}" ${selected?.id===c.id?'selected':''}>${esc(c.name)} — ${esc(c.setName)} #${esc(c.number)}</option>`).join('')}<option value="skip" ${selected===null?'selected':''}>Skip this row</option></select>`:'';
     return `<div class="import-row"><img src="${esc(m?.image||'')}" alt="" onerror="this.style.visibility='hidden'"><div><div class="row-title">${esc(r.row.name||m?.name||'Unknown card')} ×${r.row.quantity||1}</div><div class="row-meta">Source: ${esc(r.row.set||'No set')} ${r.row.number?'#'+esc(r.row.number):''}<br>${m?`Match: ${esc(m.name)} • ${esc(m.setName)} #${esc(m.number)}`:'No database match found'}</div>${select}</div><span class="badge ${badge}">${r.status==='matched'?(r.confidence||'matched'):r.status==='review'?'Review':'Unmatched'}</span></div>`;
   }).join('');
+  matchedResults.forEach(r=>{if(!Object.prototype.hasOwnProperty.call(r,'selectedMatch'))r.selectedMatch=r.status==='unmatched'?null:r.match;});
   $('results').querySelectorAll('.review-select').forEach(sel=>sel.onchange=()=>{
     const r=matchedResults[Number(sel.dataset.i)];if(sel.value==='skip'){r.selectedMatch=null;return;}const choices=[r.match,...(r.alternatives||[])].filter(Boolean);r.selectedMatch=choices[Number(sel.value)];
   });
-  matchedResults.forEach(r=>r.selectedMatch=r.status==='unmatched'?null:r.match);
-  $('reviewSection').style.display='block';$('reviewSection').scrollIntoView({behavior:'smooth',block:'start'});
+  $('reviewSection').style.display='block';
+  if(shouldScroll)$('reviewSection').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 $('fileInput').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`};
 const dz=$('dropZone');['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.addEventListener('drop',async e=>{const f=e.dataTransfer.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`});
 $('pasteBox').addEventListener('input',()=>sourceText='');$('analyzeBtn').onclick=analyze;
-$('resetBtn').onclick=()=>{matchedResults=[];sourceText='';$('fileInput').value='';$('pasteBox').value='';$('reviewSection').style.display='none';$('parseStatus').textContent='';window.scrollTo({top:0,behavior:'smooth'})};
+$('resetBtn').onclick=()=>{analysisRun++;matchedResults=[];sourceText='';$('fileInput').value='';$('pasteBox').value='';$('reviewSection').style.display='none';$('parseStatus').textContent='';$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection';window.scrollTo({top:0,behavior:'smooth'})};
 
 $('importBtn').onclick=async()=>{
   if(!currentUser)return;
