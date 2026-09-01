@@ -1,15 +1,65 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
 let cachedCards = null;
+let cardsPromise = null;
 
-function loadCards() {
-  if (!cachedCards) {
-    const parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
-    cachedCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'Card-Crate-Club-Importer' } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        fetchJson(res.headers.location).then(resolve, reject);
+        return;
+      }
+      if (res.statusCode !== 200) {
+        res.resume();
+        reject(new Error(`Card database request failed with HTTP ${res.statusCode}`));
+        return;
+      }
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)); }
+        catch (err) { reject(new Error(`Card database JSON could not be parsed: ${err.message}`)); }
+      });
+    }).on('error', reject);
+  });
+}
+
+async function loadCards(event) {
+  if (cachedCards) return cachedCards;
+  if (cardsPromise) return cardsPromise;
+
+  cardsPromise = (async () => {
+    let parsed = null;
+
+    // First try the bundled/local copy. This is fastest when Netlify includes it.
+    try {
+      parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
+    } catch (localErr) {
+      // Netlify does not always bundle files outside the functions folder.
+      // Fall back to the copy already published with the website.
+      const host = event?.headers?.['x-forwarded-host'] || event?.headers?.host;
+      if (!host) throw localErr;
+      parsed = await fetchJson(`https://${host}/card-data/all-cards-index.json`);
+    }
+
+    const cards = Array.isArray(parsed?.cards) ? parsed.cards : [];
+    if (!cards.length) throw new Error('Card database is empty');
+    cachedCards = cards;
+    return cards;
+  })();
+
+  try {
+    return await cardsPromise;
+  } catch (err) {
+    cardsPromise = null;
+    throw err;
   }
-  return cachedCards;
 }
 
 function norm(value) {
@@ -97,8 +147,6 @@ function score(card, row) {
     else return -1;
   }
 
-  // Require a useful identifying signal. This keeps fuzzy matching from
-  // silently turning an unknown row into the wrong card.
   if (!numberExact && (!rn || nameStrength < 0.6)) return -1;
   return s;
 }
@@ -131,7 +179,18 @@ exports.handler = async function(event) {
     return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'No rows supplied' }) };
   }
 
-  const cards = loadCards();
+  let cards;
+  try {
+    cards = await loadCards(event);
+  } catch (err) {
+    console.error('Collection matcher database load failed:', err);
+    return {
+      statusCode: 503,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      body: JSON.stringify({ error: 'Card database unavailable', detail: err.message })
+    };
+  }
+
   const results = rows.map((row, index) => {
     const candidates = [];
     for (const card of cards) {
