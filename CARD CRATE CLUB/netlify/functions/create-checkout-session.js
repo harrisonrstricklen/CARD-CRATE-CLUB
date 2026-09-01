@@ -9,18 +9,25 @@ exports.handler = async (event) => {
     const plan = PLANS[planId];
     if (!plan) return json(400, { error: 'Invalid plan' });
 
-    const priceId = process.env[plan.priceEnv];
-    if (!priceId) {
-      console.error(`Missing ${plan.priceEnv}`);
-      return json(500, { error: 'This plan is not connected to billing yet.' });
-    }
-
     const stripe = getStripe();
     const siteUrl = getSiteUrl(event);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: Math.round(plan.price * 100),
+          recurring: { interval: 'month' },
+          product_data: {
+            name: `Card Crate Club — ${plan.name}`,
+            description: plan.sealed
+              ? 'Monthly sealed-product subscription; inventory varies by release.'
+              : `${plan.packs}-pack monthly Card Crate Club subscription.`
+          }
+        },
+        quantity: 1
+      }],
       customer_email: user.email || undefined,
       client_reference_id: user.uid,
       allow_promotion_codes: true,
