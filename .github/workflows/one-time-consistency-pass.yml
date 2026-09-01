@@ -26,12 +26,8 @@ jobs:
               "A numbered badge, physical member card, price lock guarantee, bonus Crate Coins, early access, and a Discord role. See the Founding 100 page for the full list.": "A permanent numbered badge, physical Founder card, one complimentary entry in eligible giveaways, first opportunity at select new store items, and other Founder benefits. See the Founding 100 page for the full list."
             },
             'CARD CRATE CLUB/how-it-works.html': {
-              '>Dashboard</a>';: '>My Dashboard</a>';
+              '>Dashboard</a>': '>My Dashboard</a>'
             }
-          }
-          # Handle how-it-works separately because its JS string includes quotes.
-          replacements['CARD CRATE CLUB/how-it-works.html'] = {
-            '>Dashboard</a>': '>My Dashboard</a>'
           }
           for path, reps in replacements.items():
             p = Path(path)
