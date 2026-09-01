@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             img.onerror = () => { if (img.parentElement) img.parentElement.style.display = 'none'; };
         });
 
-        // Use the real Card Crate Club concept art that now lives in the repo.
+        // Use the newest Card Crate Club concept art from the repo.
         if (!document.querySelector('.crate-concept-section')) {
             const concept = document.createElement('section');
             concept.className = 'crate-concept-section';
@@ -123,11 +123,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h2>Your Packs. Your Sets. <span>Your Crate.</span></h2>
                         <p>Pick a monthly pack count, split those packs across the eligible sets you actually want, and preview your crate before you subscribe.</p>
                         <div class="crate-concept-points">
-                            <span>4 Pack Crate</span><span>8 Pack Crate</span><span>12 Pack Crate</span><span>Choose your sets</span>
+                            <span>4 Pack Crate</span><span>8 Pack Crate</span><span>12 Pack Crate</span><span>Box Club</span>
                         </div>
                     </div>
                     <div class="crate-concept-art">
-                        <img src="images/card-crate-club-4-8-12-pack-crates.png" alt="Card Crate Club 4 pack, 8 pack, and 12 pack subscription crate concept renderings" loading="lazy">
+                        <img src="images/card-crate-club-crates-final.png?v=20260901-v2" alt="Card Crate Club subscription crate concept renderings" loading="eager">
                         <div class="crate-concept-caption">Concept rendering — final packaging and eligible pack selection may vary.</div>
                     </div>
                 </div>`;
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (why) why.insertAdjacentElement('beforebegin', concept);
         }
 
-        // Replace the old generic four-tier preview with the pack-count model we're actually building.
+        // Match the homepage choices to the full subscription lineup.
         const subscriptionsSection = document.getElementById('subscriptions');
         if (subscriptionsSection) {
             subscriptionsSection.innerHTML = `
@@ -186,6 +186,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>✓ Maximum mixed-crate flexibility</li>
                         </ul>
                         <a href="onboarding.html?plan=collector-club" class="btn btn-outline btn-block">Build 12-Pack Crate</a>
+                    </div>
+                    <div class="tier-card">
+                        <div class="tier-icon">📦</div>
+                        <div class="tier-name">Box Club</div>
+                        <div class="tier-amount">$119.99</div>
+                        <div class="tier-period">/month — current price</div>
+                        <ul class="tier-features">
+                            <li>✓ Premium monthly sealed-product option</li>
+                            <li>✓ Build from eligible Box Club selections</li>
+                            <li>✓ Preview available options before checkout</li>
+                            <li>✓ Member access to limited inventory</li>
+                        </ul>
+                        <a href="onboarding.html?plan=box-club" class="btn btn-outline btn-block">Build Box Club Crate</a>
                     </div>
                 </div>
                 <p class="tiers-note">ℹ️ Pricing and eligible sets can change with product acquisition, shipping, and inventory. You'll see your crate options before subscribing.</p>
