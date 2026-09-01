@@ -4,6 +4,7 @@
 [functions]
   included_files = [
     "card-data/all-cards-index.json",
+    "card-data/all-cards-index-ja.json",
     "card-data/all-sets/index.json"
   ]
 
