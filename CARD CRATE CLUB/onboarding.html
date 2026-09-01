@@ -2,475 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Set Up Your Subscription — CardCrate Club</title>
-<meta name="description" content="Finish setting up your CardCrate Club subscription — pick preferences, add shipping, and get ready for your first crate.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Build Your Subscription — Card Crate Club</title>
+<meta name="description" content="Choose your Card Crate Club plan, build your crate from available sets, add shipping, and continue to secure Stripe checkout.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="theme.css">
 <style>
-  .onboard-shell { max-width: 680px; margin: 0 auto; padding: 36px 20px 80px; width: 100%; }
-
-  /* Step indicator */
-  .step-indicator { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 32px; }
-  .step-dot { width: 30px; height: 30px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--muted); flex-shrink: 0; }
-  .step-dot.active { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; border-color: var(--gold); }
-  .step-dot.done { background: rgba(245,200,66,0.15); color: var(--gold); border-color: rgba(245,200,66,0.4); }
-  .step-line { width: 24px; height: 1px; background: var(--border); }
-  .step-line.done { background: rgba(245,200,66,0.5); }
-
-  .onboard-step { display: none; }
-  .onboard-step.active { display: block; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-  .step-heading { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; text-align: center; }
-  .step-sub { color: var(--muted); font-size: 0.88rem; text-align: center; margin-bottom: 28px; }
-
-  /* Step 1: plan picker */
-  .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .plan-pick { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: all 0.2s; }
-  .plan-pick:hover { border-color: rgba(245,200,66,0.4); }
-  .plan-pick.selected { border-color: var(--gold); background: rgba(245,200,66,0.08); box-shadow: 0 0 0 1px var(--gold); }
-  .plan-pick-name { font-weight: 800; font-size: 0.95rem; }
-  .plan-pick-price { color: var(--gold); font-weight: 800; font-size: 1.1rem; margin: 4px 0; }
-  .plan-pick-desc { color: var(--muted); font-size: 0.76rem; }
-
-  /* Step 2: preference tiles */
-  .pref-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }
-  .pref-tile { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; cursor: pointer; text-align: center; transition: all 0.2s; }
-  .pref-tile:hover { border-color: rgba(245,200,66,0.4); }
-  .pref-tile.selected { border-color: var(--gold); background: rgba(245,200,66,0.08); }
-  .pref-tile-icon { font-size: 1.5rem; margin-bottom: 6px; }
-  .pref-tile-label { font-size: 0.82rem; font-weight: 600; }
-
-  /* Step 4: payment */
-  .order-summary { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
-  .order-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; color: #ccc; }
-  .order-row.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; font-weight: 800; font-size: 1rem; color: var(--text); }
-  .order-row .gold { color: var(--gold); }
-
-  .stripe-note { background: rgba(66,153,245,0.08); border: 1px solid rgba(66,153,245,0.3); border-radius: 10px; padding: 12px 14px; font-size: 0.78rem; color: #a8cbf0; margin-bottom: 20px; display: flex; gap: 8px; align-items: flex-start; }
-
-  .card-field-mock { background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-
-  /* Step 5: welcome */
-  .welcome-hero { text-align: center; padding: 20px 0 8px; }
-  .welcome-icon { font-size: 3rem; margin-bottom: 12px; }
-  .welcome-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 6px; }
-  .welcome-title .gold { color: var(--gold); }
-  .welcome-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
-  .welcome-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-
-  .nav-buttons { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
-  .nav-buttons .btn { flex: 1; }
-
-  @media (max-width: 480px) {
-    .plan-grid, .pref-grid, .welcome-stats { grid-template-columns: 1fr 1fr; }
-    .step-line { width: 12px; }
-  }
+.onboard-shell{max-width:760px;margin:0 auto;padding:36px 18px 80px;width:100%}.step-indicator{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:32px}.step-dot{width:30px;height:30px;border-radius:50%;background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);flex-shrink:0}.step-dot.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#000;border-color:var(--gold)}.step-dot.done{background:rgba(245,200,66,.15);color:var(--gold);border-color:rgba(245,200,66,.4)}.step-line{width:24px;height:1px;background:var(--border)}.step-line.done{background:rgba(245,200,66,.5)}.onboard-step{display:none}.onboard-step.active{display:block}.step-heading{font-size:1.5rem;font-weight:900;margin-bottom:6px;text-align:center}.step-sub{color:var(--muted);font-size:.86rem;text-align:center;margin:0 auto 26px;line-height:1.55;max-width:610px}.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.plan-pick{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:.2s}.plan-pick:hover{border-color:rgba(245,200,66,.4)}.plan-pick.selected{border-color:var(--gold);background:rgba(245,200,66,.08);box-shadow:0 0 0 1px var(--gold)}.plan-pick-name{font-weight:800;font-size:.95rem}.plan-pick-price{color:var(--gold);font-weight:800;font-size:1.1rem;margin:4px 0}.plan-pick-desc{color:var(--muted);font-size:.76rem;line-height:1.45}.pricing-note{font-size:.7rem;line-height:1.5;color:var(--muted);padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.02);margin-bottom:20px}.crate-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 15px;border:1px solid rgba(245,200,66,.24);border-radius:12px;background:rgba(245,200,66,.05);margin-bottom:12px}.crate-head strong{font-size:.9rem}.crate-count{font-size:.9rem;font-weight:900;color:var(--gold)}.set-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.set-option{border:1px solid var(--border);border-radius:12px;padding:13px;background:var(--card-bg)}.set-name-row{display:flex;justify-content:space-between;gap:8px;align-items:center}.set-name-row strong{font-size:.82rem}.set-name-row a{font-size:.66rem;color:var(--gold)}.qty-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px}.qty-row button{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:#14141a;color:#fff;font-size:1.15rem;cursor:pointer}.qty-row span{font-weight:900;color:var(--gold)}.selection-summary{margin-top:12px;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.05);font-size:.74rem;color:var(--muted);line-height:1.45}.selection-error{display:none;color:#ff9898;font-size:.75rem;text-align:center;margin-top:10px}.box-message{display:none;padding:20px;border:1px solid rgba(245,200,66,.24);border-radius:14px;background:rgba(245,200,66,.055);text-align:center}.box-message strong{display:block;margin-bottom:6px}.box-message p{font-size:.8rem;color:var(--muted);line-height:1.5}.order-summary{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}.order-row{display:flex;justify-content:space-between;gap:12px;font-size:.84rem;padding:6px 0;color:#ccc}.order-row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:12px;font-weight:800;font-size:1rem;color:var(--text)}.order-row .gold{color:var(--gold)}.stripe-note{background:rgba(66,153,245,.08);border:1px solid rgba(66,153,245,.3);border-radius:10px;padding:12px 14px;font-size:.78rem;color:#a8cbf0;margin-bottom:16px;line-height:1.5}.billing-note{font-size:.72rem;color:var(--muted);line-height:1.5;margin:10px 0 18px}.checkbox-row{display:flex;gap:9px;align-items:flex-start;font-size:.78rem;color:#c8c8c8;line-height:1.45}.checkbox-row input{margin-top:3px}.nav-buttons{display:flex;justify-content:space-between;gap:12px;margin-top:20px}.nav-buttons .btn{flex:1}.welcome-hero{text-align:center;padding:20px 0 8px}.welcome-icon{font-size:3rem;margin-bottom:12px}.welcome-title{font-size:1.7rem;font-weight:900;margin-bottom:6px}.welcome-title .gold{color:var(--gold)}.welcome-sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}.welcome-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}.stat-card{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg);text-align:center}.stat-value{font-weight:850;font-size:.88rem;margin:4px 0}.stat-label{font-size:.68rem;color:var(--muted)}@media(max-width:520px){.plan-grid,.set-grid,.welcome-stats{grid-template-columns:1fr}.step-line{width:12px}.onboard-shell{padding-left:12px;padding-right:12px}.nav-buttons{flex-direction:column}.crate-head{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
-
-<!-- ========== FLOATING POKEMON CARDS BACKGROUND ========== -->
-<div class="floating-bg">
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png"       alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png"     alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png"      alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png"   alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png"    alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png"   alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png"  alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png"   alt="" loading="lazy"/></div>
-</div>
-
-<div class="page-wrapper">
-  <header>
-    <a href="index.html" class="nav-logo">CCC<span>.</span></a>
-    <span style="font-size:0.8rem;color:var(--muted);font-weight:600;">Subscription Setup</span>
-  </header>
-
-  <main class="onboard-shell">
-
-    <div class="step-indicator" id="stepIndicator"></div>
-
-    <!-- ===== STEP 1: CHOOSE SUBSCRIPTION ===== -->
-    <section class="onboard-step active" data-step="1">
-      <h1 class="step-heading">Choose Your Crate</h1>
-      <p class="step-sub">Pick the tier that fits your collecting style. You can change this anytime later.</p>
-      <div class="plan-grid" id="planGrid">
-        <div class="plan-pick" data-plan="pack-club" data-price="24.99">
-          <div class="plan-pick-name">🎴 Pack Club</div>
-          <div class="plan-pick-price">$24.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
-          <div class="plan-pick-desc">5 packs, 1 set, casual collectors</div>
-        </div>
-        <div class="plan-pick" data-plan="trainer-club" data-price="44.99">
-          <div class="plan-pick-name">🏋️ Trainer Club</div>
-          <div class="plan-pick-price">$44.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
-          <div class="plan-pick-desc">10 packs, 2 sets, guaranteed rare</div>
-        </div>
-        <div class="plan-pick" data-plan="collector-club" data-price="64.99">
-          <div class="plan-pick-name">🏆 Collector Club</div>
-          <div class="plan-pick-price">$64.99<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
-          <div class="plan-pick-desc">15 packs, any set, sealed ETB</div>
-        </div>
-        <div class="plan-pick" data-plan="box-club" data-price="149">
-          <div class="plan-pick-name">📦 Box Club</div>
-          <div class="plan-pick-price">$149<span style="font-size:0.7rem;color:var(--muted);">/mo</span></div>
-          <div class="plan-pick-desc">1 sealed booster box, your set</div>
-        </div>
-      </div>
-      <div class="nav-buttons">
-        <a href="subscriptions.html" class="btn btn-outline">← Back to Plans</a>
-        <button class="btn btn-gold" id="toStep2">Continue</button>
-      </div>
-    </section>
-
-    <!-- ===== STEP 2: COLLECTOR PREFERENCES ===== -->
-    <section class="onboard-step" data-step="2">
-      <h1 class="step-heading">Collector Preferences</h1>
-      <p class="step-sub">Pick as many as you like — we'll use these to curate your crates.</p>
-      <div class="pref-grid" id="prefGrid">
-        <div class="pref-tile" data-pref="newest"><div class="pref-tile-icon">🆕</div><div class="pref-tile-label">Newest Sets</div></div>
-        <div class="pref-tile" data-pref="specific"><div class="pref-tile-icon">🎯</div><div class="pref-tile-label">Specific Sets</div></div>
-        <div class="pref-tile" data-pref="chase"><div class="pref-tile-icon">💎</div><div class="pref-tile-label">Chase Cards</div></div>
-        <div class="pref-tile" data-pref="sealed"><div class="pref-tile-icon">📦</div><div class="pref-tile-label">Sealed Products</div></div>
-        <div class="pref-tile" data-pref="art"><div class="pref-tile-icon">🎨</div><div class="pref-tile-label">Art Cards</div></div>
-        <div class="pref-tile" data-pref="competitive"><div class="pref-tile-icon">⚔️</div><div class="pref-tile-label">Competitive</div></div>
-        <div class="pref-tile" data-pref="surprise" style="grid-column: span 2;"><div class="pref-tile-icon">🎲</div><div class="pref-tile-label">Surprise Me</div></div>
-      </div>
-      <div class="nav-buttons">
-        <button class="btn btn-outline" id="toStep1From2">← Back</button>
-        <button class="btn btn-gold" id="toStep3">Continue</button>
-      </div>
-    </section>
-
-    <!-- ===== STEP 3: SHIPPING ===== -->
-    <section class="onboard-step" data-step="3">
-      <h1 class="step-heading">Shipping Information</h1>
-      <p class="step-sub">Where should we send your crates?</p>
-      <form id="shippingForm" novalidate>
-        <div class="form-group" id="g-fullName"><label for="fullName">Full Name</label><input type="text" id="fullName" required /><div class="field-error">Required.</div></div>
-        <div class="form-group" id="g-addr1"><label for="addr1">Address Line 1</label><input type="text" id="addr1" required /><div class="field-error">Required.</div></div>
-        <div class="form-group"><label for="addr2">Address Line 2 (optional)</label><input type="text" id="addr2" /></div>
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;">
-          <div class="form-group" id="g-city"><label for="city">City</label><input type="text" id="city" required /><div class="field-error">Required.</div></div>
-          <div class="form-group" id="g-state"><label for="state">State</label><input type="text" id="state" required /><div class="field-error">Required.</div></div>
-          <div class="form-group" id="g-zip"><label for="zip">ZIP</label><input type="text" id="zip" required /><div class="field-error">Required.</div></div>
-        </div>
-        <div class="form-group"><label for="country">Country</label>
-          <select id="country"><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option><option>Other</option></select>
-        </div>
-        <div class="form-group" id="g-phone"><label for="phone">Phone Number</label><input type="tel" id="phone" placeholder="For shipping updates" required /><div class="field-error">Required.</div></div>
-      </form>
-      <div class="nav-buttons">
-        <button class="btn btn-outline" id="toStep2From3">← Back</button>
-        <button class="btn btn-gold" id="toStep4">Continue</button>
-      </div>
-    </section>
-
-    <!-- ===== STEP 4: PAYMENT ===== -->
-    <section class="onboard-step" data-step="4">
-      <h1 class="step-heading">Payment</h1>
-      <p class="step-sub">Review your order and add a payment method.</p>
-
-      <div class="order-summary" id="orderSummary"></div>
-
-      <div class="stripe-note">
-        🔒 <span><strong>Secure checkout powered by Stripe.</strong> CardCrate Club never stores your card number. You’ll be sent to Stripe to enter payment details and then returned here after checkout.</span>
-      </div>
-
-      <label class="checkbox-row" style="margin-bottom:20px;">
-        <input type="checkbox" id="agreeBilling" />
-        <span>I understand this is a monthly recurring subscription and I can manage or cancel billing from my account.</span>
-      </label>
-
-      <div id="checkoutMessage" style="display:none;margin-bottom:14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.82rem;color:var(--muted);"></div>
-
-      <div class="nav-buttons">
-        <button class="btn btn-outline" id="toStep3From4">← Back</button>
-        <button class="btn btn-gold" id="startCheckout" disabled>Continue to Secure Checkout →</button>
-      </div>
-    </section>
-
-    <!-- ===== STEP 5: WELCOME ===== -->
-    <section class="onboard-step" data-step="5">
-      <div class="welcome-hero">
-        <div class="welcome-icon">🎉</div>
-        <h1 class="welcome-title">Welcome to <span class="gold">CardCrate Club</span></h1>
-        <p class="welcome-sub">Your subscription setup is complete. Here's what's next.</p>
-      </div>
-
-      <div class="founding-banner" style="margin-bottom:20px;">
-        <div class="founding-icon">🏆</div>
-        <div class="founding-text">
-          <strong>Founding Member Status</strong>
-          <p id="foundingNote">Your Founding Member number will be assigned once billing goes live — first 100 subscribers lock it in.</p>
-        </div>
-      </div>
-
-      <div class="welcome-stats">
-        <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value" id="welcomePlan">—</div><div class="stat-label">Your Tier</div></div>
-        <div class="stat-card"><div class="stat-icon">🚚</div><div class="stat-value">TBD</div><div class="stat-label">Next Crate</div></div>
-        <div class="stat-card"><div class="stat-icon">🪙</div><div class="stat-value">0</div><div class="stat-label">Crate Coins</div></div>
-        <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-value">Pending</div><div class="stat-label">Member #</div></div>
-      </div>
-
-      <p style="font-size:0.78rem;color:var(--muted);text-align:center;margin-bottom:24px;">Crate Coins begin accruing after your first billed crate. Your next-crate date is confirmed once payment is connected.</p>
-
-      <a href="dashboard.html" class="btn btn-gold btn-block btn-lg">Go to My Dashboard →</a>
-    </section>
-
-  </main>
-</div>
-
+<div class="floating-bg"><div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png" alt=""></div><div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png" alt=""></div><div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png" alt=""></div></div>
+<div class="page-wrapper"><header><a href="index.html" class="nav-logo">CCC</a><span style="font-size:.8rem;color:var(--muted);font-weight:600">Subscription Setup</span></header>
+<main class="onboard-shell"><div class="step-indicator" id="stepIndicator"></div>
+<section class="onboard-step active" data-step="1"><h1 class="step-heading">Choose Your Crate Size</h1><p class="step-sub">Choose how many packs you want each month. For pack plans, you’ll build the exact set mix on the next screen before entering payment information.</p><div class="plan-grid" id="planGrid">
+<div class="plan-pick" data-plan="pack-club"><div class="plan-pick-name">🎴 Pack Club</div><div class="plan-pick-price">$24.99<span style="font-size:.7rem;color:var(--muted)">/mo</span></div><div class="plan-pick-desc">4 booster packs • mix available sets</div></div>
+<div class="plan-pick" data-plan="trainer-club"><div class="plan-pick-name">⚡ Trainer Club</div><div class="plan-pick-price">$44.99<span style="font-size:.7rem;color:var(--muted)">/mo</span></div><div class="plan-pick-desc">8 booster packs • more variety • Surprise Me available</div></div>
+<div class="plan-pick" data-plan="collector-club"><div class="plan-pick-name">🏆 Collector Club</div><div class="plan-pick-price">$64.99<span style="font-size:.7rem;color:var(--muted)">/mo</span></div><div class="plan-pick-desc">12 booster packs • build a larger mixed crate</div></div>
+<div class="plan-pick" data-plan="box-club"><div class="plan-pick-name">📦 Box Club</div><div class="plan-pick-price">$149<span style="font-size:.7rem;color:var(--muted)">/mo</span></div><div class="plan-pick-desc">1 eligible sealed booster box • inventory dependent</div></div>
+</div><div class="pricing-note">These are current subscription prices, not lifetime-locked prices. Product acquisition and shipping costs can change; future recurring price changes should be communicated before they take effect.</div><div class="nav-buttons"><a href="subscriptions.html" class="btn btn-outline">← Back</a><button class="btn btn-gold" id="toStep2">Build My Crate →</button></div></section>
+<section class="onboard-step" data-step="2"><h1 class="step-heading">Choose Your Packs</h1><p class="step-sub" id="builderSub">Split your monthly packs across the sets currently offered, or leave some slots to Card Crate Club with Surprise Me.</p><div id="packBuilder"><div class="crate-head"><strong id="cratePlanName">Your Crate</strong><div class="crate-count"><span id="selectedCount">0</span> / <span id="packLimit">0</span> packs selected</div></div><div class="set-grid" id="setGrid">
+<div class="set-option" data-key="pitch-black" data-label="Pitch Black"><div class="set-name-row"><strong>Pitch Black</strong><a href="set.html?set=me05" target="_blank">View set →</a></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+<div class="set-option" data-key="chaos-rising" data-label="Chaos Rising"><div class="set-name-row"><strong>Chaos Rising</strong><a href="set.html?set=me04" target="_blank">View set →</a></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+<div class="set-option" data-key="perfect-order" data-label="Perfect Order"><div class="set-name-row"><strong>Perfect Order</strong><a href="set.html?set=me03" target="_blank">View set →</a></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+<div class="set-option" data-key="ascended-heroes" data-label="Ascended Heroes"><div class="set-name-row"><strong>Ascended Heroes</strong><a href="set.html?set=me02.5" target="_blank">View set →</a></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+<div class="set-option" data-key="phantasmal-flames" data-label="Phantasmal Flames"><div class="set-name-row"><strong>Phantasmal Flames</strong><a href="set.html?set=me02" target="_blank">View set →</a></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+<div class="set-option" data-key="surprise-me" data-label="Surprise Me"><div class="set-name-row"><strong>🎲 Surprise Me</strong><span style="font-size:.65rem;color:var(--muted)">CCC chooses</span></div><div class="qty-row"><button type="button" data-delta="-1">−</button><span>0</span><button type="button" data-delta="1">+</button></div></div>
+</div><div class="selection-summary" id="selectionSummary">No packs selected yet.</div><div class="selection-error" id="selectionError">Fill every pack slot before continuing.</div></div><div class="box-message" id="boxMessage"><strong>Box Club uses sealed inventory.</strong><p>Booster box availability changes by release and distributor inventory. You’ll choose from eligible sealed boxes offered for the upcoming shipment rather than being promised a specific set that may become unavailable.</p></div><div class="nav-buttons"><button class="btn btn-outline" id="toStep1From2">← Change Plan</button><button class="btn btn-gold" id="toStep3">Continue →</button></div></section>
+<section class="onboard-step" data-step="3"><h1 class="step-heading">Shipping Information</h1><p class="step-sub">Where should we send your crates?</p><form id="shippingForm" novalidate><div class="form-group" id="g-fullName"><label for="fullName">Full Name</label><input type="text" id="fullName" required><div class="field-error">Required.</div></div><div class="form-group" id="g-addr1"><label for="addr1">Address Line 1</label><input type="text" id="addr1" required><div class="field-error">Required.</div></div><div class="form-group"><label for="addr2">Address Line 2 (optional)</label><input type="text" id="addr2"></div><div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px"><div class="form-group" id="g-city"><label for="city">City</label><input type="text" id="city" required><div class="field-error">Required.</div></div><div class="form-group" id="g-state"><label for="state">State</label><input type="text" id="state" required><div class="field-error">Required.</div></div><div class="form-group" id="g-zip"><label for="zip">ZIP</label><input type="text" id="zip" required><div class="field-error">Required.</div></div></div><div class="form-group"><label for="country">Country</label><select id="country"><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Australia</option><option>Other</option></select></div><div class="form-group" id="g-phone"><label for="phone">Phone Number</label><input type="tel" id="phone" placeholder="For shipping updates" required><div class="field-error">Required.</div></div></form><div class="nav-buttons"><button class="btn btn-outline" id="toStep2From3">← Back</button><button class="btn btn-gold" id="toStep4">Review Subscription →</button></div></section>
+<section class="onboard-step" data-step="4"><h1 class="step-heading">Review & Payment</h1><p class="step-sub">Confirm the plan and crate mix you’re starting with, then continue to Stripe.</p><div class="order-summary" id="orderSummary"></div><div class="stripe-note">🔒 <span><strong>Secure checkout powered by Stripe.</strong> Card Crate Club never stores your card number. You’ll enter payment details through Stripe.</span></div><label class="checkbox-row"><input type="checkbox" id="agreeBilling"><span>I understand this is a recurring monthly subscription, available products depend on inventory, and future subscription pricing may change with advance notice. I can manage or cancel future billing from my account.</span></label><div class="billing-note">Your initial crate selections are saved with your account. The member experience is intended to let you update future crate selections before each monthly cutoff.</div><div id="checkoutMessage" style="display:none;margin-bottom:14px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:.82rem;color:var(--muted)"></div><div class="nav-buttons"><button class="btn btn-outline" id="toStep3From4">← Back</button><button class="btn btn-gold" id="startCheckout" disabled>Continue to Secure Checkout →</button></div></section>
+<section class="onboard-step" data-step="5"><div class="welcome-hero"><div class="welcome-icon">🎉</div><h1 class="welcome-title">Welcome to <span class="gold">Card Crate Club</span></h1><p class="welcome-sub">Your subscription setup is complete. Your crate preferences are saved to your account.</p></div><div class="welcome-stats"><div class="stat-card"><div>📦</div><div class="stat-value" id="welcomePlan">—</div><div class="stat-label">Your Plan</div></div><div class="stat-card"><div>🎴</div><div class="stat-value" id="welcomeCrate">—</div><div class="stat-label">Starting Crate</div></div><div class="stat-card"><div>🏆</div><div class="stat-value" id="founderStatus">Pending</div><div class="stat-label">Founder Status</div></div><div class="stat-card"><div>🚚</div><div class="stat-value">TBD</div><div class="stat-label">Next Shipment</div></div></div><a href="dashboard.html" class="btn btn-gold btn-block btn-lg">Go to My Dashboard →</a></section>
+</main></div>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",
-    authDomain: "cardcrate-club.firebaseapp.com",
-    projectId: "cardcrate-club",
-    storageBucket: "cardcrate-club.firebasestorage.app",
-    messagingSenderId: "261800955788",
-    appId: "1:261800955788:web:3f07f4c60886b26d05d0a9",
-    measurementId: "G-5B8J0LWGKE"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  const totalSteps = 5;
-  let currentStep = 1;
-  let selectedPlan = null;
-  let currentUser = null;
-
-  const planData = {
-    'pack-club':      { name: 'Pack Club',      price: 24.99 },
-    'trainer-club':   { name: 'Trainer Club',   price: 44.99 },
-    'collector-club': { name: 'Collector Club', price: 64.99 },
-    'box-club':       { name: 'Box Club',       price: 149.00 }
-  };
-
-  const params = new URLSearchParams(window.location.search);
-  const preselect = params.get('plan');
-  const checkoutState = params.get('checkout');
-
-  function renderStepIndicator() {
-    const el = document.getElementById('stepIndicator');
-    let html = '';
-    for (let i = 1; i <= totalSteps; i++) {
-      const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
-      html += `<div class="step-dot ${cls}">${i < currentStep ? '✓' : i}</div>`;
-      if (i < totalSteps) html += `<div class="step-line ${i < currentStep ? 'done' : ''}"></div>`;
-    }
-    el.innerHTML = html;
-  }
-
-  function goToStep(n) {
-    currentStep = n;
-    document.querySelectorAll('.onboard-step').forEach(s => s.classList.toggle('active', Number(s.dataset.step) === n));
-    renderStepIndicator();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (n === 4) renderOrderSummary();
-    if (n === 5) renderWelcome();
-  }
-
-  function setSelectedPlan(planId) {
-    if (!planData[planId]) return;
-    document.querySelectorAll('.plan-pick').forEach(c => c.classList.toggle('selected', c.dataset.plan === planId));
-    selectedPlan = planId;
-  }
-
-  function selectedPreferences() {
-    return [...document.querySelectorAll('.pref-tile.selected')].map(el => el.dataset.pref);
-  }
-
-  function shippingData() {
-    return {
-      fullName: document.getElementById('fullName').value.trim(),
-      address1: document.getElementById('addr1').value.trim(),
-      address2: document.getElementById('addr2').value.trim(),
-      city: document.getElementById('city').value.trim(),
-      state: document.getElementById('state').value.trim(),
-      zip: document.getElementById('zip').value.trim(),
-      country: document.getElementById('country').value,
-      phone: document.getElementById('phone').value.trim()
-    };
-  }
-
-  async function saveOnboardingDraft() {
-    if (!currentUser || !selectedPlan) return;
-    await setDoc(doc(db, 'users', currentUser.uid), {
-      preferences: selectedPreferences(),
-      shipping: shippingData(),
-      onboarding: {
-        planId: selectedPlan,
-        planName: planData[selectedPlan].name,
-        status: 'checkout_pending',
-        updatedAt: serverTimestamp()
-      }
-    }, { merge: true });
-  }
-
-  function fillExistingData(data = {}) {
-    if (data.onboarding?.planId && planData[data.onboarding.planId] && !preselect) setSelectedPlan(data.onboarding.planId);
-    if (Array.isArray(data.preferences)) {
-      document.querySelectorAll('.pref-tile').forEach(tile => tile.classList.toggle('selected', data.preferences.includes(tile.dataset.pref)));
-    }
-    const ship = data.shipping || {};
-    const map = { fullName:'fullName', address1:'addr1', address2:'addr2', city:'city', state:'state', zip:'zip', country:'country', phone:'phone' };
-    Object.entries(map).forEach(([key,id]) => {
-      if (ship[key] !== undefined && document.getElementById(id)) document.getElementById(id).value = ship[key];
-    });
-  }
-
-  document.querySelectorAll('.plan-pick').forEach(card => {
-    card.addEventListener('click', () => setSelectedPlan(card.dataset.plan));
-  });
-  if (preselect && planData[preselect]) setSelectedPlan(preselect);
-
-  document.getElementById('toStep2').addEventListener('click', () => {
-    if (!selectedPlan) return alert('Please choose a plan to continue.');
-    goToStep(2);
-  });
-
-  document.querySelectorAll('.pref-tile').forEach(tile => tile.addEventListener('click', () => tile.classList.toggle('selected')));
-  document.getElementById('toStep1From2').addEventListener('click', () => goToStep(1));
-  document.getElementById('toStep3').addEventListener('click', () => goToStep(3));
-  document.getElementById('toStep2From3').addEventListener('click', () => goToStep(2));
-
-  document.getElementById('toStep4').addEventListener('click', async () => {
-    const required = ['fullName', 'addr1', 'city', 'state', 'zip', 'phone'];
-    let valid = true;
-    required.forEach(id => {
-      const input = document.getElementById(id);
-      const hasError = input.value.trim().length === 0;
-      const group = document.getElementById('g-' + id);
-      if (group) group.classList.toggle('has-error', hasError);
-      if (hasError) valid = false;
-    });
-    if (!valid) return;
-
-    try {
-      await saveOnboardingDraft();
-      goToStep(4);
-    } catch (err) {
-      console.error(err);
-      alert('We could not save your shipping information. Please try again.');
-    }
-  });
-
-  function renderOrderSummary() {
-    const plan = planData[selectedPlan] || { name: '—', price: 0 };
-    document.getElementById('orderSummary').innerHTML = `
-      <div class="order-row"><span>${plan.name}</span><span class="gold">$${plan.price.toFixed(2)}</span></div>
-      <div class="order-row"><span>Shipping</span><span>Free</span></div>
-      <div class="order-row"><span>Tax</span><span>Calculated by Stripe</span></div>
-      <div class="order-row total"><span>Monthly subtotal</span><span class="gold">$${plan.price.toFixed(2)}</span></div>
-    `;
-  }
-
-  document.getElementById('toStep3From4').addEventListener('click', () => goToStep(3));
-
-  const agreeBilling = document.getElementById('agreeBilling');
-  const checkoutBtn = document.getElementById('startCheckout');
-  const checkoutMessage = document.getElementById('checkoutMessage');
-  agreeBilling.addEventListener('change', () => { checkoutBtn.disabled = !agreeBilling.checked; });
-
-  function showCheckoutMessage(text, isError = false) {
-    checkoutMessage.style.display = 'block';
-    checkoutMessage.textContent = text;
-    checkoutMessage.style.color = isError ? '#ff8e8e' : 'var(--muted)';
-  }
-
-  checkoutBtn.addEventListener('click', async () => {
-    if (!currentUser || !selectedPlan) return;
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Opening secure checkout…';
-    showCheckoutMessage('Saving your setup and connecting to Stripe…');
-
-    try {
-      await saveOnboardingDraft();
-      const token = await currentUser.getIdToken();
-      const response = await fetch('/.netlify/functions/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ planId: selectedPlan })
-      });
-      const data = await response.json();
-      if (!response.ok || !data.url) throw new Error(data.error || 'Checkout could not be started.');
-      window.location.href = data.url;
-    } catch (err) {
-      console.error(err);
-      showCheckoutMessage(err.message || 'Checkout could not be started.', true);
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = 'Continue to Secure Checkout →';
-    }
-  });
-
-  function renderWelcome() {
-    const plan = planData[selectedPlan] || { name: 'Your plan' };
-    document.getElementById('welcomePlan').textContent = plan.name;
-  }
-
-  async function waitForSubscription(uid) {
-    const welcomeSub = document.querySelector('[data-step="5"] .welcome-sub');
-    for (let i = 0; i < 10; i++) {
-      const snap = await getDoc(doc(db, 'users', uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.subscription?.planId) setSelectedPlan(data.subscription.planId);
-        if (['active','trialing'].includes(data.subscription?.status)) {
-          welcomeSub.textContent = 'Payment confirmed. Your membership is active and your dashboard is ready.';
-          document.getElementById('foundingNote').textContent = data.foundingMember === true
-            ? `You’re Founding Member #${data.memberNumber}. Your Founding 100 spot is locked in.`
-            : 'Your membership is active. Founding 100 status is assigned automatically to eligible paid members.';
-          renderWelcome();
-          return;
-        }
-      }
-      await new Promise(resolve => setTimeout(resolve, 1200));
-    }
-    welcomeSub.textContent = 'Checkout is complete. Stripe is confirming your subscription; your dashboard will update automatically.';
-  }
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      const planQuery = preselect ? `?plan=${encodeURIComponent(preselect)}` : '';
-      window.location.href = `signup.html${planQuery}`;
-      return;
-    }
-    currentUser = user;
-
-    try {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) fillExistingData(snap.data());
-      if (!document.getElementById('fullName').value) document.getElementById('fullName').value = user.displayName || '';
-    } catch (err) {
-      console.warn('Could not load onboarding data:', err);
-    }
-
-    if (checkoutState === 'success') {
-      goToStep(5);
-      await waitForSubscription(user.uid);
-    } else {
-      if (checkoutState === 'cancelled') {
-        goToStep(4);
-        showCheckoutMessage('Checkout was cancelled. Nothing was charged. You can try again when you’re ready.');
-      } else {
-        renderStepIndicator();
-      }
-    }
-  });
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const firebaseConfig={apiKey:'AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8',authDomain:'cardcrate-club.firebaseapp.com',projectId:'cardcrate-club',storageBucket:'cardcrate-club.firebasestorage.app',messagingSenderId:'261800955788',appId:'1:261800955788:web:3f07f4c60886b26d05d0a9',measurementId:'G-5B8J0LWGKE'};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);const totalSteps=5;let currentStep=1,selectedPlan=null,currentUser=null;
+const planData={'pack-club':{name:'Pack Club',price:24.99,packs:4},'trainer-club':{name:'Trainer Club',price:44.99,packs:8},'collector-club':{name:'Collector Club',price:64.99,packs:12},'box-club':{name:'Box Club',price:149,packs:0,sealed:true}};
+const params=new URLSearchParams(location.search),preselect=params.get('plan'),checkoutState=params.get('checkout');const quantities={};document.querySelectorAll('.set-option').forEach(el=>quantities[el.dataset.key]=0);
+function renderStepIndicator(){const el=document.getElementById('stepIndicator');el.innerHTML='';for(let i=1;i<=totalSteps;i++){const d=document.createElement('div');d.className='step-dot '+(i===currentStep?'active':i<currentStep?'done':'');d.textContent=i<currentStep?'✓':i;el.appendChild(d);if(i<totalSteps){const l=document.createElement('div');l.className='step-line '+(i<currentStep?'done':'');el.appendChild(l)}}}
+function goToStep(n){currentStep=n;document.querySelectorAll('.onboard-step').forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));renderStepIndicator();scrollTo({top:0,behavior:'smooth'});if(n===2)renderBuilder();if(n===4)renderOrderSummary();if(n===5)renderWelcome()}
+function setSelectedPlan(id){if(!planData[id])return;selectedPlan=id;document.querySelectorAll('.plan-pick').forEach(c=>c.classList.toggle('selected',c.dataset.plan===id));renderBuilder()}
+function resetSelections(){Object.keys(quantities).forEach(k=>quantities[k]=0);renderBuilder()}
+function selectionTotal(){return Object.values(quantities).reduce((a,b)=>a+b,0)}
+function selectedCrate(){const out={};document.querySelectorAll('.set-option').forEach(el=>{const q=quantities[el.dataset.key]||0;if(q>0)out[el.dataset.key]={label:el.dataset.label,quantity:q}});return out}
+function renderBuilder(){if(!selectedPlan)return;const p=planData[selectedPlan],builder=document.getElementById('packBuilder'),box=document.getElementById('boxMessage');if(p.sealed){builder.style.display='none';box.style.display='block';return}builder.style.display='block';box.style.display='none';document.getElementById('cratePlanName').textContent=`${p.name} — ${p.packs} Pack Crate`;document.getElementById('packLimit').textContent=p.packs;document.getElementById('selectedCount').textContent=selectionTotal();document.querySelectorAll('.set-option').forEach(el=>el.querySelector('.qty-row span').textContent=quantities[el.dataset.key]||0);const chosen=Object.values(selectedCrate()).map(x=>`${x.label} ×${x.quantity}`);document.getElementById('selectionSummary').textContent=chosen.length?chosen.join(' • '):'No packs selected yet.';document.getElementById('selectionError').style.display='none'}
+document.querySelectorAll('.set-option button').forEach(btn=>btn.addEventListener('click',()=>{if(!selectedPlan||planData[selectedPlan].sealed)return;const el=btn.closest('.set-option'),key=el.dataset.key,d=Number(btn.dataset.delta),limit=planData[selectedPlan].packs;if(d>0&&selectionTotal()>=limit)return;if(d<0&&quantities[key]<=0)return;quantities[key]+=d;renderBuilder()}));
+function shippingData(){return{fullName:fullName.value.trim(),address1:addr1.value.trim(),address2:addr2.value.trim(),city:city.value.trim(),state:state.value.trim(),zip:zip.value.trim(),country:country.value,phone:phone.value.trim()}}
+async function saveOnboardingDraft(){if(!currentUser||!selectedPlan)return;await setDoc(doc(db,'users',currentUser.uid),{crateSelections:selectedCrate(),shipping:shippingData(),onboarding:{planId:selectedPlan,planName:planData[selectedPlan].name,packCount:planData[selectedPlan].packs,status:'checkout_pending',updatedAt:serverTimestamp()}},{merge:true})}
+function fillExistingData(data={}){if(data.onboarding?.planId&&planData[data.onboarding.planId]&&!preselect)setSelectedPlan(data.onboarding.planId);if(data.crateSelections&&typeof data.crateSelections==='object'){Object.keys(quantities).forEach(k=>quantities[k]=Number(data.crateSelections[k]?.quantity||0))}const ship=data.shipping||{},map={fullName:'fullName',address1:'addr1',address2:'addr2',city:'city',state:'state',zip:'zip',country:'country',phone:'phone'};Object.entries(map).forEach(([k,id])=>{if(ship[k]!==undefined&&document.getElementById(id))document.getElementById(id).value=ship[k]});renderBuilder()}
+document.querySelectorAll('.plan-pick').forEach(card=>card.addEventListener('click',()=>{if(selectedPlan!==card.dataset.plan)resetSelections();setSelectedPlan(card.dataset.plan)}));if(preselect&&planData[preselect])setSelectedPlan(preselect);
+document.getElementById('toStep2').addEventListener('click',()=>{if(!selectedPlan)return alert('Please choose a plan to continue.');goToStep(2)});document.getElementById('toStep1From2').addEventListener('click',()=>goToStep(1));document.getElementById('toStep3').addEventListener('click',()=>{const p=planData[selectedPlan];if(!p.sealed&&selectionTotal()!==p.packs){document.getElementById('selectionError').style.display='block';return}goToStep(3)});document.getElementById('toStep2From3').addEventListener('click',()=>goToStep(2));
+document.getElementById('toStep4').addEventListener('click',async()=>{const required=['fullName','addr1','city','state','zip','phone'];let valid=true;required.forEach(id=>{const input=document.getElementById(id),bad=!input.value.trim(),group=document.getElementById('g-'+id);if(group)group.classList.toggle('has-error',bad);if(bad)valid=false});if(!valid)return;try{await saveOnboardingDraft();goToStep(4)}catch(e){console.error(e);alert('We could not save your subscription setup. Please try again.')}});
+function renderOrderSummary(){const p=planData[selectedPlan]||{name:'—',price:0,sealed:false};let mix=p.sealed?'Choose from eligible sealed box inventory':Object.values(selectedCrate()).map(x=>`${x.label} ×${x.quantity}`).join(', ');document.getElementById('orderSummary').innerHTML=`<div class="order-row"><span>${p.name}</span><span class="gold">$${p.price.toFixed(2)}/month</span></div><div class="order-row"><span>Starting selection</span><span style="text-align:right;max-width:60%">${mix}</span></div><div class="order-row"><span>Tax</span><span>Calculated by Stripe</span></div><div class="order-row total"><span>Monthly subtotal</span><span class="gold">$${p.price.toFixed(2)}</span></div>`}
+document.getElementById('toStep3From4').addEventListener('click',()=>goToStep(3));const agree=document.getElementById('agreeBilling'),checkoutBtn=document.getElementById('startCheckout'),msg=document.getElementById('checkoutMessage');agree.addEventListener('change',()=>checkoutBtn.disabled=!agree.checked);function showMessage(t,error=false){msg.style.display='block';msg.textContent=t;msg.style.color=error?'#ff8e8e':'var(--muted)'}
+checkoutBtn.addEventListener('click',async()=>{if(!currentUser||!selectedPlan)return;checkoutBtn.disabled=true;checkoutBtn.textContent='Opening secure checkout…';showMessage('Saving your crate and connecting to Stripe…');try{await saveOnboardingDraft();const token=await currentUser.getIdToken(),response=await fetch('/.netlify/functions/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({planId:selectedPlan})}),data=await response.json();if(!response.ok||!data.url)throw new Error(data.error||'Checkout could not be started.');location.href=data.url}catch(e){console.error(e);showMessage(e.message||'Checkout could not be started.',true);checkoutBtn.disabled=false;checkoutBtn.textContent='Continue to Secure Checkout →'}});
+function renderWelcome(){const p=planData[selectedPlan]||{name:'Your plan',sealed:false};document.getElementById('welcomePlan').textContent=p.name;document.getElementById('welcomeCrate').textContent=p.sealed?'Sealed Box':`${p.packs} Packs`}
+async function waitForSubscription(uid){const sub=document.querySelector('[data-step="5"] .welcome-sub');for(let i=0;i<10;i++){const snap=await getDoc(doc(db,'users',uid));if(snap.exists()){const data=snap.data();if(data.subscription?.planId)setSelectedPlan(data.subscription.planId);if(['active','trialing'].includes(data.subscription?.status)){sub.textContent='Payment confirmed. Your membership is active and your starting crate selection is saved.';document.getElementById('founderStatus').textContent=data.foundingMember===true?`#${data.memberNumber}`:'Member';renderWelcome();return}}await new Promise(r=>setTimeout(r,1200))}sub.textContent='Checkout is complete. Stripe is confirming your subscription; your dashboard will update automatically.'}
+onAuthStateChanged(auth,async user=>{if(!user){const q=preselect?`?plan=${encodeURIComponent(preselect)}`:'';location.href=`signup.html${q}`;return}currentUser=user;try{const snap=await getDoc(doc(db,'users',user.uid));if(snap.exists())fillExistingData(snap.data());if(!fullName.value)fullName.value=user.displayName||''}catch(e){console.warn(e)}if(checkoutState==='success'){goToStep(5);await waitForSubscription(user.uid)}else if(checkoutState==='cancelled'){goToStep(4);showMessage('Checkout was cancelled. Nothing was charged. You can review your crate and try again.')}else renderStepIndicator()});
 </script>
-
-</body>
-</html>
+</body></html>
