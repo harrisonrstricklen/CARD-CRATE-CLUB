@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'CARD CRATE CLUB/tools/sync-full-pokemon-database.py'
+      - 'CARD CRATE CLUB/tools/sync-japanese-pokemon-database.py'
       - '.github/workflows/sync-full-pokemon-database.yml'
   schedule:
     - cron: '20 9 * * 1'
@@ -33,17 +34,24 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Download current Pokemon TCG source data
+      - name: Download current English Pokemon TCG source data
         run: |
           git clone --depth 1 https://github.com/PokemonTCG/pokemon-tcg-data.git /tmp/pokemon-tcg-data
 
-      - name: Build Card Crate Club full database
+      - name: Build English Card Crate Club database
         run: |
           python 'CARD CRATE CLUB/tools/sync-full-pokemon-database.py' /tmp/pokemon-tcg-data
 
+      - name: Build Japanese Card Crate Club database
+        run: |
+          python 'CARD CRATE CLUB/tools/sync-japanese-pokemon-database.py'
+
       - name: Show generated database counts
         run: |
+          echo 'English:'
           cat 'CARD CRATE CLUB/card-data/database-report.json'
+          echo 'Japanese:'
+          cat 'CARD CRATE CLUB/card-data/database-report-ja.json'
 
       - name: Commit updated card database
         shell: bash
@@ -53,13 +61,15 @@ jobs:
 
           git add 'CARD CRATE CLUB/card-data/all-sets' \
                   'CARD CRATE CLUB/card-data/all-cards-index.json' \
-                  'CARD CRATE CLUB/card-data/database-report.json'
+                  'CARD CRATE CLUB/card-data/all-cards-index-ja.json' \
+                  'CARD CRATE CLUB/card-data/database-report.json' \
+                  'CARD CRATE CLUB/card-data/database-report-ja.json'
 
           if git diff --cached --quiet; then
             echo 'Full Pokemon database is already current.'
             exit 0
           fi
 
-          git commit -m 'Sync complete Pokemon card database'
+          git commit -m 'Sync complete English and Japanese Pokemon card database'
           git pull --rebase origin main
           git push origin main
