@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(canonical);
     }
 
-    // Force the official nested-C favicon everywhere and bust old browser favicon caches.
     document.querySelectorAll('link[rel~="icon"], link[rel="shortcut icon"]').forEach(icon => icon.remove());
     const icon = document.createElement('link');
     icon.rel = 'icon';
@@ -41,6 +40,32 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('a[target="_blank"]').forEach(link => {
         link.rel = 'noopener noreferrer';
     });
+
+    // ---- PERSONAL NAVIGATION ----
+    // Keep Home visibly available and make the signed-in dashboard feel personal.
+    const navLinks = document.getElementById('navLinks') || document.querySelector('.nav-links');
+    if (navLinks && !navLinks.querySelector('a[data-home-nav]')) {
+        const homeLink = document.createElement('a');
+        homeLink.href = 'index.html';
+        homeLink.textContent = 'Home';
+        homeLink.dataset.homeNav = 'true';
+        navLinks.insertBefore(homeLink, navLinks.firstChild);
+    }
+
+    const personalizeDashboardLinks = () => {
+        document.querySelectorAll('a[href*="dashboard.html"]').forEach(link => {
+            if (/^dashboard$/i.test(link.textContent.trim())) link.textContent = 'My Dashboard';
+        });
+    };
+    personalizeDashboardLinks();
+    const navAuth = document.getElementById('navAuth');
+    if (navAuth && 'MutationObserver' in window) {
+        new MutationObserver(personalizeDashboardLinks).observe(navAuth, { childList: true, subtree: true, characterData: true });
+    }
+    const mobileAuth = document.getElementById('mobileAuth');
+    if (mobileAuth && 'MutationObserver' in window) {
+        new MutationObserver(personalizeDashboardLinks).observe(mobileAuth, { childList: true, subtree: true, characterData: true });
+    }
 
     // ---- HOMEPAGE BRAND / PRE-LAUNCH COPY ----
     const isHome = !!document.querySelector('.hero#home');
@@ -54,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const heroSubtitle = document.querySelector('.hero-subtitle');
         if (heroSubtitle) {
-            heroSubtitle.textContent = 'Monthly Pokémon TCG subscriptions built to make collecting easier. Choose your tier, set your preferences, and let Card Crate Club handle the monthly hunt.';
+            heroSubtitle.textContent = 'Monthly Pokémon TCG subscriptions built to make collecting easier. Pick your monthly pack count, choose the sets you want, and let Card Crate Club handle the hunt.';
         }
 
         const disclaimer = document.querySelector('.hero-disclaimer');
@@ -86,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             img.onerror = () => { if (img.parentElement) img.parentElement.style.display = 'none'; };
         });
 
-        // Clearly-labelled subscription crate concepts until real product photography is available.
+        // Use the real Card Crate Club concept art that now lives in the repo.
         if (!document.querySelector('.crate-concept-section')) {
             const concept = document.createElement('section');
             concept.className = 'crate-concept-section';
@@ -94,16 +119,16 @@ document.addEventListener('DOMContentLoaded', function() {
             concept.innerHTML = `
                 <div class="crate-concept-card">
                     <div class="crate-concept-copy">
-                        <span class="crate-concept-kicker">Packaging Preview</span>
-                        <h2>Choose Your <span>Card Crate</span></h2>
-                        <p>A look at how the core subscription sizes can scale with you. The 4, 8, and 12-pack concepts use the same black-and-gold Card Crate Club packaging, sized around the amount of sealed product inside.</p>
+                        <span class="crate-concept-kicker">What We're Building</span>
+                        <h2>Your Packs. Your Sets. <span>Your Crate.</span></h2>
+                        <p>Pick a monthly pack count, split those packs across the eligible sets you actually want, and preview your crate before you subscribe.</p>
                         <div class="crate-concept-points">
-                            <span>4 Pack Crate</span><span>8 Pack Crate</span><span>12 Pack Crate</span><span>Compact packaging</span>
+                            <span>4 Pack Crate</span><span>8 Pack Crate</span><span>12 Pack Crate</span><span>Choose your sets</span>
                         </div>
                     </div>
                     <div class="crate-concept-art">
-                        <img src="images/card-crate-club-4-8-12-pack-crates.png" alt="Concept renderings of Card Crate Club 4 pack, 8 pack, and 12 pack subscription boxes" loading="lazy">
-                        <div class="crate-concept-caption">Concept rendering — final box dimensions, pack selection, and packaging may vary.</div>
+                        <img src="images/card-crate-club-4-8-12-pack-crates.png" alt="Card Crate Club 4 pack, 8 pack, and 12 pack subscription crate concept renderings" loading="lazy">
+                        <div class="crate-concept-caption">Concept rendering — final packaging and eligible pack selection may vary.</div>
                     </div>
                 </div>`;
             const announcement = document.querySelector('.announcement-bar');
@@ -111,6 +136,93 @@ document.addEventListener('DOMContentLoaded', function() {
             if (announcement) announcement.insertAdjacentElement('afterend', concept);
             else if (why) why.insertAdjacentElement('beforebegin', concept);
         }
+
+        // Replace the old generic four-tier preview with the pack-count model we're actually building.
+        const subscriptionsSection = document.getElementById('subscriptions');
+        if (subscriptionsSection) {
+            subscriptionsSection.innerHTML = `
+                <div class="section-header">
+                    <span class="section-tag">Build Your Crate</span>
+                    <h2 class="section-title">Choose Your <span class="gold">Monthly Pack Count</span></h2>
+                    <p class="section-subtitle">Start with the size that fits you, then choose how many packs you want from each eligible set before checkout.</p>
+                </div>
+                <div class="tiers-grid">
+                    <div class="tier-card">
+                        <div class="tier-icon">🎴</div>
+                        <div class="tier-name">4-Pack Crate</div>
+                        <div class="tier-amount">$24.99</div>
+                        <div class="tier-period">/month — current price</div>
+                        <ul class="tier-features">
+                            <li>✓ 4 booster packs each month</li>
+                            <li>✓ Mix available eligible sets</li>
+                            <li>✓ Update next crate before cutoff</li>
+                            <li>✓ Member store access</li>
+                        </ul>
+                        <a href="onboarding.html?plan=pack-club" class="btn btn-outline btn-block">Build 4-Pack Crate</a>
+                    </div>
+                    <div class="tier-card popular">
+                        <div class="popular-badge">⭐ Most Popular</div>
+                        <div class="tier-icon">⚡</div>
+                        <div class="tier-name">8-Pack Crate</div>
+                        <div class="tier-amount">$44.99</div>
+                        <div class="tier-period">/month — current price</div>
+                        <ul class="tier-features">
+                            <li>✓ 8 booster packs each month</li>
+                            <li>✓ Mix sets however you want</li>
+                            <li>✓ Surprise Me option for open slots</li>
+                            <li>✓ Early member access to select drops</li>
+                        </ul>
+                        <a href="onboarding.html?plan=trainer-club" class="btn btn-gold btn-block">Build 8-Pack Crate</a>
+                    </div>
+                    <div class="tier-card">
+                        <div class="tier-icon">🏆</div>
+                        <div class="tier-name">12-Pack Crate</div>
+                        <div class="tier-amount">$64.99</div>
+                        <div class="tier-period">/month — current price</div>
+                        <ul class="tier-features">
+                            <li>✓ 12 booster packs each month</li>
+                            <li>✓ Mix all available eligible sets</li>
+                            <li>✓ Priority access to limited inventory</li>
+                            <li>✓ Maximum mixed-crate flexibility</li>
+                        </ul>
+                        <a href="onboarding.html?plan=collector-club" class="btn btn-outline btn-block">Build 12-Pack Crate</a>
+                    </div>
+                </div>
+                <p class="tiers-note">ℹ️ Pricing and eligible sets can change with product acquisition, shipping, and inventory. You'll see your crate options before subscribing.</p>
+                <div class="home-cta-row"><a href="subscriptions.html" class="btn btn-outline">See All Subscription Options →</a></div>`;
+        }
+
+        // Keep Founding 100 benefits valuable without promises that are difficult to sustain.
+        const foundingSection = document.getElementById('founding-members');
+        if (foundingSection) {
+            const title = foundingSection.querySelector('.founding-title');
+            if (title) title.innerHTML = 'Become One of the <span class="gold">Founding 100</span>';
+            const subtitle = foundingSection.querySelector('.founding-subtitle');
+            if (subtitle) subtitle.textContent = 'The first 100 activated founding memberships get permanent recognition plus launch-era perks built to stay useful as Card Crate Club grows.';
+
+            const benefits = foundingSection.querySelector('.founding-benefits');
+            if (benefits) benefits.innerHTML = `
+                <div class="benefit"><div class="benefit-icon">🃏</div><div class="benefit-text"><strong>Exclusive Founding Card</strong><span>A physical Card Crate Club collectible made for the Founding 100.</span></div></div>
+                <div class="benefit"><div class="benefit-icon">🏆</div><div class="benefit-text"><strong>Permanent Founder Number</strong><span>Your member number #001–#100 stays tied to your account.</span></div></div>
+                <div class="benefit"><div class="benefit-icon">🎟️</div><div class="benefit-text"><strong>Giveaway Entry for Life</strong><span>One complimentary entry in eligible Card Crate Club giveaways for life.</span></div></div>
+                <div class="benefit"><div class="benefit-icon">⚡</div><div class="benefit-text"><strong>First Look at New Drops</strong><span>Founders get the first opportunity at new store items and select releases.</span></div></div>
+                <div class="benefit"><div class="benefit-icon">🪙</div><div class="benefit-text"><strong>Launch Crate Coins</strong><span>Special launch rewards as the Crate Coins program rolls out.</span></div></div>
+                <div class="benefit"><div class="benefit-icon">👑</div><div class="benefit-text"><strong>Founding Member Status</strong><span>A permanent founder badge and recognition inside the club.</span></div></div>`;
+
+            const counter = foundingSection.querySelector('.founding-counter');
+            if (counter) {
+                counter.innerHTML = '<p class="counter-text"><span class="counter-number">Founding 100</span> — limited to the first 100 activated founding memberships.</p>';
+            }
+            const foundingCta = foundingSection.querySelector('.btn.btn-gold');
+            if (foundingCta) foundingCta.textContent = '👑 Join the Founding 100 Waitlist';
+        }
+
+        // Remove outdated lifetime-price-lock language anywhere else on the homepage.
+        document.querySelectorAll('.tiers-note, .waitlist-perks .perk, .announcement-inner span').forEach(el => {
+            if (/price lock|locked in|pricing forever|lifetime price/i.test(el.textContent)) {
+                el.textContent = el.classList.contains('perk') ? '✅ Founder-only launch perks' : 'Founding 100 members receive exclusive launch perks';
+            }
+        });
     }
 
     // ---- NAVBAR SCROLL EFFECT ----
@@ -235,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Keep visual counter animation only; connect this to live availability before paid launch.
     const counterSection = document.querySelector('.founding-counter');
     if (counterSection && 'IntersectionObserver' in window) {
         const counterObserver = new IntersectionObserver((entries) => {
