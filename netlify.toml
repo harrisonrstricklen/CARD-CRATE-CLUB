@@ -1,3 +1,11 @@
+[build]
+  publish = "CARD CRATE CLUB"
+  functions = "CARD CRATE CLUB/netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["CARD CRATE CLUB/card-data/all-cards-index.json"]
+
 [[headers]]
   for = "/*"
   [headers.values]
