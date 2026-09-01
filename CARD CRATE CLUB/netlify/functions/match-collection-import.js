@@ -1,84 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 
-let cachedCards = null;
-let cardsPromise = null;
-
-function fetchJson(url) {
-  return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { 'User-Agent': 'Card-Crate-Club-Importer' }, timeout: 15000 }, res => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume();
-        fetchJson(res.headers.location).then(resolve, reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        res.resume();
-        reject(new Error(`Card database request failed with HTTP ${res.statusCode}`));
-        return;
-      }
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => { body += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(body)); }
-        catch (err) { reject(new Error(`Card database JSON could not be parsed: ${err.message}`)); }
-      });
-    });
-    req.on('timeout', () => req.destroy(new Error('Card database request timed out')));
-    req.on('error', reject);
-  });
-}
-
-function tryLocalDatabase() {
-  const candidates = [
-    path.resolve(__dirname, '../../card-data/all-cards-index.json'),
-    path.resolve(__dirname, '../card-data/all-cards-index.json'),
-    path.resolve(process.cwd(), 'CARD CRATE CLUB/card-data/all-cards-index.json'),
-    path.resolve(process.cwd(), 'card-data/all-cards-index.json')
-  ];
-
-  for (const file of candidates) {
-    try {
-      if (!fs.existsSync(file)) continue;
-      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (Array.isArray(parsed?.cards) && parsed.cards.length) return parsed;
-    } catch (err) {
-      console.warn(`Could not load card index from ${file}:`, err.message);
-    }
-  }
-  return null;
-}
-
-async function loadCards(event) {
-  if (cachedCards) return cachedCards;
-  if (cardsPromise) return cardsPromise;
-
-  cardsPromise = (async () => {
-    let parsed = tryLocalDatabase();
-
-    if (!parsed) {
-      const headers = event?.headers || {};
-      const host = headers['x-forwarded-host'] || headers.host;
-      const proto = headers['x-forwarded-proto'] || 'https';
-      if (!host) throw new Error('Card database was not bundled and request host is unavailable');
-      parsed = await fetchJson(`${proto}://${host}/card-data/all-cards-index.json`);
-    }
-
-    const cards = Array.isArray(parsed?.cards) ? parsed.cards : [];
-    if (!cards.length) throw new Error('Card database is empty');
-    cachedCards = cards;
-    return cards;
-  })();
-
-  try {
-    return await cardsPromise;
-  } catch (err) {
-    cardsPromise = null;
-    throw err;
-  }
-}
+const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
+let cache = null;
 
 function norm(value) {
   return String(value || '')
@@ -92,170 +16,184 @@ function norm(value) {
     .trim();
 }
 
+function baseName(value) {
+  return norm(value)
+    .replace(/\b(reverse holo|reverse foil|holofoil|holo foil|normal foil|foil|non holo|unlimited|1st edition|first edition|near mint|lightly played|moderately played|heavily played|damaged|english|japanese)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function normNumber(value) {
   let raw = String(value || '').trim();
   if (!raw) return '';
-  raw = raw.split('/')[0].trim().toLowerCase();
-  raw = raw.replace(/^#/, '').replace(/\s+/g, '');
+  raw = raw.split('/')[0].trim().toLowerCase().replace(/^#/, '').replace(/\s+/g, '');
   if (/^\d+$/.test(raw)) return String(Number(raw));
-  const numericPromo = raw.match(/^([a-z]+)0*(\d+)$/i);
-  if (numericPromo) return `${numericPromo[1]}${Number(numericPromo[2])}`;
+  const promo = raw.match(/^([a-z]+)0*(\d+)$/i);
+  if (promo) return `${promo[1]}${Number(promo[2])}`;
   return raw;
 }
 
-function baseName(value) {
-  return norm(value)
-    .replace(/\b(reverse holo|reverse foil|holofoil|holo foil|normal foil|foil|non holo|unlimited|1st edition|first edition|near mint|lightly played|moderately played|heavily played|damaged)\b/g, ' ')
-    .replace(/\b(english|japanese)\b/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+function pushMap(map, key, card) {
+  if (!key) return;
+  const list = map.get(key);
+  if (list) list.push(card);
+  else map.set(key, [card]);
+}
+
+function loadIndex() {
+  if (cache) return cache;
+  const parsed = JSON.parse(fs.readFileSync(INDEX_PATH, 'utf8'));
+  const cards = Array.isArray(parsed.cards) ? parsed.cards : [];
+  const byNumber = new Map();
+  const byName = new Map();
+  const bySet = new Map();
+
+  for (const card of cards) {
+    card.__name = baseName(card.name);
+    card.__set = norm(card.setName);
+    card.__setId = norm(card.setId);
+    card.__number = normNumber(card.number);
+    pushMap(byNumber, card.__number, card);
+    pushMap(byName, card.__name, card);
+    pushMap(bySet, card.__set, card);
+    pushMap(bySet, card.__setId, card);
+  }
+
+  cache = { cards, byNumber, byName, bySet };
+  return cache;
 }
 
 function tokenSimilarity(a, b) {
   const aa = new Set(baseName(a).split(' ').filter(Boolean));
   const bb = new Set(baseName(b).split(' ').filter(Boolean));
   if (!aa.size || !bb.size) return 0;
-  let intersection = 0;
-  for (const t of aa) if (bb.has(t)) intersection++;
-  return intersection / Math.max(aa.size, bb.size);
+  let hit = 0;
+  for (const t of aa) if (bb.has(t)) hit++;
+  return hit / Math.max(aa.size, bb.size);
 }
 
-function setSimilarity(card, rowSet) {
+function setScore(card, rowSet) {
   const rs = norm(rowSet);
-  if (!rs) return { score: 0, exact: false };
-  const names = [norm(card.setName), norm(card.setId)].filter(Boolean);
-  if (names.includes(rs)) return { score: 400, exact: true };
-  if (names.some(v => v.includes(rs) || rs.includes(v))) return { score: 200, exact: false };
-  const sim = Math.max(...names.map(v => tokenSimilarity(v, rs)), 0);
-  if (sim >= 0.8) return { score: 160, exact: false };
-  if (sim >= 0.55) return { score: 80, exact: false };
-  return { score: -80, exact: false };
+  if (!rs) return 0;
+  if (card.__set === rs || card.__setId === rs) return 420;
+  if (card.__set.includes(rs) || rs.includes(card.__set)) return 220;
+  const sim = tokenSimilarity(card.__set, rs);
+  if (sim >= .8) return 170;
+  if (sim >= .55) return 90;
+  return -100;
 }
 
 function score(card, row) {
-  const cn = baseName(card.name);
   const rn = baseName(row.name);
-  const cnum = normNumber(card.number);
   const rnum = normNumber(row.number);
-  const numberExact = !!rnum && cnum === rnum;
-
-  let s = 0;
-  let nameStrength = 0;
-
-  if (rn) {
-    if (cn === rn) { s += 500; nameStrength = 1; }
-    else if (cn.startsWith(rn) || rn.startsWith(cn)) { s += 300; nameStrength = 0.85; }
-    else if (cn.includes(rn) || rn.includes(cn)) { s += 220; nameStrength = 0.75; }
-    else {
-      const sim = tokenSimilarity(cn, rn);
-      nameStrength = sim;
-      if (sim >= 0.8) s += 260;
-      else if (sim >= 0.6) s += 160;
-      else if (sim >= 0.45 && numberExact) s += 80;
-      else if (!numberExact) return -1;
-    }
-  }
-
-  const setScore = setSimilarity(card, row.set);
-  s += setScore.score;
+  let s = setScore(card, row.set);
 
   if (rnum) {
-    if (numberExact) s += 650;
-    else if (rn && nameStrength >= 0.75) s -= 220;
-    else return -1;
+    if (card.__number === rnum) s += 700;
+    else s -= 350;
   }
 
-  if (!numberExact && (!rn || nameStrength < 0.6)) return -1;
+  if (rn) {
+    if (card.__name === rn) s += 550;
+    else if (card.__name.startsWith(rn) || rn.startsWith(card.__name)) s += 320;
+    else if (card.__name.includes(rn) || rn.includes(card.__name)) s += 230;
+    else {
+      const sim = tokenSimilarity(card.__name, rn);
+      if (sim >= .8) s += 260;
+      else if (sim >= .6) s += 160;
+      else if (rnum && card.__number === rnum && sim >= .4) s += 70;
+      else s -= 260;
+    }
+  }
   return s;
 }
 
-function confidence(best, second, row) {
-  const exactName = baseName(best.card.name) === baseName(row.name);
-  const exactSet = row.set && setSimilarity(best.card, row.set).exact;
-  const exactNumber = row.number && normNumber(best.card.number) === normNumber(row.number);
-  const gap = best.score - (second?.score ?? -9999);
+function candidatePool(index, row) {
+  const rnum = normNumber(row.number);
+  const rn = baseName(row.name);
+  const rs = norm(row.set);
+  const seen = new Map();
+  const add = list => (list || []).forEach(card => seen.set(card.id, card));
 
-  if (exactNumber && exactSet && (!row.name || exactName)) return 'exact';
-  if (exactNumber && exactName && gap >= 100) return 'exact';
-  if (exactName && exactSet && gap >= 150) return 'high';
-  if (best.score >= 900 && gap >= 180) return 'high';
-  if (gap >= 250 && best.score >= 500) return 'medium';
-  return 'review';
+  // Exact card number is the strongest narrowing signal and normally leaves
+  // only a few dozen cards across all sets instead of scanning 20k cards.
+  if (rnum) add(index.byNumber.get(rnum));
+  if (rn) add(index.byName.get(rn));
+  if (rs) add(index.bySet.get(rs));
+
+  // If exact indexes did not find enough candidates, use a small name-based
+  // expansion rather than a full fuzzy pass through the whole database.
+  if (seen.size < 3 && rn) {
+    const firstToken = rn.split(' ')[0];
+    for (const [name, cards] of index.byName) {
+      if (name === rn || name.startsWith(firstToken) || rn.startsWith(name.split(' ')[0])) add(cards);
+      if (seen.size > 180) break;
+    }
+  }
+
+  return [...seen.values()];
 }
 
-function cardOut({ card }) {
+function cardOut(card) {
+  return { id: card.id, name: card.name, setId: card.setId, setName: card.setName, number: card.number, rarity: card.rarity || '', image: card.image || '' };
+}
+
+function matchRow(index, row, i) {
+  const pool = candidatePool(index, row);
+  if (!pool.length) return { index: i, status: 'unmatched', row, match: null, alternatives: [] };
+
+  const ranked = pool
+    .map(card => ({ card, score: score(card, row) }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
+
+  if (!ranked.length) return { index: i, status: 'unmatched', row, match: null, alternatives: [] };
+
+  const best = ranked[0];
+  const second = ranked[1];
+  const rn = baseName(row.name);
+  const rs = norm(row.set);
+  const rnum = normNumber(row.number);
+  const exactName = !!rn && best.card.__name === rn;
+  const exactNumber = !!rnum && best.card.__number === rnum;
+  const exactSet = !!rs && (best.card.__set === rs || best.card.__setId === rs);
+  const gap = best.score - (second?.score ?? -9999);
+
+  let confidence = 'review';
+  if (exactNumber && exactName && exactSet) confidence = 'exact';
+  else if (exactNumber && exactSet && gap >= 80) confidence = 'high';
+  else if (exactNumber && exactName && gap >= 100) confidence = 'high';
+  else if (exactName && exactSet && gap >= 140) confidence = 'high';
+  else if (best.score >= 900 && gap >= 150) confidence = 'medium';
+
   return {
-    id: card.id,
-    name: card.name,
-    setId: card.setId,
-    setName: card.setName,
-    number: card.number,
-    rarity: card.rarity || '',
-    image: card.image || ''
+    index: i,
+    status: confidence === 'review' ? 'review' : 'matched',
+    confidence,
+    row,
+    match: cardOut(best.card),
+    alternatives: ranked.slice(1).map(x => cardOut(x.card))
   };
 }
 
-function matchOneRow(cards, row, index) {
-  try {
-    const candidates = [];
-    for (const card of cards) {
-      const s = score(card, row);
-      if (s >= 0) candidates.push({ card, score: s });
-    }
-    candidates.sort((a, b) => b.score - a.score);
-    const top = candidates.slice(0, 6);
-    if (!top.length) return { index, status: 'unmatched', row, match: null, alternatives: [] };
-
-    const level = confidence(top[0], top[1], row);
-    return {
-      index,
-      status: level === 'review' ? 'review' : 'matched',
-      confidence: level,
-      row,
-      match: cardOut(top[0]),
-      alternatives: top.slice(1).map(cardOut)
-    };
-  } catch (err) {
-    console.error(`Collection matcher failed on row ${index}:`, err);
-    return { index, status: 'unmatched', row, match: null, alternatives: [], error: 'Row could not be matched' };
-  }
-}
-
 exports.handler = async function(event) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'POST required' }) };
-  }
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'POST required' }) };
 
   let payload;
   try { payload = JSON.parse(event.body || '{}'); }
   catch { return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-  const rows = Array.isArray(payload.rows) ? payload.rows.slice(0, 500) : [];
-  if (!rows.length) {
-    return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'No rows supplied' }) };
-  }
+  const rows = Array.isArray(payload.rows) ? payload.rows.slice(0, 250) : [];
+  if (!rows.length) return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'No rows supplied' }) };
 
-  let cards;
   try {
-    cards = await loadCards(event);
+    const index = loadIndex();
+    const results = rows.map((row, i) => matchRow(index, row, i));
+    const counts = results.reduce((a, r) => { a[r.status]++; return a; }, { matched: 0, review: 0, unmatched: 0 });
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body: JSON.stringify({ results, counts }) };
   } catch (err) {
-    console.error('Collection matcher database load failed:', err);
-    return {
-      statusCode: 503,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-      body: JSON.stringify({ error: 'Card database unavailable', detail: err.message })
-    };
+    console.error('Collection import matcher failed:', err);
+    return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Collection matcher failed', detail: err.message }) };
   }
-
-  const results = rows.map((row, index) => matchOneRow(cards, row, index));
-  const counts = results.reduce((acc, r) => {
-    acc[r.status] = (acc[r.status] || 0) + 1;
-    return acc;
-  }, { matched: 0, review: 0, unmatched: 0 });
-
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-    body: JSON.stringify({ results, counts })
-  };
 };
