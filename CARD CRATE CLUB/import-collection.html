@@ -7,293 +7,102 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="theme.css" />
-<link rel="stylesheet" href="brand-logo.css?v=import-collection-20260831" />
+<link rel="stylesheet" href="brand-logo.css?v=import-collection-20260901-v2" />
 <style>
-  main.wide-main{max-width:1080px;padding-bottom:80px}
-  .import-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px}
-  .drop-zone{border:1.5px dashed rgba(245,184,28,.55);border-radius:14px;padding:30px;text-align:center;background:rgba(245,184,28,.04);cursor:pointer;transition:.2s}
-  .drop-zone:hover,.drop-zone.drag{background:rgba(245,184,28,.08);border-color:var(--gold)}
-  .drop-zone strong{color:var(--gold)}
+  main.wide-main{max-width:1040px;padding:38px 22px 110px}
+  .page-subtitle{max-width:760px;margin-bottom:24px}
+  .import-card{background:linear-gradient(180deg,rgba(25,25,35,.98),rgba(17,17,24,.98));border:1px solid rgba(245,200,66,.18);border-radius:18px;padding:24px;margin-bottom:20px;box-shadow:0 16px 44px rgba(0,0,0,.18)}
+  .import-card h3{font-size:1.05rem;margin-bottom:14px}
+  .drop-zone{display:flex!important;width:100%!important;min-height:160px;flex-direction:column;align-items:center;justify-content:center;border:1.5px dashed rgba(245,184,28,.58);border-radius:14px;padding:30px;text-align:center;background:rgba(245,184,28,.035);cursor:pointer;transition:.2s;overflow:hidden}
+  .drop-zone:hover,.drop-zone.drag{background:rgba(245,184,28,.08);border-color:var(--gold);transform:translateY(-1px)}
+  .drop-zone strong{display:block;color:var(--gold);font-size:.95rem}
   .drop-zone input{display:none}
-  .paste-box{width:100%;min-height:130px;background:var(--dark2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;resize:vertical;font:inherit}
-  .import-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .paste-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:.72rem;font-weight:700;letter-spacing:.06em}
+  .paste-divider:before,.paste-divider:after{content:'';height:1px;background:var(--border);flex:1}
+  .paste-box{display:block;width:100%;min-height:125px;background:var(--dark2);border:1px solid var(--border);border-radius:11px;color:var(--text);padding:14px;resize:vertical;font:inherit;line-height:1.45;outline:none}
+  .paste-box:focus{border-color:rgba(245,200,66,.55);box-shadow:0 0 0 3px rgba(245,200,66,.06)}
+  .import-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0 18px}
   .sum-card{background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
-  .sum-card b{display:block;font-size:1.3rem;color:var(--gold);margin-bottom:3px}
+  .sum-card b{display:block;font-size:1.35rem;color:var(--gold);margin-bottom:3px}
   .sum-card span{font-size:.72rem;color:var(--muted)}
-  .results{display:grid;gap:9px}
+  .results{display:grid;gap:9px;max-height:58vh;overflow:auto;padding-right:4px}
   .import-row{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:10px;background:var(--dark2);border:1px solid var(--border);border-radius:11px}
   .import-row img{width:52px;height:72px;object-fit:cover;border-radius:5px;background:#111}
   .row-title{font-weight:800;font-size:.88rem}
-  .row-meta{font-size:.72rem;color:var(--muted);margin-top:3px}
+  .row-meta{font-size:.72rem;color:var(--muted);margin-top:3px;line-height:1.45}
   .badge{font-size:.68rem;font-weight:800;padding:5px 8px;border-radius:999px;white-space:nowrap}
   .badge.match{background:rgba(55,200,120,.14);color:#65d89b}
   .badge.review{background:rgba(245,184,28,.14);color:var(--gold)}
   .badge.unmatched{background:rgba(240,80,80,.14);color:#ff8585}
   .review-select{margin-top:7px;width:100%;background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px}
   .progress{height:9px;background:var(--dark2);border-radius:999px;overflow:hidden;margin-top:12px}
-  .progress > div{height:100%;width:0;background:var(--gold);transition:width .2s}
-  .status{font-size:.78rem;color:var(--muted);margin-top:8px}
-  @media(max-width:700px){.summary{grid-template-columns:repeat(2,1fr)}.import-row{grid-template-columns:46px 1fr}.import-row img{width:46px;height:64px}.badge{grid-column:2;justify-self:start}}
+  .progress>div{height:100%;width:0;background:var(--gold);transition:width .2s}
+  .status{font-size:.8rem;color:var(--muted);margin-top:10px;min-height:18px}
+  .work-overlay{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:rgba(7,7,11,.86);backdrop-filter:blur(8px);padding:20px}
+  .work-overlay.active{display:flex}
+  .work-card{width:min(460px,92vw);background:var(--card-bg);border:1px solid rgba(245,200,66,.28);border-radius:18px;padding:28px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.48)}
+  .work-spinner{width:48px;height:48px;border:4px solid rgba(245,200,66,.16);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+  .work-title{font-size:1.08rem;font-weight:850;margin-bottom:7px}.work-copy{font-size:.84rem;color:var(--muted);line-height:1.5}.work-count{font-size:.8rem;color:var(--gold);font-weight:750;margin-top:12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:700px){main.wide-main{padding:26px 14px 100px}.import-card{padding:17px}.summary{grid-template-columns:repeat(2,1fr)}.import-row{grid-template-columns:46px 1fr}.import-row img{width:46px;height:64px}.badge{grid-column:2;justify-self:start}.drop-zone{min-height:135px;padding:22px}}
 </style>
 </head>
 <body class="member-page">
 <div id="loading-overlay"><div class="loader-logo">CCC<span>.</span></div><div class="spinner"></div></div>
+<div class="work-overlay" id="workOverlay" aria-live="polite"><div class="work-card"><div class="work-spinner"></div><div class="work-title" id="workTitle">Processing your collection…</div><div class="work-copy" id="workCopy">Matching every card against the Card Crate Club database. Please keep this page open.</div><div class="work-count" id="workCount"></div></div></div>
 <div class="page-wrapper">
 <header>
   <div class="nav-logo">CCC<span>.</span></div>
-  <nav class="nav-links">
-    <a href="dashboard.html">🏠 Dashboard</a>
-    <a href="crates.html">📦 My Crates</a>
-    <a href="collection.html" class="active">🃏 Collection</a>
-    <a href="rewards.html">🪙 Rewards</a>
-    <a href="account.html">⚙️ Account</a>
-  </nav>
+  <nav class="nav-links"><a href="dashboard.html">🏠 Dashboard</a><a href="crates.html">📦 My Crates</a><a href="collection.html" class="active">🃏 Collection</a><a href="rewards.html">🪙 Rewards</a><a href="account.html">⚙️ Account</a></nav>
   <div class="nav-right"><button class="avatar-btn" id="avatar-btn">?</button><button class="sign-out-btn" id="sign-out-btn">Sign Out</button></div>
 </header>
 <main class="wide-main">
   <div class="page-title">Import <span class="gold">Collection</span></div>
-  <p class="page-subtitle">Upload an export from Collectr or another collection tracker. Card Crate Club will match the cards against our full Pokémon database before anything is added.</p>
-
+  <p class="page-subtitle">Upload a Collectr export or another collection list. We’ll match every row against the Card Crate Club Pokémon database and let you review uncertain cards before anything is saved.</p>
   <section class="import-card">
-    <h3 style="margin-bottom:12px">1. Add your list</h3>
-    <label class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" />
-      <div style="font-size:1.8rem;margin-bottom:8px">📥</div>
-      <strong>Choose a CSV, TSV, or text file</strong>
-      <div class="form-hint" style="margin-top:6px">or drag and drop it here</div>
-    </label>
-    <div style="margin:14px 0;text-align:center;color:var(--muted);font-size:.75rem">OR PASTE A LIST</div>
+    <h3>1. Add your collection file</h3>
+    <label class="drop-zone" id="dropZone"><input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" /><div style="font-size:1.8rem;margin-bottom:8px">📥</div><strong>Choose a CSV, TSV, or text file</strong><div class="form-hint" style="margin-top:6px">or drag and drop it here</div></label>
+    <div class="paste-divider">OR PASTE A LIST</div>
     <textarea id="pasteBox" class="paste-box" placeholder="Card Name, Set, Number, Quantity&#10;Charizard, Base, 4, 1&#10;Pikachu, Base, 58, 2"></textarea>
-    <div class="form-hint" style="margin-top:8px">Recognized columns include card/name, set/expansion, number, quantity/qty, condition, cost/purchase price, and value/market price.</div>
-    <div class="import-actions">
-      <button class="btn btn-gold" id="analyzeBtn">Analyze Collection</button>
-      <a class="btn btn-outline" href="collection.html">Cancel</a>
-    </div>
+    <div class="form-hint" style="margin-top:8px">Collectr exports are supported, including Product Name, Set, Card Number, Quantity, Card Condition, Average Cost Paid, Rarity, Variance, and dated Market Price columns.</div>
+    <div class="import-actions"><button class="btn btn-gold" id="analyzeBtn">Analyze Collection</button><a class="btn btn-outline" href="collection.html">Cancel</a></div>
     <div id="parseStatus" class="status"></div>
   </section>
-
   <section class="import-card" id="reviewSection" style="display:none">
     <h3>2. Review matches</h3>
-    <div class="summary">
-      <div class="sum-card"><b id="sumRows">0</b><span>Rows Found</span></div>
-      <div class="sum-card"><b id="sumMatched">0</b><span>Matched</span></div>
-      <div class="sum-card"><b id="sumReview">0</b><span>Needs Review</span></div>
-      <div class="sum-card"><b id="sumUnmatched">0</b><span>Unmatched</span></div>
-    </div>
+    <div class="summary"><div class="sum-card"><b id="sumRows">0</b><span>Rows Found</span></div><div class="sum-card"><b id="sumMatched">0</b><span>Matched</span></div><div class="sum-card"><b id="sumReview">0</b><span>Needs Review</span></div><div class="sum-card"><b id="sumUnmatched">0</b><span>Unmatched</span></div></div>
     <div id="results" class="results"></div>
-    <div class="import-actions">
-      <button class="btn btn-gold" id="importBtn">Import Matched Cards</button>
-      <button class="btn btn-outline" id="resetBtn">Start Over</button>
-    </div>
-    <div class="progress" id="progress" style="display:none"><div id="progressBar"></div></div>
-    <div id="importStatus" class="status"></div>
+    <div class="import-actions"><button class="btn btn-gold" id="importBtn">Import Matched Cards</button><button class="btn btn-outline" id="resetBtn">Start Over</button></div>
+    <div class="progress" id="progress" style="display:none"><div id="progressBar"></div></div><div id="importStatus" class="status"></div>
   </section>
 </main>
-<nav class="mobile-nav"><div class="mobile-nav-inner">
-  <a href="dashboard.html" class="mnav-item"><span class="micon">🏠</span>Home</a>
-  <a href="crates.html" class="mnav-item"><span class="micon">📦</span>Crates</a>
-  <a href="collection.html" class="mnav-item active"><span class="micon">🃏</span>Collection</a>
-  <a href="rewards.html" class="mnav-item"><span class="micon">🪙</span>Rewards</a>
-  <a href="account.html" class="mnav-item"><span class="micon">⚙️</span>Account</a>
-</div></nav>
+<nav class="mobile-nav"><div class="mobile-nav-inner"><a href="dashboard.html" class="mnav-item"><span class="micon">🏠</span>Home</a><a href="crates.html" class="mnav-item"><span class="micon">📦</span>Crates</a><a href="collection.html" class="mnav-item active"><span class="micon">🃏</span>Collection</a><a href="rewards.html" class="mnav-item"><span class="micon">🪙</span>Rewards</a><a href="account.html" class="mnav-item"><span class="micon">⚙️</span>Account</a></div></nav>
 </div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 const firebaseConfig={apiKey:"AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",authDomain:"cardcrate-club.firebaseapp.com",projectId:"cardcrate-club",storageBucket:"cardcrate-club.firebasestorage.app",messagingSenderId:"261800955788",appId:"1:261800955788:web:3f07f4c60886b26d05d0a9",measurementId:"G-5B8J0LWGKE"};
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-let currentUser=null,sourceText='',matchedResults=[],analysisRun=0;
-const $=id=>document.getElementById(id);
-const MATCH_BATCH_SIZE=40;
-const RETRY_BASE_MS=1200;
-const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-
-onAuthStateChanged(auth,user=>{
-  if(!user){location.href='login.html';return;}
-  currentUser=user;$('avatar-btn').textContent=(user.displayName||user.email||'?').charAt(0).toUpperCase();
-  const overlay=$('loading-overlay');overlay.classList.add('hide');setTimeout(()=>overlay.style.display='none',400);
-});
-$('sign-out-btn').onclick=async()=>{await signOut(auth);location.href='login.html'};
-$('avatar-btn').onclick=()=>location.href='account.html';
-
-function cleanHeader(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,' ')}
-function pick(obj,aliases){for(const [k,v] of Object.entries(obj)){const h=cleanHeader(k);if(aliases.includes(h))return v}return ''}
-function parseDelimitedLine(line,delimiter){const out=[];let cur='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++;}else quoted=!quoted;}else if(ch===delimiter&&!quoted){out.push(cur.trim());cur='';}else cur+=ch;}out.push(cur.trim());return out}
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);let currentUser=null,sourceText='',matchedResults=[],analysisRun=0;const $=id=>document.getElementById(id);const MATCH_BATCH_SIZE=40,RETRY_BASE_MS=900,sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function showWork(title,copy,count=''){ $('workTitle').textContent=title;$('workCopy').textContent=copy;$('workCount').textContent=count;$('workOverlay').classList.add('active') }
+function hideWork(){ $('workOverlay').classList.remove('active') }
+onAuthStateChanged(auth,user=>{if(!user){location.href='login.html';return;}currentUser=user;$('avatar-btn').textContent=(user.displayName||user.email||'?').charAt(0).toUpperCase();const overlay=$('loading-overlay');overlay.classList.add('hide');setTimeout(()=>overlay.style.display='none',400)});
+$('sign-out-btn').onclick=async()=>{await signOut(auth);location.href='login.html'};$('avatar-btn').onclick=()=>location.href='account.html';
+function cleanHeader(v){return String(v||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+function pick(obj,aliases){for(const [k,v] of Object.entries(obj)){const h=cleanHeader(k);if(aliases.some(a=>h===a||h.startsWith(a+' ')))return v}return ''}
+function parseDelimitedLine(line,d){const out=[];let cur='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++}else quoted=!quoted}else if(ch===d&&!quoted){out.push(cur.trim());cur=''}else cur+=ch}out.push(cur.trim());return out}
 function detectDelimiter(line){const tabs=(line.match(/\t/g)||[]).length,commas=(line.match(/,/g)||[]).length,semis=(line.match(/;/g)||[]).length;return tabs>=commas&&tabs>=semis?'\t':semis>commas?';':','}
-function money(v){const n=Number(String(v||'').replace(/[$,]/g,''));return Number.isFinite(n)?n:null}
+function money(v){const raw=String(v??'').trim();if(!raw)return null;const n=Number(raw.replace(/[$,]/g,''));return Number.isFinite(n)?n:null}
 function qty(v){const n=parseInt(v,10);return Number.isFinite(n)&&n>0?n:1}
-
-function normalizeRows(text){
-  const lines=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length)return [];
-  const delim=detectDelimiter(lines[0]);const first=parseDelimitedLine(lines[0],delim);
-  const known=['name','card name','card','product name','set','set name','expansion','number','card number','collector number','quantity','qty','count','condition','cost','purchase price','value','market price'];
-  const hasHeader=first.some(h=>known.includes(cleanHeader(h)));
-  const headers=hasHeader?first:first.map((_,i)=>['name','set','number','quantity'][i]||`col${i+1}`);
-  const dataLines=hasHeader?lines.slice(1):lines;
-  return dataLines.map((line,index)=>{
-    const vals=parseDelimitedLine(line,delim),obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');
-    return {
-      sourceRow:index+1,
-      name:String(pick(obj,['name','card name','card','product name'])||'').trim(),
-      set:String(pick(obj,['set','set name','expansion'])||'').trim(),
-      number:String(pick(obj,['number','card number','collector number','#'])||'').trim(),
-      quantity:qty(pick(obj,['quantity','qty','count'])),
-      condition:String(pick(obj,['condition'])||'').trim(),
-      cost:money(pick(obj,['cost','purchase price','purchase cost','paid'])),
-      value:money(pick(obj,['value','market price','market value','price']))
-    };
-  }).filter(r=>r.name||r.number);
-}
-
-async function requestMatchBatch(chunk,start){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),30000);
-  try{
-    const res=await fetch('/.netlify/functions/match-collection-import',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({rows:chunk}),
-      signal:controller.signal
-    });
-    if(!res.ok){
-      let detail='';
-      try{const body=await res.json();detail=body?.detail||body?.error||''}catch{}
-      throw new Error(`Matcher HTTP ${res.status}${detail?`: ${detail}`:''}`);
-    }
-    const data=await res.json();
-    if(!Array.isArray(data.results))throw new Error('Matcher returned no results');
-    return data.results.map(r=>({...r,index:r.index+start}));
-  }finally{
-    clearTimeout(timer);
-  }
-}
-
-function mergeResults(results){
-  const byIndex=new Map(matchedResults.map(r=>[r.index,r]));
-  for(const incoming of results){
-    const existing=byIndex.get(incoming.index);
-    if(existing&&Object.prototype.hasOwnProperty.call(existing,'selectedMatch'))incoming.selectedMatch=existing.selectedMatch;
-    byIndex.set(incoming.index,incoming);
-  }
-  matchedResults=[...byIndex.values()].sort((a,b)=>a.index-b.index);
-}
-
-async function analyze(){
-  const text=sourceText||$('pasteBox').value;
-  const rows=normalizeRows(text);
-  if(!rows.length){$('parseStatus').textContent='No usable card rows found. Make sure the file includes a card name or card number.';return;}
-
-  const run=++analysisRun;
-  $('analyzeBtn').disabled=true;
-  $('analyzeBtn').textContent='Analyzing…';
-  $('parseStatus').textContent=`Starting ${rows.length} rows… successful cards will appear as they are found.`;
-  matchedResults=[];
-  $('reviewSection').style.display='none';
-  $('results').innerHTML='';
-
-  let queue=[];
-  for(let start=0;start<rows.length;start+=MATCH_BATCH_SIZE){
-    queue.push({start,chunk:rows.slice(start,start+MATCH_BATCH_SIZE),attempt:0});
-  }
-
-  let processed=0;
-  let retryRound=0;
-
-  try{
-    while(queue.length&&run===analysisRun){
-      const nextQueue=[];
-      for(const job of queue){
-        if(run!==analysisRun)return;
-        try{
-          const found=await requestMatchBatch(job.chunk,job.start);
-          mergeResults(found);
-          processed+=job.chunk.length;
-          renderReview(false);
-          $('parseStatus').textContent=`Found results for ${processed} of ${rows.length} rows. ${nextQueue.length?'Some batches are queued to retry.':''}`;
-        }catch(err){
-          console.warn(`Batch ${job.start+1}-${job.start+job.chunk.length} failed`,err);
-          const attempt=job.attempt+1;
-          if(attempt>=2&&job.chunk.length>8){
-            const half=Math.ceil(job.chunk.length/2);
-            nextQueue.push({start:job.start,chunk:job.chunk.slice(0,half),attempt});
-            nextQueue.push({start:job.start+half,chunk:job.chunk.slice(half),attempt});
-          }else{
-            nextQueue.push({...job,attempt});
-          }
-          $('parseStatus').textContent=`Found ${matchedResults.length} of ${rows.length} rows so far. Retrying ${nextQueue.reduce((n,j)=>n+j.chunk.length,0)} rows that did not respond…`;
-        }
-      }
-
-      if(!nextQueue.length)break;
-      queue=nextQueue;
-      retryRound++;
-      const wait=Math.min(RETRY_BASE_MS*Math.max(1,retryRound),8000);
-      $('parseStatus').textContent=`Showing ${matchedResults.length} rows found so far. ${queue.reduce((n,j)=>n+j.chunk.length,0)} rows are retrying automatically…`;
-      await sleep(wait);
-    }
-
-    if(run!==analysisRun)return;
-    renderReview(false);
-    $('parseStatus').textContent=`Analysis complete — ${matchedResults.length} rows returned. Review the matches below before importing.`;
-  }catch(err){
-    console.error(err);
-    if(matchedResults.length){
-      renderReview(false);
-      $('parseStatus').textContent=`Showing ${matchedResults.length} rows found before an unexpected error. You can still review and import these matches.`;
-    }else{
-      $('parseStatus').textContent='The matcher is not responding yet. Please run Analyze Collection again.';
-    }
-  }finally{
-    if(run===analysisRun){$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection';}
-  }
-}
-
+function normalizeRows(text){const lines=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return[];const delim=detectDelimiter(lines[0]),first=parseDelimitedLine(lines[0],delim);const known=['name','card name','card','product name','set','set name','expansion','number','card number','collector number','quantity','qty','count','condition','card condition','average cost paid','cost','purchase price','rarity','variance','value','market price'];const hasHeader=first.some(h=>known.some(k=>cleanHeader(h)===k||cleanHeader(h).startsWith(k+' ')));const headers=hasHeader?first:first.map((_,i)=>['name','set','number','quantity'][i]||`col${i+1}`),dataLines=hasHeader?lines.slice(1):lines;return dataLines.map((line,index)=>{const vals=parseDelimitedLine(line,delim),obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return{sourceRow:index+1,name:String(pick(obj,['name','card name','card','product name'])||'').trim(),set:String(pick(obj,['set','set name','expansion'])||'').trim(),number:String(pick(obj,['number','card number','collector number'])||'').trim(),quantity:qty(pick(obj,['quantity','qty','count'])),condition:String(pick(obj,['card condition','condition'])||'').trim(),rarity:String(pick(obj,['rarity'])||'').trim(),variance:String(pick(obj,['variance'])||'').trim(),cost:money(pick(obj,['average cost paid','cost','purchase price','purchase cost','paid'])),value:money(pick(obj,['market price','market value','value','price']))}}).filter(r=>r.name||r.number)}
+async function requestMatchBatch(chunk,start){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),22000);try{const res=await fetch('/.netlify/functions/match-collection-import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows:chunk}),signal:controller.signal});if(!res.ok){let detail='';try{const b=await res.json();detail=b?.detail||b?.error||''}catch{}throw new Error(`Matcher HTTP ${res.status}${detail?`: ${detail}`:''}`)}const data=await res.json();if(!Array.isArray(data.results))throw new Error('Matcher returned no results');return data.results.map(r=>({...r,index:r.index+start}))}finally{clearTimeout(timer)}}
+function mergeResults(results){const byIndex=new Map(matchedResults.map(r=>[r.index,r]));for(const incoming of results){const old=byIndex.get(incoming.index);if(old&&Object.prototype.hasOwnProperty.call(old,'selectedMatch'))incoming.selectedMatch=old.selectedMatch;byIndex.set(incoming.index,incoming)}matchedResults=[...byIndex.values()].sort((a,b)=>a.index-b.index)}
+async function analyze(){const text=sourceText||$('pasteBox').value,rows=normalizeRows(text);if(!rows.length){$('parseStatus').textContent='No usable card rows found. Make sure the file includes Product Name/Card Name or Card Number.';return}const run=++analysisRun;$('analyzeBtn').disabled=true;$('analyzeBtn').textContent='Analyzing…';$('parseStatus').textContent=`Preparing ${rows.length} rows…`;matchedResults=[];$('reviewSection').style.display='none';$('results').innerHTML='';showWork('Processing your collection…','Matching every card against our database. Please keep this page open.',`0 of ${rows.length} rows processed`);let queue=[];for(let start=0;start<rows.length;start+=MATCH_BATCH_SIZE)queue.push({start,chunk:rows.slice(start,start+MATCH_BATCH_SIZE),attempt:0});let processed=0,retryRound=0;try{while(queue.length&&run===analysisRun){const next=[];for(const job of queue){if(run!==analysisRun)return;try{const found=await requestMatchBatch(job.chunk,job.start);mergeResults(found);processed+=job.chunk.length;$('workCount').textContent=`${Math.min(processed,rows.length)} of ${rows.length} rows processed`;$('parseStatus').textContent=`Matched ${Math.min(processed,rows.length)} of ${rows.length} rows…`}catch(err){console.warn('Import batch failed:',err);const attempt=job.attempt+1;if(attempt>=2&&job.chunk.length>8){const half=Math.ceil(job.chunk.length/2);next.push({start:job.start,chunk:job.chunk.slice(0,half),attempt},{start:job.start+half,chunk:job.chunk.slice(half),attempt})}else next.push({...job,attempt});$('workCount').textContent=`Retrying ${next.reduce((n,j)=>n+j.chunk.length,0)} rows automatically…`}}if(!next.length)break;queue=next;retryRound++;await sleep(Math.min(RETRY_BASE_MS*Math.max(1,retryRound),5000))}if(run!==analysisRun)return;renderReview();$('parseStatus').textContent=`Analysis complete — ${matchedResults.length} rows returned. Review uncertain matches below.`}catch(err){console.error(err);if(matchedResults.length){renderReview();$('parseStatus').textContent=`Showing ${matchedResults.length} rows found before an unexpected error.`}else $('parseStatus').textContent='Could not analyze the collection. Please try again.'}finally{if(run===analysisRun){hideWork();$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection'}}}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderReview(shouldScroll=true){
-  const counts={matched:0,review:0,unmatched:0};matchedResults.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);
-  $('sumRows').textContent=matchedResults.length;$('sumMatched').textContent=counts.matched;$('sumReview').textContent=counts.review;$('sumUnmatched').textContent=counts.unmatched;
-  $('results').innerHTML=matchedResults.map((r,i)=>{
-    const m=r.match, badge=r.status==='matched'?'match':r.status;
-    const choices=[m,...(r.alternatives||[])].filter(Boolean);
-    const selected=r.selectedMatch;
-    const select=r.status==='review'&&choices.length?`<select class="review-select" data-i="${i}">${choices.map((c,j)=>`<option value="${j}" ${selected?.id===c.id?'selected':''}>${esc(c.name)} — ${esc(c.setName)} #${esc(c.number)}</option>`).join('')}<option value="skip" ${selected===null?'selected':''}>Skip this row</option></select>`:'';
-    return `<div class="import-row"><img src="${esc(m?.image||'')}" alt="" onerror="this.style.visibility='hidden'"><div><div class="row-title">${esc(r.row.name||m?.name||'Unknown card')} ×${r.row.quantity||1}</div><div class="row-meta">Source: ${esc(r.row.set||'No set')} ${r.row.number?'#'+esc(r.row.number):''}<br>${m?`Match: ${esc(m.name)} • ${esc(m.setName)} #${esc(m.number)}`:'No database match found'}</div>${select}</div><span class="badge ${badge}">${r.status==='matched'?(r.confidence||'matched'):r.status==='review'?'Review':'Unmatched'}</span></div>`;
-  }).join('');
-  matchedResults.forEach(r=>{if(!Object.prototype.hasOwnProperty.call(r,'selectedMatch'))r.selectedMatch=r.status==='unmatched'?null:r.match;});
-  $('results').querySelectorAll('.review-select').forEach(sel=>sel.onchange=()=>{
-    const r=matchedResults[Number(sel.dataset.i)];if(sel.value==='skip'){r.selectedMatch=null;return;}const choices=[r.match,...(r.alternatives||[])].filter(Boolean);r.selectedMatch=choices[Number(sel.value)];
-  });
-  $('reviewSection').style.display='block';
-  if(shouldScroll)$('reviewSection').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-$('fileInput').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`};
-const dz=$('dropZone');['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.addEventListener('drop',async e=>{const f=e.dataTransfer.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`});
-$('pasteBox').addEventListener('input',()=>sourceText='');$('analyzeBtn').onclick=analyze;
-$('resetBtn').onclick=()=>{analysisRun++;matchedResults=[];sourceText='';$('fileInput').value='';$('pasteBox').value='';$('reviewSection').style.display='none';$('parseStatus').textContent='';$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection';window.scrollTo({top:0,behavior:'smooth'})};
-
-$('importBtn').onclick=async()=>{
-  if(!currentUser)return;
-  const importable=matchedResults.filter(r=>r.selectedMatch);
-  if(!importable.length){$('importStatus').textContent='There are no matched cards selected to import.';return;}
-  $('importBtn').disabled=true;$('progress').style.display='block';$('importStatus').textContent=`Importing ${importable.length} cards…`;
-  try{
-    let completed=0;
-    for(let start=0;start<importable.length;start+=450){
-      const batch=writeBatch(db);const chunk=importable.slice(start,start+450);
-      chunk.forEach(r=>{
-        const m=r.selectedMatch,row=r.row,ref=doc(collection(db,'users',currentUser.uid,'collection'));
-        batch.set(ref,{apiId:m.id||null,name:m.name,set:m.setName,number:m.number||'',rarity:m.rarity||'',qty:Number(row.quantity)||1,value:row.value??0,cost:row.cost??null,condition:row.condition||null,image:m.image||'',marketPrice:row.value??null,marketPriceUpdatedAt:null,importSource:'collection-import',addedAt:serverTimestamp()});
-      });
-      await batch.commit();completed+=chunk.length;$('progressBar').style.width=`${Math.round(completed/importable.length*100)}%`;$('importStatus').textContent=`Imported ${completed} of ${importable.length} cards…`;
-    }
-    $('importStatus').textContent=`Done — imported ${importable.length} matched cards. Redirecting to your collection…`;setTimeout(()=>location.href='collection.html',1100);
-  }catch(err){console.error(err);$('importStatus').textContent='Import stopped because something went wrong. Cards from completed batches were saved; you can retry the remaining list.';$('importBtn').disabled=false}
-};
+function renderReview(){const counts={matched:0,review:0,unmatched:0};matchedResults.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);$('sumRows').textContent=matchedResults.length;$('sumMatched').textContent=counts.matched;$('sumReview').textContent=counts.review;$('sumUnmatched').textContent=counts.unmatched;$('results').innerHTML=matchedResults.map((r,i)=>{const m=r.match,badge=r.status==='matched'?'match':r.status,choices=[m,...(r.alternatives||[])].filter(Boolean),selected=r.selectedMatch;const select=r.status==='review'&&choices.length?`<select class="review-select" data-i="${i}">${choices.map((c,j)=>`<option value="${j}" ${selected?.id===c.id?'selected':''}>${esc(c.name)} — ${esc(c.setName)} #${esc(c.number)}</option>`).join('')}<option value="skip" ${selected===null?'selected':''}>Skip this row</option></select>`:'';return`<div class="import-row"><img src="${esc(m?.image||'')}" alt="" onerror="this.style.visibility='hidden'"><div><div class="row-title">${esc(r.row.name||m?.name||'Unknown card')} ×${r.row.quantity||1}</div><div class="row-meta">Source: ${esc(r.row.set||'No set')} ${r.row.number?'#'+esc(r.row.number):''}${r.row.variance?' • '+esc(r.row.variance):''}${r.row.condition?' • '+esc(r.row.condition):''}<br>${m?`Match: ${esc(m.name)} • ${esc(m.setName)} #${esc(m.number)}`:'No database match found'}</div>${select}</div><span class="badge ${badge}">${r.status==='matched'?(r.confidence||'matched'):r.status==='review'?'Review':'Unmatched'}</span></div>`}).join('');matchedResults.forEach(r=>{if(!Object.prototype.hasOwnProperty.call(r,'selectedMatch'))r.selectedMatch=r.status==='unmatched'?null:r.match});$('results').querySelectorAll('.review-select').forEach(sel=>sel.onchange=()=>{const r=matchedResults[Number(sel.dataset.i)];if(sel.value==='skip'){r.selectedMatch=null;return}const choices=[r.match,...(r.alternatives||[])].filter(Boolean);r.selectedMatch=choices[Number(sel.value)]});$('reviewSection').style.display='block';$('reviewSection').scrollIntoView({behavior:'smooth',block:'start'})}
+$('fileInput').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`};const dz=$('dropZone');['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')}));dz.addEventListener('drop',async e=>{const f=e.dataTransfer.files?.[0];if(!f)return;sourceText=await f.text();$('pasteBox').value='';$('parseStatus').textContent=`Loaded ${f.name}`});$('pasteBox').addEventListener('input',()=>sourceText='');$('analyzeBtn').onclick=analyze;$('resetBtn').onclick=()=>{analysisRun++;hideWork();matchedResults=[];sourceText='';$('fileInput').value='';$('pasteBox').value='';$('reviewSection').style.display='none';$('parseStatus').textContent='';$('analyzeBtn').disabled=false;$('analyzeBtn').textContent='Analyze Collection';window.scrollTo({top:0,behavior:'smooth'})};
+$('importBtn').onclick=async()=>{if(!currentUser)return;const importable=matchedResults.filter(r=>r.selectedMatch);if(!importable.length){$('importStatus').textContent='There are no matched cards selected to import.';return}$('importBtn').disabled=true;$('progress').style.display='block';showWork('Saving your collection…','Your matched cards are being written to your account. Please keep this page open.',`0 of ${importable.length} cards saved`);try{let completed=0;for(let start=0;start<importable.length;start+=400){const batch=writeBatch(db),chunk=importable.slice(start,start+400);chunk.forEach(r=>{const m=r.selectedMatch,row=r.row,ref=doc(collection(db,'users',currentUser.uid,'collection'));batch.set(ref,{apiId:m.id||null,name:m.name,set:m.setName,number:m.number||'',rarity:m.rarity||row.rarity||'',variance:row.variance||null,qty:Number(row.quantity)||1,value:row.value??0,cost:row.cost??null,condition:row.condition||null,image:m.image||'',marketPrice:row.value??null,marketPriceUpdatedAt:null,importSource:'collection-import',addedAt:serverTimestamp()})});await batch.commit();completed+=chunk.length;$('progressBar').style.width=`${Math.round(completed/importable.length*100)}%`;$('importStatus').textContent=`Imported ${completed} of ${importable.length} cards…`;$('workCount').textContent=`${completed} of ${importable.length} cards saved`}$('workTitle').textContent='Import complete';$('workCopy').textContent='Your collection was saved successfully.';$('workCount').textContent=`${importable.length} cards imported`;setTimeout(()=>location.href='collection.html',900)}catch(err){console.error(err);hideWork();$('importStatus').textContent='Import stopped because something went wrong. Completed batches were saved; you can retry the rest.';$('importBtn').disabled=false}};
 </script>
 </body>
 </html>
