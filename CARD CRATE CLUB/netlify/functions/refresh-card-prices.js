@@ -1,4 +1,4 @@
-const { getFirebaseAdmin, json } = require('./_shared');
+const { getFirebaseAdmin, json, requireUser } = require('./_shared');
 
 function normalizeVariant(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -188,6 +188,39 @@ async function fetchJson(url, timeout = 5000) {
   return res.json();
 }
 
+function normalizeCardNumber(value) {
+  const raw = String(value || '').trim().toLowerCase().split('/')[0].trim();
+  return /^\d+$/.test(raw) ? String(Number(raw)) : raw;
+}
+
+function productCardNumber(product) {
+  const direct = product?.number || product?.cardNumber || '';
+  if (direct) return normalizeCardNumber(direct);
+  for (const row of product?.extendedData || []) {
+    const key = normalizeText(row?.name || row?.displayName || '');
+    if (key === 'number' || key === 'card number') return normalizeCardNumber(row?.value || '');
+  }
+  return '';
+}
+
+function resolveProductId(item, products) {
+  const wantedName = normalizeText(item.name);
+  const wantedNumber = normalizeCardNumber(item.number);
+  let best = null, bestScore = -1;
+  for (const product of products || []) {
+    const name = normalizeText(product.name || product.cleanName || '');
+    const number = productCardNumber(product);
+    let score = 0;
+    if (wantedName && name === wantedName) score += 100;
+    else if (wantedName && name.includes(wantedName)) score += 55;
+    else if (wantedName && wantedName.includes(name)) score += 35;
+    if (wantedNumber && number === wantedNumber) score += 120;
+    else if (wantedNumber && number) score -= 80;
+    if (score > bestScore) { bestScore = score; best = Number(product.productId); }
+  }
+  return bestScore >= (wantedNumber ? 120 : 100) && Number.isFinite(best) ? best : null;
+}
+
 // TCGCSV mirrors TCGplayer's product/group market-price exports and updates
 // daily. It is a fallback only when the primary Pokemon TCG API cannot return
 // live TCGplayer pricing. This prevents imported/stale prices from surviving
@@ -195,7 +228,7 @@ async function fetchJson(url, timeout = 5000) {
 async function fetchTcgCsvFallback(wanted, primaryLive, deadlineMs) {
   const fallback = new Map();
   if (Date.now() >= deadlineMs - 3000) return fallback;
-  const unresolved = [...wanted.entries()].filter(([, item]) => !primaryLive.has(item.apiId) && extractProductId(item.tcgplayerUrl));
+  const unresolved = [...wanted.entries()].filter(([, item]) => !primaryLive.has(item.apiId));
   if (!unresolved.length) return fallback;
 
   let groups;
@@ -211,7 +244,7 @@ async function fetchTcgCsvFallback(wanted, primaryLive, deadlineMs) {
   for (const [key, item] of unresolved) {
     const productId = extractProductId(item.tcgplayerUrl);
     const groupId = resolveGroupId(item.set, groups);
-    if (!productId || !groupId) continue;
+    if (!groupId) continue;
     if (!byGroup.has(groupId)) byGroup.set(groupId, []);
     byGroup.get(groupId).push({ key, item, productId });
   }
@@ -219,6 +252,11 @@ async function fetchTcgCsvFallback(wanted, primaryLive, deadlineMs) {
   for (const [groupId, entries] of byGroup) {
     if (Date.now() >= deadlineMs - 2500) break;
     try {
+      if (entries.some(entry => !entry.productId)) {
+        const productsPayload = await fetchJson(`https://tcgcsv.com/tcgplayer/3/${groupId}/products`, 4500);
+        const products = productsPayload.results || [];
+        for (const entry of entries) if (!entry.productId) entry.productId = resolveProductId(entry.item, products);
+      }
       const payload = await fetchJson(`https://tcgcsv.com/tcgplayer/3/${groupId}/prices`, 4500);
       const rowsByProduct = new Map();
       for (const row of payload.results || []) {
@@ -227,6 +265,7 @@ async function fetchTcgCsvFallback(wanted, primaryLive, deadlineMs) {
         rowsByProduct.get(id).push(row);
       }
       for (const entry of entries) {
+        if (!entry.productId) continue;
         const picked = safePriceRows(rowsByProduct.get(entry.productId) || [], entry.item.priceVariant || entry.item.variance || '', entry.item.rarity, entry.item.name);
         if (picked.marketPrice != null) fallback.set(entry.key, { ...picked, productId: entry.productId });
       }
@@ -256,14 +295,20 @@ async function commitWrites(db, writes, merge = true) {
   return { committed, failedBatches };
 }
 
-exports.handler = async function() {
+exports.handler = async function(event = {}) {
   const startedAt = Date.now();
   const fetchDeadline = startedAt + 22000;
 
   try {
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
-    const collectionSnap = await db.collectionGroup('collection').get();
+    let collectionSnap;
+    if (event.httpMethod === 'POST') {
+      const user = await requireUser(event);
+      collectionSnap = await db.collection('users').doc(user.uid).collection('collection').get();
+    } else {
+      collectionSnap = await db.collectionGroup('collection').get();
+    }
     const wanted = new Map();
 
     for (const snap of collectionSnap.docs) {
