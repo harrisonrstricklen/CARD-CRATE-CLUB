@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Build Card Crate Club's Japanese Pokemon TCG search/import index.
 
-Source: TCGdex multilingual API (Japanese language endpoint).
+Card metadata source: TCGdex multilingual API (Japanese language endpoint).
+Primary image source: Limitless TCG Japanese card CDN.
+Fallback image source: TCGdex.
 Output: card-data/all-cards-index-ja.json
 
 This intentionally stays separate from the English index so language-specific
@@ -14,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 import time
+import urllib.parse
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -45,12 +48,27 @@ def infer_set_id(card_id: str) -> str:
     return ""
 
 
-def image_url(base: str, quality: str = "low") -> str:
+def tcgdex_image_url(base: str, quality: str = "low") -> str:
     if not base:
         return ""
     base = base.rstrip("/")
-    # TCGdex image values are extensionless asset URLs.
     return f"{base}/{quality}.webp"
+
+
+def limitless_image_url(set_id: str, local_id: str) -> str:
+    """Build the Limitless Japanese scan URL used by its current image index."""
+    if not set_id or not local_id:
+        return ""
+    code = set_id.strip().upper()
+    number = local_id.strip().split("/")[0].lstrip("#")
+    if not code or not number:
+        return ""
+    safe_code = urllib.parse.quote(code, safe="")
+    safe_number = urllib.parse.quote(number, safe="")
+    return (
+        "https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/"
+        f"tpc/{safe_code}/{safe_code}_{safe_number}_R_JP.png"
+    )
 
 
 def normalize_card(card: dict) -> dict:
@@ -59,6 +77,9 @@ def normalize_card(card: dict) -> dict:
     set_id = str((card.get("set") or {}).get("id") or card.get("setId") or infer_set_id(card_id))
     set_name = str((card.get("set") or {}).get("name") or card.get("setName") or set_id)
     image = str(card.get("image") or "")
+    limitless = limitless_image_url(set_id, local_id)
+    tcgdex_low = tcgdex_image_url(image, "low")
+    tcgdex_high = tcgdex_image_url(image, "high")
     return {
         "id": f"ja:{card_id}",
         "sourceId": card_id,
@@ -68,10 +89,11 @@ def normalize_card(card: dict) -> dict:
         "number": local_id,
         "rarity": card.get("rarity") or "",
         "supertype": card.get("category") or card.get("supertype") or "",
-        "image": image_url(image, "low"),
-        "imageLarge": image_url(image, "high"),
+        "image": limitless or tcgdex_low,
+        "imageLarge": limitless or tcgdex_high or tcgdex_low,
+        "imageFallback": tcgdex_high or tcgdex_low,
         "language": "ja",
-        "source": "tcgdex",
+        "source": "tcgdex+limitless-images",
     }
 
 
@@ -90,13 +112,13 @@ def main() -> int:
     cards.sort(key=lambda c: ((c.get("name") or ""), c.get("setId") or "", c.get("number") or ""))
 
     INDEX_FILE.write_text(
-        json.dumps({"language": "ja", "source": "TCGdex", "cards": cards}, ensure_ascii=False, separators=(",", ":")) + "\n",
+        json.dumps({"language": "ja", "source": "TCGdex + Limitless images", "cards": cards}, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
     REPORT_FILE.write_text(
         json.dumps({
             "generatedAt": datetime.now(timezone.utc).isoformat(),
-            "source": "TCGdex",
+            "source": "TCGdex + Limitless images",
             "language": "ja",
             "cards": len(cards),
             "cardIndex": "card-data/all-cards-index-ja.json",
