@@ -1,0 +1,66 @@
+name: Fix collection pricing display
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-collection-price-display.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch collection pricing behavior
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('CARD CRATE CLUB/collection.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = "function exactSavedCardMatch(a,b){if(norm(a.name)!==norm(b.name))return false;if(a.set&&norm(a.set)!==norm(b.set?.name))return false;const an=normNumber(a.number),bn=normNumber(b.number);if(an&&bn&&an!==bn)return false;return Boolean(an?bn:true)}"
+          new = old + "function trustedCardValue(c){if(c?.pricingStatus==='ambiguous')return null;const source=String(c?.priceSource||'');if(!source.startsWith('master-')&&!source.startsWith('live-'))return null;const n=Number(c?.marketPrice);return Number.isFinite(n)&&n>0?n:null}"
+          if old not in s: raise SystemExit('exactSavedCardMatch anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = "const patch={apiId:exact.id||saved.apiId||null,name:exact.name||saved.name,set:exact.set?.name||saved.set,number:exact.number&&exact.set?.printedTotal?`${exact.number}/${exact.set.printedTotal}`:(exact.number||saved.number||''),rarity:exact.rarity||saved.rarity||'',image,tcgplayerUrl,pricingStatus,priceVariant:exact.pricing?.variant||null,matchCheckedAt:serverTimestamp(),matchStatus:'verified'};if(live!=null){patch.marketPrice=live;patch.marketPriceUpdatedAt=serverTimestamp();if(saved.marketPrice!=null&&Math.abs((Number(saved.value)||0)-(Number(saved.marketPrice)||0))<.02)patch.value=live}"
+          new = "const patch={apiId:exact.id||saved.apiId||null,name:exact.name||saved.name,set:exact.set?.name||saved.set,number:exact.number&&exact.set?.printedTotal?`${exact.number}/${exact.set.printedTotal}`:(exact.number||saved.number||''),rarity:exact.rarity||saved.rarity||'',image,tcgplayerUrl,pricingStatus,priceVariant:exact.pricing?.variant||null,matchCheckedAt:serverTimestamp(),matchStatus:'verified'};if(live!=null){patch.marketPrice=live;patch.value=live;patch.priceSource='live-tcgplayer';patch.marketPriceUpdatedAt=serverTimestamp()}"
+          if old not in s: raise SystemExit('recheck price patch anchor not found')
+          s = s.replace(old, new, 1)
+
+          start = s.index('function renderStats(cards){')
+          end = s.index('\nfunction populateSetFilter()', start)
+          s = s[:start] + "function renderStats(cards){const priced=cards.map(c=>({c,v:trustedCardValue(c)})).filter(x=>x.v!=null),totalValue=priced.reduce((sum,x)=>sum+x.v*(Number(x.c.qty)||1),0),totalCost=cards.reduce((sum,c)=>sum+(Number(c.cost)||0)*(Number(c.qty)||1),0),totalCount=cards.reduce((sum,c)=>sum+(Number(c.qty)||1),0),sets=new Set(cards.map(c=>c.set).filter(Boolean)),top=priced.slice().sort((a,b)=>b.v-a.v)[0],pending=cards.length-priced.length;$('statValue').textContent=`$${totalValue.toFixed(2)}${pending?'*':''}`;$('statValue').title=pending?`${pending} cards are waiting for a verified market price`:'';$('statCount').textContent=totalCount;$('statTopCard').textContent=top?top.c.name:'—';$('statSets').textContent=sets.size;$('statGain').textContent=priced.length&&cards.some(c=>c.cost!==undefined&&c.cost!==null&&c.cost!=='')?`${totalValue-totalCost>=0?'+':'-'}$${Math.abs(totalValue-totalCost).toFixed(2)}${pending?'*':''}`:'—';$('statMonthly').textContent='—';const img=top&&(top.c.image||top.c.imageUrl||top.c.localImage);if(img){$('statTopImage').src=img;$('statTopImage').alt=top.c.name||'Most valuable card';$('statTopImage').classList.add('visible');$('statTopImage').onerror=()=>$('statTopImage').classList.remove('visible')}else{$('statTopImage').removeAttribute('src');$('statTopImage').classList.remove('visible')}}" + s[end:]
+
+          s = s.replace("filtered.sort((a,b)=>sort==='value-high'?(Number(b.value)||0)-(Number(a.value)||0):sort==='value-low'?(Number(a.value)||0)-(Number(b.value)||0):", "filtered.sort((a,b)=>sort==='value-high'?(trustedCardValue(b)||0)-(trustedCardValue(a)||0):sort==='value-low'?(trustedCardValue(a)||0)-(trustedCardValue(b)||0):", 1)
+          s = s.replace("valueHtml=needsVariant?'Price needs variant':`$${(Number(c.value)||0).toFixed(2)}`;", "liveValue=trustedCardValue(c),valueHtml=needsVariant?'Price needs variant':liveValue==null?'Updating market price…':`$${liveValue.toFixed(2)}`;", 1)
+          s = s.replace("${c.marketPrice!=null?`<div class=\"coll-card-market\">🔄 Market: $${Number(c.marketPrice).toFixed(2)}${c.priceVariant?' • '+esc(c.priceVariant):''}</div>`:''}", "${trustedCardValue(c)!=null?`<div class=\"coll-card-market\">🔄 Verified market: $${trustedCardValue(c).toFixed(2)}${c.priceVariant?' • '+esc(c.priceVariant):''}</div>`:''}", 1)
+
+          old = "$('viewerPrice').textContent=c.value===null||c.value===undefined||c.value===''?'Estimated value: needs exact variant':`Estimated value: $${(Number(c.value)||0).toFixed(2)}`}"
+          new = "const vv=trustedCardValue(c);$('viewerPrice').textContent=c.pricingStatus==='ambiguous'?'Estimated value: needs exact variant':vv==null?'Estimated value: updating market price…':`Estimated value: $${vv.toFixed(2)}`}"
+          if old not in s: raise SystemExit('viewer price anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = "if(live!=null){patch.marketPrice=live;patch.marketPriceUpdatedAt=serverTimestamp();if(c.marketPrice!=null&&Math.abs((Number(c.value)||0)-(Number(c.marketPrice)||0))<.02)patch.value=live}"
+          new = "if(live!=null){patch.marketPrice=live;patch.value=live;patch.priceSource='live-tcgplayer';patch.marketPriceUpdatedAt=serverTimestamp()}"
+          if old not in s: raise SystemExit('viewer live patch anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = "marketPrice:live,marketPriceUpdatedAt:live!=null?serverTimestamp():null,pricingStatus:selectedSearchCard?.pricing?.status||null"
+          new = "marketPrice:live,marketPriceUpdatedAt:live!=null?serverTimestamp():null,priceSource:live!=null?'live-tcgplayer':null,pricingStatus:selectedSearchCard?.pricing?.status||null"
+          if old not in s: raise SystemExit('add card price source anchor not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "CARD CRATE CLUB/collection.html"
+          git diff --cached --quiet && exit 0
+          git commit -m "Use verified market prices for collection totals"
+          git push
