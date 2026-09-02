@@ -85,8 +85,18 @@ function candidatePool(index, row) {
   }
   return [...seen.values()];
 }
+function limitlessJapaneseImage(card) {
+  const setId = String(card.setId || '').trim();
+  const number = String(card.number || '').trim().split('/')[0].trim().replace(/^#/, '');
+  if (!setId || !number) return '';
+  const code = setId.toUpperCase();
+  return `https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com/tpc/${encodeURIComponent(code)}/${encodeURIComponent(code)}_${encodeURIComponent(number)}_R_JP.png`;
+}
 function cardOut(card) {
-  return { id: card.id, sourceId: card.sourceId || card.id, name: card.name, setId: card.setId, setName: card.setName, number: card.number, rarity: card.rarity || '', image: card.image || '', imageLarge: card.imageLarge || card.image || '', language: card.language || 'en' };
+  const tcgdexImage = card.imageLarge || card.image || '';
+  const japaneseImage = card.language === 'ja' ? limitlessJapaneseImage(card) : '';
+  const image = japaneseImage || card.image || card.imageLarge || '';
+  return { id: card.id, sourceId: card.sourceId || card.id, name: card.name, setId: card.setId, setName: card.setName, number: card.number, rarity: card.rarity || '', image, imageLarge: japaneseImage || card.imageLarge || card.image || '', imageFallback: tcgdexImage && tcgdexImage !== image ? tcgdexImage : '', language: card.language || 'en' };
 }
 function matchRow(index, row, i) {
   const pool = candidatePool(index, row);
