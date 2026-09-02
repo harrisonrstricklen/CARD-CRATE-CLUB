@@ -11,6 +11,9 @@
 [functions."refresh-card-prices"]
   schedule = "*/5 * * * *"
 
+[functions."seed-ascended-heroes-master"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/*"
   [headers.values]
