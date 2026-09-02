@@ -76,6 +76,64 @@ function apiHeaders() {
   return headers;
 }
 
+function finiteMarket(block) {
+  const value = Number(block?.market);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+// TCGplayer can return several price variants for one card. Never choose the
+// first object arbitrarily: that can confuse normal, reverse holo, 1st Edition,
+// unlimited and other printings by very large amounts. Only expose a market
+// price when the printing can be selected safely from the card metadata.
+function selectSafeTcgplayerPrice(card) {
+  const prices = card?.tcgplayer?.prices || {};
+  const valid = Object.entries(prices).filter(([, block]) => finiteMarket(block) != null);
+  if (!valid.length) return { status: 'unavailable', variant: null, market: null, prices: {} };
+  if (valid.length === 1) {
+    const [variant, block] = valid[0];
+    return { status: 'exact', variant, market: finiteMarket(block), prices: { [variant]: block } };
+  }
+
+  const rarity = normalize(card?.rarity);
+  const name = normalize(card?.name);
+  const has = key => finiteMarket(prices[key]) != null;
+  const choose = key => ({ status: 'inferred', variant: key, market: finiteMarket(prices[key]), prices: { [key]: prices[key] } });
+
+  // Standard non-holo rarities commonly have normal + reverse-holo prices.
+  if ((rarity === 'common' || rarity === 'uncommon' || rarity === 'rare') && has('normal')) return choose('normal');
+
+  // Cards whose rarity/name identifies a holo-style printing should prefer the
+  // regular holofoil price over reverse-holo or specialty variants.
+  if ((rarity.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(name)) && has('holofoil')) return choose('holofoil');
+
+  // If exactly one ordinary modern printing remains after excluding variants
+  // that require explicit collector input, it is safe enough to expose.
+  const ordinary = valid.filter(([key]) => !/(reverse|1st|first|unlimited|shadowless)/i.test(key));
+  if (ordinary.length === 1) {
+    const [variant] = ordinary[0];
+    return choose(variant);
+  }
+
+  // Ambiguity is preferable to a confidently wrong collection value.
+  return { status: 'ambiguous', variant: null, market: null, prices: {} };
+}
+
+function sanitizeLiveCard(card) {
+  if (!card || typeof card !== 'object') return card;
+  const selected = selectSafeTcgplayerPrice(card);
+  const tcgplayer = card.tcgplayer ? { ...card.tcgplayer, prices: selected.prices } : null;
+  return {
+    ...card,
+    tcgplayer,
+    pricing: {
+      source: 'tcgplayer',
+      status: selected.status,
+      variant: selected.variant,
+      market: selected.market
+    }
+  };
+}
+
 async function upstreamDexSearch(params) {
   const clauses = [];
   if (params.q) clauses.push(`name:"${params.q}*"`);
@@ -86,7 +144,8 @@ async function upstreamDexSearch(params) {
   const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryString)}&pageSize=48&orderBy=-set.releaseDate`;
   const response = await fetch(apiUrl, { headers: apiHeaders() });
   if (!response.ok) throw new Error(`Upstream API returned ${response.status}`);
-  return response.json();
+  const payload = await response.json();
+  return { ...payload, data: (payload.data || []).map(sanitizeLiveCard) };
 }
 
 // Local search stays reliable. Pricing gets several independent attempts with
@@ -111,7 +170,10 @@ async function fetchLiveDetails(cards) {
       });
       if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
       const payload = await response.json();
-      const liveMap = new Map((payload.data || []).map(card => [String(card.id), card]));
+      const liveMap = new Map((payload.data || []).map(card => {
+        const clean = sanitizeLiveCard(card);
+        return [String(clean.id), clean];
+      }));
       if (liveMap.size) return liveMap;
       throw new Error('Pricing API returned no matching cards');
     } catch (error) {
@@ -197,6 +259,7 @@ exports.handler = async function (event) {
           large: live?.images?.large || card.image || ''
         },
         tcgplayer: live?.tcgplayer || null,
+        pricing: live?.pricing || { source: 'tcgplayer', status: 'unavailable', variant: null, market: null },
         cardmarket: live?.cardmarket || null
       };
     });
@@ -204,7 +267,7 @@ exports.handler = async function (event) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' },
-      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-live-pricing-retries' })
+      body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-live-pricing-safe-variants' })
     };
   } catch (error) {
     console.error('Local card database search failed:', error);
