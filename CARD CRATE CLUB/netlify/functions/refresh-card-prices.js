@@ -90,47 +90,76 @@ exports.handler = async function() {
       const apiId = String(item.apiId || item.sourceId || '').trim();
       if (!apiId || language !== 'en' || apiId.startsWith('ja:')) continue;
       const key = priceKey(item);
-      if (!wanted.has(key)) wanted.set(key, { apiId, language, priceVariant: item.priceVariant || '', variance: item.variance || '' });
+      if (!wanted.has(key)) wanted.set(key, { apiId, language, priceVariant: item.priceVariant || '', variance: item.variance || '', owners: [] });
+      wanted.get(key).owners.push({ ref: snap.ref, data: item });
     }
 
     const uniqueIds = [...new Set([...wanted.values()].map(x => x.apiId))];
-    if (!uniqueIds.length) return json(200, { updated: 0, uniqueCards: 0, message: 'No English collection cards need pricing yet.' });
+    if (!uniqueIds.length) return json(200, { updatedPrices: 0, updatedCollectionRows: 0, uniqueCards: 0, message: 'No English collection cards need pricing yet.' });
 
     const live = await fetchCards(uniqueIds);
-    const writes = [];
+    const priceWrites = [];
+    const collectionWrites = [];
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     for (const [key, item] of wanted) {
       const card = live.get(item.apiId);
       if (!card) continue;
       const picked = safePrice(card, item.priceVariant || item.variance || '');
-      writes.push({
-        ref: db.collection('cardPrices').doc(key),
-        data: {
-          key,
-          cardId: item.apiId,
-          language: 'en',
-          requestedVariant: item.priceVariant || item.variance || null,
-          marketPrice: picked.marketPrice,
-          pricingStatus: picked.status,
-          priceVariant: picked.variant,
-          name: card.name || '',
-          set: card.set?.name || '',
-          number: card.number || '',
-          tcgplayerUrl: card.tcgplayer?.url || '',
-          source: 'tcgplayer',
-          updatedAt: now
+      const master = {
+        key,
+        cardId: item.apiId,
+        language: 'en',
+        requestedVariant: item.priceVariant || item.variance || null,
+        marketPrice: picked.marketPrice,
+        pricingStatus: picked.status,
+        priceVariant: picked.variant,
+        name: card.name || '',
+        set: card.set?.name || '',
+        number: card.number || '',
+        tcgplayerUrl: card.tcgplayer?.url || '',
+        source: 'tcgplayer',
+        updatedAt: now
+      };
+      priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
+
+      if (picked.marketPrice != null) {
+        for (const owner of item.owners) {
+          const oldMarket = Number(owner.data.marketPrice);
+          const oldValue = Number(owner.data.value);
+          const wasAutoPriced = Number.isFinite(oldMarket) && Number.isFinite(oldValue) && Math.abs(oldValue - oldMarket) < 0.02;
+          const patch = {
+            cardPriceKey: key,
+            marketPrice: picked.marketPrice,
+            marketPriceUpdatedAt: now,
+            pricingStatus: picked.status,
+            priceVariant: picked.variant,
+            priceSource: 'master-tcgplayer'
+          };
+          if (wasAutoPriced) patch.value = picked.marketPrice;
+          collectionWrites.push({ ref: owner.ref, data: patch });
         }
-      });
+      }
     }
 
-    for (let i = 0; i < writes.length; i += 400) {
+    for (let i = 0; i < priceWrites.length; i += 400) {
       const batch = db.batch();
-      for (const write of writes.slice(i, i + 400)) batch.set(write.ref, write.data, { merge: true });
+      for (const write of priceWrites.slice(i, i + 400)) batch.set(write.ref, write.data, { merge: true });
       await batch.commit();
     }
 
-    return json(200, { updated: writes.length, uniqueCards: uniqueIds.length, ownedRowsScanned: collectionSnap.size });
+    for (let i = 0; i < collectionWrites.length; i += 400) {
+      const batch = db.batch();
+      for (const write of collectionWrites.slice(i, i + 400)) batch.set(write.ref, write.data, { merge: true });
+      await batch.commit();
+    }
+
+    return json(200, {
+      updatedPrices: priceWrites.length,
+      updatedCollectionRows: collectionWrites.length,
+      uniqueCards: uniqueIds.length,
+      ownedRowsScanned: collectionSnap.size
+    });
   } catch (error) {
     console.error('Scheduled master price refresh failed:', error);
     return json(500, { error: 'Master price refresh failed', detail: error.message });
