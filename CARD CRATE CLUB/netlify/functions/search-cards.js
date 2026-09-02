@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const { getFirebaseAdmin } = require('./_shared');
 
-// Search Card Crate Club's generated card database locally, then enrich the
-// small result set with live TCGplayer pricing from the Pokemon TCG API.
+// Card identity/search is local. Routine exact collection lookups read the
+// centralized Firestore master price cache, while broad user searches may still
+// request live details so adding/identifying a new card stays useful.
 const INDEX_PATH = path.resolve(__dirname, '../../card-data/all-cards-index.json');
 const SETS_PATH = path.resolve(__dirname, '../../card-data/all-sets/index.json');
 let cachedCards = null;
@@ -32,36 +34,19 @@ function normalizeVariant(value) {
 function variantKeys(value) {
   const v = normalizeVariant(value);
   const map = {
-    normal: ['normal'],
-    nonholo: ['normal'],
-    nonfoil: ['normal'],
-    holo: ['holofoil'],
-    holofoil: ['holofoil'],
-    foil: ['holofoil'],
-    reverseholo: ['reverseHolofoil'],
-    reverseholofoil: ['reverseHolofoil'],
-    reversefoil: ['reverseHolofoil'],
-    firstedition: ['1stEditionHolofoil', '1stEditionNormal'],
-    '1stedition': ['1stEditionHolofoil', '1stEditionNormal'],
-    firsteditionholo: ['1stEditionHolofoil'],
-    firsteditionholofoil: ['1stEditionHolofoil'],
-    '1steditionholo': ['1stEditionHolofoil'],
-    firsteditionnormal: ['1stEditionNormal'],
-    '1steditionnormal': ['1stEditionNormal'],
-    unlimited: ['unlimitedHolofoil', 'unlimitedNormal'],
-    unlimitedholo: ['unlimitedHolofoil'],
-    unlimitedholofoil: ['unlimitedHolofoil'],
-    unlimitednormal: ['unlimitedNormal'],
-    shadowless: ['shadowlessHolofoil', 'shadowlessNormal'],
-    shadowlessholo: ['shadowlessHolofoil'],
-    shadowlessnormal: ['shadowlessNormal']
+    normal: ['normal'], nonholo: ['normal'], nonfoil: ['normal'],
+    holo: ['holofoil'], holofoil: ['holofoil'], foil: ['holofoil'],
+    reverseholo: ['reverseHolofoil'], reverseholofoil: ['reverseHolofoil'], reversefoil: ['reverseHolofoil'],
+    firstedition: ['1stEditionHolofoil', '1stEditionNormal'], '1stedition': ['1stEditionHolofoil', '1stEditionNormal'],
+    firsteditionholo: ['1stEditionHolofoil'], firsteditionholofoil: ['1stEditionHolofoil'], '1steditionholo': ['1stEditionHolofoil'],
+    firsteditionnormal: ['1stEditionNormal'], '1steditionnormal': ['1stEditionNormal'],
+    unlimited: ['unlimitedHolofoil', 'unlimitedNormal'], unlimitedholo: ['unlimitedHolofoil'], unlimitedholofoil: ['unlimitedHolofoil'], unlimitednormal: ['unlimitedNormal'],
+    shadowless: ['shadowlessHolofoil', 'shadowlessNormal'], shadowlessholo: ['shadowlessHolofoil'], shadowlessnormal: ['shadowlessNormal']
   };
   return map[v] || [];
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 function loadDatabase() {
   if (!cachedCards) {
@@ -81,7 +66,6 @@ function scoreCard(card, query, tokens, setQuery) {
   const number = normalize(card.number);
   const haystack = `${name} ${setName} ${number}`;
   let score = 0;
-
   if (query) {
     if (name === query) score += 1000;
     else if (name.startsWith(query)) score += 700;
@@ -95,7 +79,6 @@ function scoreCard(card, query, tokens, setQuery) {
       else if (haystack.includes(token)) score += 10;
     }
   }
-
   if (setQuery) {
     if (setName === setQuery) score += 300;
     else if (setName.startsWith(setQuery)) score += 180;
@@ -115,41 +98,27 @@ function finiteMarket(block) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-// TCGplayer can return several price variants for one card. Never choose the
-// first object arbitrarily: that can confuse normal, reverse holo, 1st Edition,
-// unlimited and other printings by very large amounts. Only expose a market
-// price when the printing can be selected safely from the card metadata or an
-// explicit saved/imported variance.
 function selectSafeTcgplayerPrice(card, requestedVariant = '') {
   const prices = card?.tcgplayer?.prices || {};
   const valid = Object.entries(prices).filter(([, block]) => finiteMarket(block) != null);
   if (!valid.length) return { status: 'unavailable', variant: null, market: null, prices: {} };
-
   const requestedKeys = variantKeys(requestedVariant).filter(key => finiteMarket(prices[key]) != null);
   if (requestedKeys.length === 1) {
     const key = requestedKeys[0];
     return { status: 'exact-variant', variant: key, market: finiteMarket(prices[key]), prices: { [key]: prices[key] } };
   }
-
   if (valid.length === 1) {
     const [variant, block] = valid[0];
     return { status: 'exact', variant, market: finiteMarket(block), prices: { [variant]: block } };
   }
-
   const rarity = normalize(card?.rarity);
   const name = normalize(card?.name);
   const has = key => finiteMarket(prices[key]) != null;
   const choose = key => ({ status: 'inferred', variant: key, market: finiteMarket(prices[key]), prices: { [key]: prices[key] } });
-
   if ((rarity === 'common' || rarity === 'uncommon' || rarity === 'rare') && has('normal')) return choose('normal');
   if ((rarity.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(name)) && has('holofoil')) return choose('holofoil');
-
   const ordinary = valid.filter(([key]) => !/(reverse|1st|first|unlimited|shadowless)/i.test(key));
-  if (ordinary.length === 1) {
-    const [variant] = ordinary[0];
-    return choose(variant);
-  }
-
+  if (ordinary.length === 1) return choose(ordinary[0][0]);
   return { status: 'ambiguous', variant: null, market: null, prices: {} };
 }
 
@@ -160,13 +129,7 @@ function sanitizeLiveCard(card, requestedVariant = '') {
   return {
     ...card,
     tcgplayer,
-    pricing: {
-      source: 'tcgplayer',
-      status: selected.status,
-      variant: selected.variant,
-      requestedVariant: requestedVariant || null,
-      market: selected.market
-    }
+    pricing: { source: 'tcgplayer', status: selected.status, variant: selected.variant, requestedVariant: requestedVariant || null, market: selected.market }
   };
 }
 
@@ -178,7 +141,7 @@ async function upstreamDexSearch(params) {
   if (params.set) clauses.push(`set.name:"${params.set}*"`);
   const queryString = clauses.join(' ');
   const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryString)}&pageSize=48&orderBy=-set.releaseDate`;
-  const response = await fetch(apiUrl, { headers: apiHeaders() });
+  const response = await fetch(apiUrl, { headers: apiHeaders(), signal: AbortSignal.timeout(7000) });
   if (!response.ok) throw new Error(`Upstream API returned ${response.status}`);
   const payload = await response.json();
   return { ...payload, data: (payload.data || []).map(card => sanitizeLiveCard(card, params.variant || '')) };
@@ -188,19 +151,14 @@ async function fetchLiveDetails(cards, requestedVariant = '') {
   if (!cards.length) return new Map();
   const ids = cards.map(card => String(card.id || '').trim()).filter(Boolean);
   if (!ids.length) return new Map();
-
   const clauses = ids.map(id => `id:${id}`).join(' OR ');
   const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(clauses)}&pageSize=${Math.min(ids.length, 48)}`;
   const retryDelays = [0, 450, 1000, 2000];
   let lastError = null;
-
   for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
     if (retryDelays[attempt]) await sleep(retryDelays[attempt]);
     try {
-      const response = await fetch(apiUrl, {
-        headers: apiHeaders(),
-        signal: AbortSignal.timeout(7000)
-      });
+      const response = await fetch(apiUrl, { headers: apiHeaders(), signal: AbortSignal.timeout(7000) });
       if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
       const payload = await response.json();
       const liveMap = new Map((payload.data || []).map(card => {
@@ -214,9 +172,74 @@ async function fetchLiveDetails(cards, requestedVariant = '') {
       console.warn(`Live pricing attempt ${attempt + 1}/${retryDelays.length} failed:`, error.message || error);
     }
   }
-
   console.warn('Live TCGplayer pricing unavailable after retries:', lastError);
   return new Map();
+}
+
+function masterMatchesVariant(row, requestedVariant) {
+  const wanted = normalizeVariant(requestedVariant);
+  if (!wanted) return true;
+  const requested = normalizeVariant(row.requestedVariant || '');
+  const resolved = normalizeVariant(row.priceVariant || '');
+  const keys = variantKeys(requestedVariant).map(normalizeVariant);
+  return requested === wanted || resolved === wanted || keys.includes(resolved);
+}
+
+async function fetchMasterPrices(cards, requestedVariant = '') {
+  const result = new Map();
+  if (!cards.length) return result;
+  try {
+    const admin = getFirebaseAdmin();
+    const db = admin.firestore();
+    await Promise.all(cards.map(async card => {
+      const id = String(card.id || '').trim();
+      if (!id) return;
+      const snap = await db.collection('cardPrices').where('cardId', '==', id).limit(12).get();
+      const rows = snap.docs.map(doc => doc.data()).filter(row => masterMatchesVariant(row, requestedVariant));
+      const usable = rows.filter(row => Number.isFinite(Number(row.marketPrice)) && Number(row.marketPrice) > 0);
+      const row = usable.sort((a, b) => {
+        const aExact = normalizeVariant(a.requestedVariant || a.priceVariant) === normalizeVariant(requestedVariant) ? 1 : 0;
+        const bExact = normalizeVariant(b.requestedVariant || b.priceVariant) === normalizeVariant(requestedVariant) ? 1 : 0;
+        return bExact - aExact;
+      })[0] || rows[0];
+      if (row) result.set(id, row);
+    }));
+  } catch (error) {
+    console.warn('Master price cache lookup failed:', error.message || error);
+  }
+  return result;
+}
+
+function masterCardShape(card, set, master, variantRaw) {
+  const market = Number(master?.marketPrice);
+  const validMarket = Number.isFinite(market) && market > 0 ? market : null;
+  const variant = master?.priceVariant || null;
+  const prices = validMarket && variant ? { [variant]: { market: validMarket } } : {};
+  return {
+    id: card.id,
+    name: master?.name || card.name,
+    number: master?.number || card.number,
+    rarity: card.rarity || null,
+    supertype: card.supertype || null,
+    set: {
+      id: card.setId,
+      name: master?.set || card.setName,
+      series: set.series || '',
+      printedTotal: set.printedTotal || null,
+      total: set.total || null,
+      releaseDate: set.releaseDate || ''
+    },
+    images: { small: card.image || '', large: card.image || '' },
+    tcgplayer: master?.tcgplayerUrl ? { url: master.tcgplayerUrl, prices } : (validMarket ? { prices } : null),
+    pricing: {
+      source: 'master-cache',
+      status: master?.pricingStatus || (validMarket ? 'exact' : 'unavailable'),
+      variant,
+      requestedVariant: variantRaw || null,
+      market: validMarket
+    },
+    cardmarket: null
+  };
 }
 
 exports.handler = async function (event) {
@@ -269,8 +292,19 @@ exports.handler = async function (event) {
     });
 
     const selected = matches.slice(0, 48).map(({ card }) => card);
-    const liveDetails = await fetchLiveDetails(selected, variantRaw);
+    const isRoutineExactLookup = Boolean(nameRaw && setRaw && numberRaw && !dexRaw);
 
+    if (isRoutineExactLookup) {
+      const masters = await fetchMasterPrices(selected, variantRaw);
+      const data = selected.map(card => masterCardShape(card, sets.get(String(card.setId)) || {}, masters.get(String(card.id)), variantRaw));
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=120' },
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-price-cache' })
+      };
+    }
+
+    const liveDetails = await fetchLiveDetails(selected, variantRaw);
     const data = selected.map(card => {
       const set = sets.get(String(card.setId)) || {};
       const live = liveDetails.get(String(card.id));
@@ -288,10 +322,7 @@ exports.handler = async function (event) {
           total: set.total || live?.set?.total || null,
           releaseDate: set.releaseDate || live?.set?.releaseDate || ''
         },
-        images: {
-          small: live?.images?.small || card.image || '',
-          large: live?.images?.large || card.image || ''
-        },
+        images: { small: live?.images?.small || card.image || '', large: live?.images?.large || card.image || '' },
         tcgplayer: live?.tcgplayer || null,
         pricing: live?.pricing || { source: 'tcgplayer', status: 'unavailable', variant: null, requestedVariant: variantRaw || null, market: null },
         cardmarket: live?.cardmarket || null
