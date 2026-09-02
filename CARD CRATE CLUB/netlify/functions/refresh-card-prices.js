@@ -74,9 +74,6 @@ async function requestCardBatch(ids) {
   return body.data || [];
 }
 
-// Pricing refreshes are intentionally partial-success. One bad API request or
-// one troublesome card must never cancel prices that were successfully found.
-// Failed cards are left untouched and will be tried again on the next schedule.
 async function fetchCardsResilient(ids, deadlineMs) {
   const out = new Map();
   const failed = new Set();
@@ -108,8 +105,6 @@ async function fetchCardsResilient(ids, deadlineMs) {
         returned.add(id);
         out.set(id, card);
       }
-      // An upstream 200 response can still omit individual IDs. Retry only the
-      // missing IDs independently instead of discarding the successful cards.
       const missing = batch.filter(id => !returned.has(String(id)));
       if (missing.length) {
         if (missing.length === 1) failed.add(missing[0]);
@@ -130,7 +125,6 @@ async function fetchCardsResilient(ids, deadlineMs) {
     }
   }
 
-  // Anything not reached before the function deadline is deferred, not failed.
   for (const batch of queue) for (const id of batch) failed.add(id);
   return { cards: out, failedIds: [...failed] };
 }
@@ -146,8 +140,6 @@ async function commitWrites(db, writes, merge = true) {
       await batch.commit();
       committed += chunk.length;
     } catch (error) {
-      // Do not undo earlier successful chunks. The next scheduled run will retry
-      // these documents from the master source.
       failedBatches.push({ start: i, count: chunk.length, error: error.message || String(error) });
       console.error('Master price Firestore batch deferred:', error);
     }
@@ -157,8 +149,6 @@ async function commitWrites(db, writes, merge = true) {
 
 exports.handler = async function() {
   const startedAt = Date.now();
-  // Leave several seconds for Firestore writes before Netlify's scheduled
-  // function execution limit is reached.
   const fetchDeadline = startedAt + 22000;
 
   try {
@@ -187,7 +177,7 @@ exports.handler = async function() {
 
     for (const [key, item] of wanted) {
       const card = live.get(item.apiId);
-      if (!card) continue; // Keep the previous master price; retry next run.
+      if (!card) continue;
       const picked = safePrice(card, item.priceVariant || item.variance || '');
       const master = {
         key,
@@ -206,22 +196,28 @@ exports.handler = async function() {
       };
       priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
 
-      if (picked.marketPrice != null) {
-        for (const owner of item.owners) {
-          const oldMarket = Number(owner.data.marketPrice);
-          const oldValue = Number(owner.data.value);
-          const wasAutoPriced = Number.isFinite(oldMarket) && Number.isFinite(oldValue) && Math.abs(oldValue - oldMarket) < 0.02;
-          const patch = {
-            cardPriceKey: key,
-            marketPrice: picked.marketPrice,
-            marketPriceUpdatedAt: now,
-            pricingStatus: picked.status,
-            priceVariant: picked.variant,
-            priceSource: 'master-tcgplayer'
-          };
-          if (wasAutoPriced) patch.value = picked.marketPrice;
-          collectionWrites.push({ ref: owner.ref, data: patch });
+      for (const owner of item.owners) {
+        const patch = {
+          cardPriceKey: key,
+          marketPrice: picked.marketPrice,
+          marketPriceUpdatedAt: now,
+          pricingStatus: picked.status,
+          priceVariant: picked.variant,
+          priceSource: 'master-tcgplayer'
+        };
+
+        // The live master market price is the collection's estimated value.
+        // Acquisition/cost basis remains stored separately in `cost`. This also
+        // repairs old imported snapshots that previously stayed stuck forever.
+        if (picked.marketPrice != null) {
+          patch.value = picked.marketPrice;
+          patch.valueSource = 'master-market';
+        } else if (picked.status === 'ambiguous') {
+          patch.value = null;
+          patch.valueSource = 'needs-variant';
         }
+
+        collectionWrites.push({ ref: owner.ref, data: patch });
       }
     }
 
