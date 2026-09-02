@@ -25,6 +25,40 @@ function normalizeNumber(value) {
   return raw;
 }
 
+function normalizeVariant(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function variantKeys(value) {
+  const v = normalizeVariant(value);
+  const map = {
+    normal: ['normal'],
+    nonholo: ['normal'],
+    nonfoil: ['normal'],
+    holo: ['holofoil'],
+    holofoil: ['holofoil'],
+    foil: ['holofoil'],
+    reverseholo: ['reverseHolofoil'],
+    reverseholofoil: ['reverseHolofoil'],
+    reversefoil: ['reverseHolofoil'],
+    firstedition: ['1stEditionHolofoil', '1stEditionNormal'],
+    '1stedition': ['1stEditionHolofoil', '1stEditionNormal'],
+    firsteditionholo: ['1stEditionHolofoil'],
+    firsteditionholofoil: ['1stEditionHolofoil'],
+    '1steditionholo': ['1stEditionHolofoil'],
+    firsteditionnormal: ['1stEditionNormal'],
+    '1steditionnormal': ['1stEditionNormal'],
+    unlimited: ['unlimitedHolofoil', 'unlimitedNormal'],
+    unlimitedholo: ['unlimitedHolofoil'],
+    unlimitedholofoil: ['unlimitedHolofoil'],
+    unlimitednormal: ['unlimitedNormal'],
+    shadowless: ['shadowlessHolofoil', 'shadowlessNormal'],
+    shadowlessholo: ['shadowlessHolofoil'],
+    shadowlessnormal: ['shadowlessNormal']
+  };
+  return map[v] || [];
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -84,11 +118,19 @@ function finiteMarket(block) {
 // TCGplayer can return several price variants for one card. Never choose the
 // first object arbitrarily: that can confuse normal, reverse holo, 1st Edition,
 // unlimited and other printings by very large amounts. Only expose a market
-// price when the printing can be selected safely from the card metadata.
-function selectSafeTcgplayerPrice(card) {
+// price when the printing can be selected safely from the card metadata or an
+// explicit saved/imported variance.
+function selectSafeTcgplayerPrice(card, requestedVariant = '') {
   const prices = card?.tcgplayer?.prices || {};
   const valid = Object.entries(prices).filter(([, block]) => finiteMarket(block) != null);
   if (!valid.length) return { status: 'unavailable', variant: null, market: null, prices: {} };
+
+  const requestedKeys = variantKeys(requestedVariant).filter(key => finiteMarket(prices[key]) != null);
+  if (requestedKeys.length === 1) {
+    const key = requestedKeys[0];
+    return { status: 'exact-variant', variant: key, market: finiteMarket(prices[key]), prices: { [key]: prices[key] } };
+  }
+
   if (valid.length === 1) {
     const [variant, block] = valid[0];
     return { status: 'exact', variant, market: finiteMarket(block), prices: { [variant]: block } };
@@ -99,28 +141,21 @@ function selectSafeTcgplayerPrice(card) {
   const has = key => finiteMarket(prices[key]) != null;
   const choose = key => ({ status: 'inferred', variant: key, market: finiteMarket(prices[key]), prices: { [key]: prices[key] } });
 
-  // Standard non-holo rarities commonly have normal + reverse-holo prices.
   if ((rarity === 'common' || rarity === 'uncommon' || rarity === 'rare') && has('normal')) return choose('normal');
-
-  // Cards whose rarity/name identifies a holo-style printing should prefer the
-  // regular holofoil price over reverse-holo or specialty variants.
   if ((rarity.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(name)) && has('holofoil')) return choose('holofoil');
 
-  // If exactly one ordinary modern printing remains after excluding variants
-  // that require explicit collector input, it is safe enough to expose.
   const ordinary = valid.filter(([key]) => !/(reverse|1st|first|unlimited|shadowless)/i.test(key));
   if (ordinary.length === 1) {
     const [variant] = ordinary[0];
     return choose(variant);
   }
 
-  // Ambiguity is preferable to a confidently wrong collection value.
   return { status: 'ambiguous', variant: null, market: null, prices: {} };
 }
 
-function sanitizeLiveCard(card) {
+function sanitizeLiveCard(card, requestedVariant = '') {
   if (!card || typeof card !== 'object') return card;
-  const selected = selectSafeTcgplayerPrice(card);
+  const selected = selectSafeTcgplayerPrice(card, requestedVariant);
   const tcgplayer = card.tcgplayer ? { ...card.tcgplayer, prices: selected.prices } : null;
   return {
     ...card,
@@ -129,6 +164,7 @@ function sanitizeLiveCard(card) {
       source: 'tcgplayer',
       status: selected.status,
       variant: selected.variant,
+      requestedVariant: requestedVariant || null,
       market: selected.market
     }
   };
@@ -145,13 +181,10 @@ async function upstreamDexSearch(params) {
   const response = await fetch(apiUrl, { headers: apiHeaders() });
   if (!response.ok) throw new Error(`Upstream API returned ${response.status}`);
   const payload = await response.json();
-  return { ...payload, data: (payload.data || []).map(sanitizeLiveCard) };
+  return { ...payload, data: (payload.data || []).map(card => sanitizeLiveCard(card, params.variant || '')) };
 }
 
-// Local search stays reliable. Pricing gets several independent attempts with
-// increasing delays before we give up, so a transient API hiccup is far less
-// likely to leave a selected card without its TCGplayer market value.
-async function fetchLiveDetails(cards) {
+async function fetchLiveDetails(cards, requestedVariant = '') {
   if (!cards.length) return new Map();
   const ids = cards.map(card => String(card.id || '').trim()).filter(Boolean);
   if (!ids.length) return new Map();
@@ -171,7 +204,7 @@ async function fetchLiveDetails(cards) {
       if (!response.ok) throw new Error(`Pricing API returned ${response.status}`);
       const payload = await response.json();
       const liveMap = new Map((payload.data || []).map(card => {
-        const clean = sanitizeLiveCard(card);
+        const clean = sanitizeLiveCard(card, requestedVariant);
         return [String(clean.id), clean];
       }));
       if (liveMap.size) return liveMap;
@@ -192,6 +225,7 @@ exports.handler = async function (event) {
   const dexRaw = (params.dex || '').trim();
   const numberRaw = (params.number || '').trim().split('/')[0].trim();
   const setRaw = (params.set || '').trim();
+  const variantRaw = (params.variant || '').trim();
 
   if (!nameRaw && !dexRaw && !numberRaw) {
     return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Provide "q" (name), "dex" (Pokédex number), and/or "number" (card number).' }) };
@@ -199,7 +233,7 @@ exports.handler = async function (event) {
 
   if (dexRaw) {
     try {
-      const data = await upstreamDexSearch({ q: nameRaw, dex: dexRaw, number: numberRaw, set: setRaw });
+      const data = await upstreamDexSearch({ q: nameRaw, dex: dexRaw, number: numberRaw, set: setRaw, variant: variantRaw });
       return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }, body: JSON.stringify(data) };
     } catch (error) {
       return { statusCode: 502, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Pokédex-number search is temporarily unavailable. Name and card-number searches still work locally.' }) };
@@ -235,7 +269,7 @@ exports.handler = async function (event) {
     });
 
     const selected = matches.slice(0, 48).map(({ card }) => card);
-    const liveDetails = await fetchLiveDetails(selected);
+    const liveDetails = await fetchLiveDetails(selected, variantRaw);
 
     const data = selected.map(card => {
       const set = sets.get(String(card.setId)) || {};
@@ -259,7 +293,7 @@ exports.handler = async function (event) {
           large: live?.images?.large || card.image || ''
         },
         tcgplayer: live?.tcgplayer || null,
-        pricing: live?.pricing || { source: 'tcgplayer', status: 'unavailable', variant: null, market: null },
+        pricing: live?.pricing || { source: 'tcgplayer', status: 'unavailable', variant: null, requestedVariant: variantRaw || null, market: null },
         cardmarket: live?.cardmarket || null
       };
     });
