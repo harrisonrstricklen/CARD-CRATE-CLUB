@@ -63,21 +63,104 @@ function apiHeaders() {
   return headers;
 }
 
-async function fetchCards(ids) {
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function requestCardBatch(ids) {
+  const q = ids.map(id => `id:${id}`).join(' OR ');
+  const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&pageSize=${ids.length}`;
+  const res = await fetch(url, { headers: apiHeaders(), signal: AbortSignal.timeout(7000) });
+  if (!res.ok) throw new Error(`Pokemon TCG API returned ${res.status}`);
+  const body = await res.json();
+  return body.data || [];
+}
+
+// Pricing refreshes are intentionally partial-success. One bad API request or
+// one troublesome card must never cancel prices that were successfully found.
+// Failed cards are left untouched and will be tried again on the next schedule.
+async function fetchCardsResilient(ids, deadlineMs) {
   const out = new Map();
-  for (let i = 0; i < ids.length; i += 35) {
-    const batch = ids.slice(i, i + 35);
-    const q = batch.map(id => `id:${id}`).join(' OR ');
-    const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&pageSize=${batch.length}`;
-    const res = await fetch(url, { headers: apiHeaders(), signal: AbortSignal.timeout(12000) });
-    if (!res.ok) throw new Error(`Pokemon TCG API returned ${res.status}`);
-    const body = await res.json();
-    for (const card of body.data || []) out.set(String(card.id), card);
+  const failed = new Set();
+  const queue = [];
+  for (let i = 0; i < ids.length; i += 30) queue.push(ids.slice(i, i + 30));
+
+  while (queue.length && Date.now() < deadlineMs) {
+    const batch = queue.shift();
+    let cards = null;
+    let lastError = null;
+
+    for (const delay of [0, 350, 900]) {
+      if (Date.now() >= deadlineMs) break;
+      if (delay) await sleep(delay);
+      try {
+        cards = await requestCardBatch(batch);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.warn(`Master price batch failed (${batch.length} cards), retrying:`, error.message || error);
+      }
+    }
+
+    if (cards) {
+      const returned = new Set();
+      for (const card of cards) {
+        const id = String(card.id || '');
+        if (!id) continue;
+        returned.add(id);
+        out.set(id, card);
+      }
+      // An upstream 200 response can still omit individual IDs. Retry only the
+      // missing IDs independently instead of discarding the successful cards.
+      const missing = batch.filter(id => !returned.has(String(id)));
+      if (missing.length) {
+        if (missing.length === 1) failed.add(missing[0]);
+        else {
+          const half = Math.ceil(missing.length / 2);
+          queue.push(missing.slice(0, half), missing.slice(half));
+        }
+      }
+      continue;
+    }
+
+    if (batch.length > 1 && Date.now() < deadlineMs) {
+      const half = Math.ceil(batch.length / 2);
+      queue.push(batch.slice(0, half), batch.slice(half));
+    } else {
+      for (const id of batch) failed.add(id);
+      console.warn('Master price card deferred until next run:', batch.join(','), lastError?.message || lastError || 'unknown error');
+    }
   }
-  return out;
+
+  // Anything not reached before the function deadline is deferred, not failed.
+  for (const batch of queue) for (const id of batch) failed.add(id);
+  return { cards: out, failedIds: [...failed] };
+}
+
+async function commitWrites(db, writes, merge = true) {
+  let committed = 0;
+  const failedBatches = [];
+  for (let i = 0; i < writes.length; i += 350) {
+    const chunk = writes.slice(i, i + 350);
+    try {
+      const batch = db.batch();
+      for (const write of chunk) batch.set(write.ref, write.data, merge ? { merge: true } : undefined);
+      await batch.commit();
+      committed += chunk.length;
+    } catch (error) {
+      // Do not undo earlier successful chunks. The next scheduled run will retry
+      // these documents from the master source.
+      failedBatches.push({ start: i, count: chunk.length, error: error.message || String(error) });
+      console.error('Master price Firestore batch deferred:', error);
+    }
+  }
+  return { committed, failedBatches };
 }
 
 exports.handler = async function() {
+  const startedAt = Date.now();
+  // Leave several seconds for Firestore writes before Netlify's scheduled
+  // function execution limit is reached.
+  const fetchDeadline = startedAt + 22000;
+
   try {
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
@@ -97,14 +180,14 @@ exports.handler = async function() {
     const uniqueIds = [...new Set([...wanted.values()].map(x => x.apiId))];
     if (!uniqueIds.length) return json(200, { updatedPrices: 0, updatedCollectionRows: 0, uniqueCards: 0, message: 'No English collection cards need pricing yet.' });
 
-    const live = await fetchCards(uniqueIds);
+    const { cards: live, failedIds } = await fetchCardsResilient(uniqueIds, fetchDeadline);
     const priceWrites = [];
     const collectionWrites = [];
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     for (const [key, item] of wanted) {
       const card = live.get(item.apiId);
-      if (!card) continue;
+      if (!card) continue; // Keep the previous master price; retry next run.
       const picked = safePrice(card, item.priceVariant || item.variance || '');
       const master = {
         key,
@@ -142,26 +225,24 @@ exports.handler = async function() {
       }
     }
 
-    for (let i = 0; i < priceWrites.length; i += 400) {
-      const batch = db.batch();
-      for (const write of priceWrites.slice(i, i + 400)) batch.set(write.ref, write.data, { merge: true });
-      await batch.commit();
-    }
-
-    for (let i = 0; i < collectionWrites.length; i += 400) {
-      const batch = db.batch();
-      for (const write of collectionWrites.slice(i, i + 400)) batch.set(write.ref, write.data, { merge: true });
-      await batch.commit();
-    }
+    const priceCommit = await commitWrites(db, priceWrites);
+    const collectionCommit = await commitWrites(db, collectionWrites);
 
     return json(200, {
-      updatedPrices: priceWrites.length,
-      updatedCollectionRows: collectionWrites.length,
-      uniqueCards: uniqueIds.length,
-      ownedRowsScanned: collectionSnap.size
+      updatedPrices: priceCommit.committed,
+      updatedCollectionRows: collectionCommit.committed,
+      uniqueCardsRequested: uniqueIds.length,
+      uniqueCardsResolved: live.size,
+      deferredCards: failedIds.length,
+      deferredCardIds: failedIds.slice(0, 25),
+      failedPriceWriteBatches: priceCommit.failedBatches.length,
+      failedCollectionWriteBatches: collectionCommit.failedBatches.length,
+      ownedRowsScanned: collectionSnap.size,
+      partialSuccess: failedIds.length > 0 || priceCommit.failedBatches.length > 0 || collectionCommit.failedBatches.length > 0,
+      durationMs: Date.now() - startedAt
     });
   } catch (error) {
-    console.error('Scheduled master price refresh failed:', error);
+    console.error('Scheduled master price refresh failed before partial processing could complete:', error);
     return json(500, { error: 'Master price refresh failed', detail: error.message });
   }
 };
