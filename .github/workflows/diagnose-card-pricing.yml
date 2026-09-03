@@ -1,0 +1,33 @@
+name: Diagnose card pricing and links
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/diagnose-card-pricing.yml'
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect local card identity and TCGCSV
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const idx=JSON.parse(fs.readFileSync('CARD CRATE CLUB/card-data/all-cards-index.json','utf8'));
+          const cards=Array.isArray(idx)?idx:(idx.cards||[]);
+          const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+          const nn=v=>{const r=String(v||'').trim().split('/')[0].trim();return /^\d+$/.test(r)?String(Number(r)):r.toLowerCase()};
+          const targets=['Mega Meganium ex',"Acerola's Mischief",'Pikachu'];
+          for(const t of targets){
+            const found=cards.filter(c=>norm(c.setName)==='ascended heroes' && norm(c.name)===norm(t));
+            console.log('LOCAL',t,JSON.stringify(found.map(c=>({id:c.id,name:c.name,number:c.number,setId:c.setId,rarity:c.rarity})),null,2));
+          }
+          const base='https://tcgcsv.com/tcgplayer/3/24541';
+          const [pp,pr]=await Promise.all([fetch(base+'/products').then(r=>r.json()),fetch(base+'/prices').then(r=>r.json())]);
+          const products=pp.results||[],prices=pr.results||[];
+          function pnum(p){for(const x of p.extendedData||[]){const k=norm(x.name||x.displayName);if(k==='number'||k==='card number')return nn(x.value)}return nn(p.number||p.cardNumber)}
+          for(const num of ['10','110','180','55']){
+            const matches=products.filter(p=>pnum(p)===num);
+            console.log('TCGCSV NUMBER',num,JSON.stringify(matches.map(p=>({productId:p.productId,name:p.name,cleanName:p.cleanName,url:p.url,number:pnum(p),prices:prices.filter(x=>Number(x.productId)===Number(p.productId)).map(x=>({variant:x.subTypeName,market:x.marketPrice}))})).slice(0,20),null,2));
+          }
+          NODE
