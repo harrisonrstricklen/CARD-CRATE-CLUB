@@ -1,0 +1,63 @@
+name: Test Ascended master pricing
+on:
+  push:
+    paths:
+      - '.github/workflows/test-ascended-master.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diagnose TCGCSV matching
+        run: |
+          python - <<'PY'
+          import json, re, time, urllib.request
+          from pathlib import Path
+          def norm(v):
+              import unicodedata
+              s=unicodedata.normalize('NFKD',str(v or ''))
+              s=''.join(ch for ch in s if not unicodedata.combining(ch)).lower().replace('’',"'").replace('‘',"'")
+              s=re.sub(r"[^a-z0-9' -]+",' ',s); return re.sub(r'\s+',' ',s).strip()
+          def num(v):
+              s=str(v or '').strip().lower().split('/')[0].strip(); return str(int(s)) if s.isdigit() else s
+          def pnum(p):
+              if p.get('number') or p.get('cardNumber'): return num(p.get('number') or p.get('cardNumber'))
+              for row in p.get('extendedData') or []:
+                  if norm(row.get('name') or row.get('displayName')) in ('number','card number'): return num(row.get('value'))
+              return ''
+          def best(card, products):
+              wn, wnum=norm(card.get('name')),num(card.get('number')); bestp=None; bs=-10**9
+              for p in products:
+                  n=norm(p.get('name') or p.get('cleanName')); pn=pnum(p); score=0
+                  if n==wn: score+=140
+                  elif wn in n or n in wn: score+=55
+                  else: continue
+                  if wnum and pn==wnum: score+=180
+                  elif wnum and pn: score-=160
+                  if score>bs: bs,bestp=score,p
+              return bestp if bs >= (260 if wnum else 130) else None
+          def get(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'CardCrateClub diagnostic/1.0'})
+              with urllib.request.urlopen(req,timeout=20) as r: return json.load(r)
+          raw=json.loads(Path('CARD CRATE CLUB/card-data/all-cards-index.json').read_text())
+          cards=raw if isinstance(raw,list) else raw.get('cards',[])
+          setcards=[c for c in cards if norm(c.get('setName'))==norm('Ascended Heroes')]
+          base='https://tcgcsv.com/tcgplayer/3/24541'
+          t=time.time(); products=get(base+'/products').get('results',[]); prices=get(base+'/prices').get('results',[])
+          by={}
+          for r in prices: by.setdefault(int(r.get('productId',0)),[]).append(r)
+          matched=0; priced=0
+          for c in setcards:
+              p=best(c,products)
+              if p:
+                  matched+=1
+                  rows=[r for r in by.get(int(p.get('productId',0)),[]) if float(r.get('marketPrice') or r.get('market') or 0)>0]
+                  if rows: priced+=1
+              if norm(c.get('name')) in [norm('Mega Meganium ex'), norm("Acerola's Mischief")] and num(c.get('number')) in ('110','180'):
+                  print('CARD',c.get('id'),c.get('name'),c.get('number'),'PRODUCT',p and p.get('productId'),p and p.get('name'),'PNUM',p and pnum(p))
+                  if p: print('ROWS',by.get(int(p.get('productId',0)),[]))
+          print('SUMMARY local',len(setcards),'products',len(products),'priceRows',len(prices),'matched',matched,'withAnyPrice',priced,'seconds',round(time.time()-t,3))
+          assert len(setcards)>0
+          assert matched>0
+          assert priced>0
+          PY
