@@ -9,6 +9,21 @@ function normalizeLanguage(value) {
   return v === 'ja' || v === 'jp' || v.includes('japanese') ? 'ja' : 'en';
 }
 
+function norm(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function normNumber(value) {
+  const raw = String(value || '').trim().toLowerCase().split('/')[0].trim();
+  return /^\d+$/.test(raw) ? String(Number(raw)) : raw;
+}
+
 function baseCardId(item) {
   return String(item.apiId || item.sourceId || '').trim();
 }
@@ -19,6 +34,16 @@ function priceKey(item, forceVariant = null) {
   if (!cardId) return '';
   const variant = forceVariant || normalizeVariant(item.priceVariant || item.variance || '') || 'auto';
   return `${language}__${cardId}__${variant}`.replace(/\//g, '_');
+}
+
+function identityKey(item, forceVariant = 'auto') {
+  const language = normalizeLanguage(item.language);
+  const set = norm(item.set || item.setName || '');
+  const name = norm(item.name || '');
+  const number = normNumber(item.number || '');
+  if (!set || !name || !number) return '';
+  const variant = forceVariant || normalizeVariant(item.priceVariant || item.variance || '') || 'auto';
+  return `${language}__lookup__${set}__${name}__${number}__${variant}`;
 }
 
 exports.handler = async function(event) {
@@ -35,7 +60,9 @@ exports.handler = async function(event) {
 
     const requestedKeys = items.map(item => priceKey(item));
     const autoKeys = items.map(item => priceKey(item, 'auto'));
-    const keys = [...new Set([...requestedKeys, ...autoKeys].filter(Boolean))];
+    const identityRequestedKeys = items.map(item => identityKey(item, normalizeVariant(item.priceVariant || item.variance || '') || 'auto'));
+    const identityAutoKeys = items.map(item => identityKey(item, 'auto'));
+    const keys = [...new Set([...requestedKeys, ...autoKeys, ...identityRequestedKeys, ...identityAutoKeys].filter(Boolean))];
     const refs = keys.map(key => db.collection('cardPrices').doc(key));
     const snaps = refs.length ? await db.getAll(...refs) : [];
     const prices = {};
@@ -48,12 +75,16 @@ exports.handler = async function(event) {
     });
 
     const resolved = items.map((item, index) => {
-      const requestedKey = requestedKeys[index];
-      const autoKey = autoKeys[index];
-      const hitKey = (requestedKey && prices[requestedKey]) ? requestedKey : ((autoKey && prices[autoKey]) ? autoKey : null);
+      const candidates = [
+        requestedKeys[index],
+        autoKeys[index],
+        identityRequestedKeys[index],
+        identityAutoKeys[index]
+      ].filter(Boolean);
+      const hitKey = candidates.find(key => prices[key]) || null;
       return {
         index,
-        requestedKey,
+        requestedKey: requestedKeys[index] || null,
         hitKey,
         price: hitKey ? prices[hitKey] : null
       };
@@ -71,3 +102,4 @@ exports.handler = async function(event) {
 };
 
 exports.priceKey = priceKey;
+exports.identityKey = identityKey;
