@@ -1,0 +1,70 @@
+name: Verify site walkthrough
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-site-walkthrough.yml'
+      - 'CARD CRATE CLUB/index.html'
+      - 'CARD CRATE CLUB/main.js'
+      - 'CARD CRATE CLUB/signup.html'
+      - 'CARD CRATE CLUB/waitlist.html'
+      - 'CARD CRATE CLUB/founding-members.html'
+      - 'CARD CRATE CLUB/subscriptions.html'
+permissions:
+  contents: read
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Poll Netlify and verify public funnel
+        run: |
+          python - <<'PY'
+          import time, urllib.request
+          from urllib.error import HTTPError, URLError
+          base='https://cardcrateclub.netlify.app/'
+          pages=['','subscriptions.html','founding-members.html','waitlist.html','signup.html?intent=waitlist','login.html','how-it-works.html','faq.html','contact.html','collection.html','dashboard.html']
+          markers={
+            '': ['Create Profile & Join Founding 100','signup.html?intent=founding'],
+            'signup.html?intent=waitlist': ['Create your collector profile','join-waitlist','waitlistIntent'],
+            'waitlist.html': ['Create Profile & Join Waitlist','signup.html?intent=waitlist'],
+            'founding-members.html': ['Create Profile & Join Founding 100','signup.html?intent=founding'],
+            'subscriptions.html': ['signup.html?intent=subscribe&plan=pack-club','signup.html?intent=subscribe&plan=trainer-club','signup.html?intent=subscribe&plan=collector-club','signup.html?intent=subscribe&plan=box-club'],
+            'main.js': ['$29.99','$54.99','$74.99','$149','Create Profile & Join Waitlist']
+          }
+          def get(path):
+            req=urllib.request.Request(base+path,headers={'Cache-Control':'no-cache','Pragma':'no-cache','User-Agent':'CCC-production-audit'})
+            with urllib.request.urlopen(req,timeout=20) as r:
+              return r.status,r.read().decode('utf-8','replace')
+          last=[]
+          for attempt in range(42):
+            failures=[]
+            try:
+              for path in pages:
+                status,body=get(path)
+                if status!=200: failures.append(f'{path or "home"}: HTTP {status}')
+              for path,wanted in markers.items():
+                status,body=get(path)
+                for marker in wanted:
+                  if marker not in body: failures.append(f'{path or "home"}: missing {marker}')
+              _,main=get('main.js')
+              for stale in ('$24.99','$44.99','$64.99','$119.99'):
+                if stale in main: failures.append(f'main.js still contains stale price {stale}')
+              # Exercise waitlist function validation without creating a production record.
+              req=urllib.request.Request(base+'.netlify/functions/join-waitlist',data=b'{}',headers={'Content-Type':'application/json','User-Agent':'CCC-production-audit'},method='POST')
+              try:
+                urllib.request.urlopen(req,timeout=20)
+                failures.append('join-waitlist accepted an invalid empty submission')
+              except HTTPError as e:
+                if e.code!=400: failures.append(f'join-waitlist invalid submission returned {e.code}, expected 400')
+            except Exception as e:
+              failures.append(str(e))
+            last=failures
+            if not failures:
+              print('LIVE_SITE_WALKTHROUGH_PASS')
+              raise SystemExit(0)
+            print(f'Attempt {attempt+1}: production not ready ({len(failures)} issue(s))')
+            for f in failures[:12]: print(' -',f)
+            time.sleep(10)
+          print('Final failures:')
+          for f in last: print(' -',f)
+          raise SystemExit(1)
+          PY
