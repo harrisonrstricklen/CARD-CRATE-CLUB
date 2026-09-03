@@ -1,0 +1,52 @@
+name: Test live pricing relay
+on:
+  push:
+    paths:
+      - '.github/workflows/test-live-pricing-relay.yml'
+permissions:
+  contents: read
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Netlify and verify Mega Meganium
+        run: |
+          python - <<'PY'
+          import json, time, urllib.parse, urllib.request
+          base='https://cardcrateclub.netlify.app/.netlify/functions/search-cards'
+          tests=[
+            dict(q='Mega Meganium ex',set='Ascended Heroes',number='10',variant='Holofoil',id='me2pt5-10'),
+            dict(q="Acerola's Mischief",set='Ascended Heroes',number='180',id='me2pt5-180'),
+          ]
+          last=None
+          for attempt in range(30):
+            try:
+              results=[]
+              ok=True
+              for t in tests:
+                qs=urllib.parse.urlencode({k:v for k,v in t.items() if k!='id'})
+                with urllib.request.urlopen(base+'?'+qs,timeout=20) as r:
+                  payload=json.load(r)
+                card=(payload.get('data') or [None])[0]
+                record={'source':payload.get('source'),'version':payload.get('version'),'card':card}
+                results.append(record)
+                if payload.get('version')!='pricing-relay-v5': ok=False
+                if not card or card.get('id')!=t['id']: ok=False
+                market=((card or {}).get('pricing') or {}).get('market')
+                url=((card or {}).get('tcgplayer') or {}).get('url','')
+                if not isinstance(market,(int,float)) or market<=0: ok=False
+                if 'tcgplayer.com/product/' not in url: ok=False
+              last=results
+              if ok:
+                print(json.dumps(results,indent=2))
+                print('LIVE_PRICING_RELAY_PASS')
+                raise SystemExit(0)
+              print(f'Attempt {attempt+1}: deploy not ready or validation failed')
+              print(json.dumps(results,indent=2)[:4000])
+            except Exception as e:
+              last=str(e)
+              print(f'Attempt {attempt+1}: {e}')
+            time.sleep(10)
+          print('LAST_RESULT',json.dumps(last,indent=2) if not isinstance(last,str) else last)
+          raise SystemExit('Live pricing relay did not pass within polling window')
+          PY
