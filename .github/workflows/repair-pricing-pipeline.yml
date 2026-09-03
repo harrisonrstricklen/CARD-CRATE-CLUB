@@ -18,19 +18,21 @@ jobs:
       - name: Test resolver against real Ascended Heroes data
         run: |
           node <<'NODE'
-          const fs=require('fs');
-          const { resolveTcgcsvCards }=require('./CARD CRATE CLUB/netlify/functions/_tcgcsv');
-          const set=JSON.parse(fs.readFileSync('CARD CRATE CLUB/card-data/all-sets/me2pt5.json','utf8'));
-          const names=['Mega Meganium ex',"Acerola's Mischief"];
-          const cards=names.map(name=>set.cards.find(c=>c.name===name)).filter(Boolean).map(c=>({...c,setName:set.name,variance:c.name==='Mega Meganium ex'?'Holofoil':''}));
-          const resolved=await resolveTcgcsvCards(cards);
-          for(const card of cards){
-            const hit=resolved.get(String(card.id));
-            console.log(JSON.stringify({card:{id:card.id,name:card.name,number:card.number},resolved:hit},null,2));
-            if(!hit) throw new Error(`No TCGCSV match for ${card.name} #${card.number}`);
-            if(!hit.tcgplayerUrl || !/tcgplayer\.com\/product\//.test(hit.tcgplayerUrl)) throw new Error(`Missing TCGplayer URL for ${card.name}`);
-            if(!(Number(hit.marketPrice)>0)) throw new Error(`Missing market price for ${card.name}`);
-          }
+          (async()=>{
+            const fs=require('fs');
+            const { resolveTcgcsvCards }=require('./CARD CRATE CLUB/netlify/functions/_tcgcsv');
+            const set=JSON.parse(fs.readFileSync('CARD CRATE CLUB/card-data/all-sets/me2pt5.json','utf8'));
+            const names=['Mega Meganium ex',"Acerola's Mischief"];
+            const cards=names.map(name=>set.cards.find(c=>c.name===name)).filter(Boolean).map(c=>({...c,setName:set.name,variance:c.name==='Mega Meganium ex'?'Holofoil':''}));
+            const resolved=await resolveTcgcsvCards(cards);
+            for(const card of cards){
+              const hit=resolved.get(String(card.id));
+              console.log(JSON.stringify({card:{id:card.id,name:card.name,number:card.number},resolved:hit},null,2));
+              if(!hit) throw new Error(`No TCGCSV match for ${card.name} #${card.number}`);
+              if(!hit.tcgplayerUrl || !/tcgplayer\.com\/product\//.test(hit.tcgplayerUrl)) throw new Error(`Missing TCGplayer URL for ${card.name}`);
+              if(!(Number(hit.marketPrice)>0)) throw new Error(`Missing market price for ${card.name}`);
+            }
+          })().catch(err=>{console.error(err);process.exit(1)});
           NODE
       - name: Syntax check
         run: |
