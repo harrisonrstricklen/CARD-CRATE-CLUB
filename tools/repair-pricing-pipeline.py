@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Tested repair entrypoint for the pricing and TCGplayer-link pipeline.
 search = Path('CARD CRATE CLUB/netlify/functions/search-cards.js')
 s = search.read_text()
 
