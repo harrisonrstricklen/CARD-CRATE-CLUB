@@ -1,3 +1,4 @@
+// Shared TCGCSV resolver used by exact card lookup and master pricing.
 const TCGCSV_BASE = 'https://tcgcsv.com/tcgplayer/3';
 
 function normalizeText(value) {
@@ -66,7 +67,6 @@ function resolveProduct(item, products) {
   const wantedNumber = normalizeNumber(item.number);
   const wantedRarity = normalizeText(item.rarity);
   if (!wantedName || !wantedNumber) return null;
-
   let best = null;
   let bestScore = -1;
   for (const product of products || []) {
@@ -180,13 +180,4 @@ async function resolveTcgcsvCards(cards, requestedVariant = '') {
   return result;
 }
 
-module.exports = {
-  normalizeText,
-  normalizeNumber,
-  normalizeVariant,
-  productNumber,
-  resolveProduct,
-  resolveGroup,
-  choosePrice,
-  resolveTcgcsvCards
-};
+module.exports = { normalizeText, normalizeNumber, normalizeVariant, productNumber, resolveProduct, resolveGroup, choosePrice, resolveTcgcsvCards };
