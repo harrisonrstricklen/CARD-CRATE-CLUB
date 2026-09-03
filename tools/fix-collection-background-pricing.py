@@ -1,5 +1,7 @@
 from pathlib import Path
 
+# Repair the collection page so unresolved cards are hydrated automatically in
+# rotating background batches instead of depending on users opening each card.
 p = Path('CARD CRATE CLUB/collection.html')
 text = p.read_text(encoding='utf-8')
 
