@@ -1,0 +1,41 @@
+name: Fix collection background pricing
+on:
+  push:
+    paths:
+      - 'tools/fix-collection-background-pricing.py'
+permissions:
+  contents: write
+jobs:
+  repair-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply background pricing repair
+        run: python tools/fix-collection-background-pricing.py
+      - name: Verify collection pricing flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          t=Path('CARD CRATE CLUB/collection.html').read_text(encoding='utf-8')
+          checks={
+            '24-card background batch':'RECHECK_BATCH_SIZE=24' in t,
+            '15-second interval':'RECHECK_INTERVAL_MS=15000' in t,
+            'startup calls exact recheck':'await recheckSavedCards(false)' in t,
+            'interval calls exact recheck':'loadMasterPrices();recheckSavedCards(false)' in t,
+            'no active startup enrich':'await enrichMissingLinks()' not in t,
+            'no active interval enrich':'loadMasterPrices();enrichMissingLinks()' not in t,
+          }
+          for name,ok in checks.items():
+            print(('PASS' if ok else 'FAIL'), name)
+            if not ok: raise SystemExit(1)
+          print('COLLECTION_BACKGROUND_PRICING_AUDIT_PASS')
+          PY
+      - name: Commit tested repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB/collection.html'
+          git commit -m 'Make collection prices refresh automatically' || exit 0
+          git push
