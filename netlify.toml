@@ -1,10 +1,22 @@
+# Production Netlify configuration. Keep function paths and bundled card data here
+# because this is the repository-level config Netlify reads for cardcrateclub.netlify.app.
 [build]
   publish = "CARD CRATE CLUB"
   functions = "CARD CRATE CLUB/netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["CARD CRATE CLUB/card-data/all-cards-index.json"]
+  included_files = [
+    "CARD CRATE CLUB/card-data/all-cards-index.json",
+    "CARD CRATE CLUB/card-data/all-cards-index-ja.json",
+    "CARD CRATE CLUB/card-data/all-sets/index.json"
+  ]
+
+[functions."refresh-card-prices"]
+  schedule = "*/5 * * * *"
+
+[functions."seed-ascended-heroes-master"]
+  schedule = "*/5 * * * *"
 
 [[headers]]
   for = "/*"
