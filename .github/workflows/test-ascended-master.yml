@@ -53,7 +53,7 @@ jobs:
                   matched+=1
                   rows=[r for r in by.get(int(p.get('productId',0)),[]) if float(r.get('marketPrice') or r.get('market') or 0)>0]
                   if rows: priced+=1
-              if norm(c.get('name')) in [norm('Mega Meganium ex'), norm("Acerola's Mischief")] and num(c.get('number')) in ('110','180'):
+              if (norm(c.get('name'))==norm('Mega Meganium ex') and num(c.get('number'))=='10') or (norm(c.get('name'))==norm("Acerola's Mischief") and num(c.get('number'))=='180'):
                   print('CARD',c.get('id'),c.get('name'),c.get('number'),'PRODUCT',p and p.get('productId'),p and p.get('name'),'PNUM',p and pnum(p))
                   if p: print('ROWS',by.get(int(p.get('productId',0)),[]))
           print('SUMMARY local',len(setcards),'products',len(products),'priceRows',len(prices),'matched',matched,'withAnyPrice',priced,'seconds',round(time.time()-t,3))
