@@ -5,6 +5,7 @@ const { getFirebaseAdmin, json } = require('./_shared');
 const SET_NAME = 'Ascended Heroes';
 const TCGPLAYER_GROUP_ID = 24541;
 const BUILD_ID = 'ascended-heroes-en';
+const BUILD_VERSION = 2;
 
 function norm(value) {
   return String(value || '')
@@ -24,6 +25,13 @@ function normNumber(value) {
 
 function normVariant(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'auto';
+}
+
+function identityKey(card, variant = 'auto') {
+  const set = norm(card.setName || card.set?.name || SET_NAME).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const name = norm(card.name).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const number = normNumber(card.number);
+  return `en__lookup__${set}__${name}__${number}__${variant}`;
 }
 
 function market(row) {
@@ -110,11 +118,11 @@ exports.handler = async function() {
     const db = admin.firestore();
     const buildRef = db.collection('masterSetBuilds').doc(BUILD_ID);
     const existing = await buildRef.get();
-    if (existing.exists && existing.data()?.status === 'complete') {
+    if (existing.exists && existing.data()?.status === 'complete' && existing.data()?.buildVersion === BUILD_VERSION) {
       return json(200, { skipped: true, message: `${SET_NAME} master catalog is already complete.`, ...existing.data() });
     }
 
-    await buildRef.set({ status: 'running', setName: SET_NAME, groupId: TCGPLAYER_GROUP_ID, startedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    await buildRef.set({ status: 'running', buildVersion: BUILD_VERSION, setName: SET_NAME, groupId: TCGPLAYER_GROUP_ID, startedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
 
     const indexPath = path.join(__dirname, '../../card-data/all-cards-index.json');
     const raw = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
@@ -171,13 +179,19 @@ exports.handler = async function() {
         if (m == null) continue;
         const variant = normVariant(row.subTypeName);
         const key = `en__${card.id}__${variant}`.replace(/\//g, '_');
-        writes.push({ ref: db.collection('cardPrices').doc(key), data: { ...baseData, key, marketPrice: m, pricingStatus: 'exact-variant', priceVariant: row.subTypeName || variant } });
+        const data = { ...baseData, key, marketPrice: m, pricingStatus: 'exact-variant', priceVariant: row.subTypeName || variant };
+        writes.push({ ref: db.collection('cardPrices').doc(key), data });
+        const aliasKey = identityKey(card, variant);
+        writes.push({ ref: db.collection('cardPrices').doc(aliasKey), data: { ...data, key: aliasKey, aliasFor: key } });
         variantPriceDocs++;
       }
 
       if (defaultRow && market(defaultRow) != null) {
         const key = `en__${card.id}__auto`.replace(/\//g, '_');
-        writes.push({ ref: db.collection('cardPrices').doc(key), data: { ...baseData, key, marketPrice: market(defaultRow), pricingStatus: 'master-default', priceVariant: defaultRow.subTypeName || null } });
+        const data = { ...baseData, key, marketPrice: market(defaultRow), pricingStatus: 'master-default', priceVariant: defaultRow.subTypeName || null };
+        writes.push({ ref: db.collection('cardPrices').doc(key), data });
+        const aliasKey = identityKey(card, 'auto');
+        writes.push({ ref: db.collection('cardPrices').doc(aliasKey), data: { ...data, key: aliasKey, aliasFor: key } });
         cardsWithDefaultPrice++;
       }
       report.push({ cardId: card.id, name: card.name, number: card.number, status: 'matched', productId, variants: rows.filter(r => market(r) != null).length, defaultPrice: defaultRow ? market(defaultRow) : null, defaultVariant: defaultRow?.subTypeName || null });
@@ -188,6 +202,7 @@ exports.handler = async function() {
     const unmatched = report.filter(r => r.status === 'unmatched');
     const summary = {
       status: 'complete',
+      buildVersion: BUILD_VERSION,
       setName: SET_NAME,
       groupId: TCGPLAYER_GROUP_ID,
       localCards: setCards.length,
