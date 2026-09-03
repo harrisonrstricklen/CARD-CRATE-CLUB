@@ -1,0 +1,91 @@
+name: Fix master links and prices
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-master-links-and-prices.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch master aliases and collection link enrichment
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          seed = Path('CARD CRATE CLUB/netlify/functions/seed-ascended-heroes-master.js')
+          s = seed.read_text()
+
+          s = s.replace("const BUILD_ID = 'ascended-heroes-en';", "const BUILD_ID = 'ascended-heroes-en';\nconst BUILD_VERSION = 2;")
+
+          old = "if (existing.exists && existing.data()?.status === 'complete') {\n      return json(200, { skipped: true, message: `${SET_NAME} master catalog is already complete.`, ...existing.data() });\n    }"
+          new = "if (existing.exists && existing.data()?.status === 'complete' && existing.data()?.buildVersion === BUILD_VERSION) {\n      return json(200, { skipped: true, message: `${SET_NAME} master catalog is already complete.`, ...existing.data() });\n    }"
+          if old not in s: raise SystemExit('seed skip marker missing')
+          s = s.replace(old, new, 1)
+
+          old = "await buildRef.set({ status: 'running', setName: SET_NAME, groupId: TCGPLAYER_GROUP_ID, startedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });"
+          new = "await buildRef.set({ status: 'running', buildVersion: BUILD_VERSION, setName: SET_NAME, groupId: TCGPLAYER_GROUP_ID, startedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });"
+          if old not in s: raise SystemExit('seed running marker missing')
+          s = s.replace(old, new, 1)
+
+          marker = "function normVariant(value) {\n  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'auto';\n}\n"
+          insert = marker + "\nfunction identityKey(card, variant = 'auto') {\n  const set = norm(card.setName || card.set?.name || SET_NAME).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\n  const name = norm(card.name).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\n  const number = normNumber(card.number);\n  return `en__lookup__${set}__${name}__${number}__${variant}`;\n}\n"
+          if marker not in s: raise SystemExit('seed variant marker missing')
+          s = s.replace(marker, insert, 1)
+
+          old = "writes.push({ ref: db.collection('cardPrices').doc(key), data: { ...baseData, key, marketPrice: m, pricingStatus: 'exact-variant', priceVariant: row.subTypeName || variant } });\n        variantPriceDocs++;"
+          new = "const data = { ...baseData, key, marketPrice: m, pricingStatus: 'exact-variant', priceVariant: row.subTypeName || variant };\n        writes.push({ ref: db.collection('cardPrices').doc(key), data });\n        const aliasKey = identityKey(card, variant);\n        writes.push({ ref: db.collection('cardPrices').doc(aliasKey), data: { ...data, key: aliasKey, aliasFor: key } });\n        variantPriceDocs++;"
+          if old not in s: raise SystemExit('seed variant write marker missing')
+          s = s.replace(old, new, 1)
+
+          old = "writes.push({ ref: db.collection('cardPrices').doc(key), data: { ...baseData, key, marketPrice: market(defaultRow), pricingStatus: 'master-default', priceVariant: defaultRow.subTypeName || null } });\n        cardsWithDefaultPrice++;"
+          new = "const data = { ...baseData, key, marketPrice: market(defaultRow), pricingStatus: 'master-default', priceVariant: defaultRow.subTypeName || null };\n        writes.push({ ref: db.collection('cardPrices').doc(key), data });\n        const aliasKey = identityKey(card, 'auto');\n        writes.push({ ref: db.collection('cardPrices').doc(aliasKey), data: { ...data, key: aliasKey, aliasFor: key } });\n        cardsWithDefaultPrice++;"
+          if old not in s: raise SystemExit('seed default write marker missing')
+          s = s.replace(old, new, 1)
+
+          old = "status: 'complete',\n      setName: SET_NAME,"
+          new = "status: 'complete',\n      buildVersion: BUILD_VERSION,\n      setName: SET_NAME,"
+          if old not in s: raise SystemExit('seed summary marker missing')
+          s = s.replace(old, new, 1)
+          seed.write_text(s)
+
+          coll = Path('CARD CRATE CLUB/collection.html')
+          c = coll.read_text()
+
+          old = "const items=allCards.map(c=>({apiId:c.apiId||null,sourceId:c.sourceId||null,language:c.language||'en',priceVariant:c.priceVariant||'',variance:c.variance||''}));"
+          new = "const items=allCards.map(c=>({apiId:c.apiId||null,sourceId:c.sourceId||null,name:c.name||'',set:c.set||'',number:c.number||'',language:c.language||'en',priceVariant:c.priceVariant||'',variance:c.variance||''}));"
+          if old not in c: raise SystemExit('collection item marker missing')
+          c = c.replace(old, new, 1)
+
+          marker = "async function loadMasterPrices(){"
+          idx = c.find(marker)
+          if idx < 0: raise SystemExit('collection master loader marker missing')
+
+          inject_point = c.find("\nonAuthStateChanged", idx)
+          if inject_point < 0: raise SystemExit('collection auth marker missing')
+          helper = "\nasync function enrichMissingLinks(){if(!currentUser||!allCards.length)return;const due=allCards.filter(c=>!c.tcgplayerUrl).slice(0,18);for(let i=0;i<due.length;i+=3){const group=due.slice(i,i+3);await Promise.allSettled(group.map(async saved=>{try{const exact=await lookupExactCard(saved);if(!exact)return;const url=exact.tcgplayer?.url||'';if(!url)return;saved.tcgplayerUrl=url;if(exact.id&&!saved.apiId)saved.apiId=exact.id;await updateDoc(doc(db,'users',currentUser.uid,'collection',saved.id),{tcgplayerUrl:url,apiId:exact.id||saved.apiId||null,matchStatus:'verified',matchCheckedAt:serverTimestamp()})}catch(e){console.warn('TCG link enrichment failed:',saved.name,e)}}));if(i+3<due.length)await sleep(300)}renderCards()}\n"
+          c = c[:inject_point] + helper + c[inject_point:]
+
+          old = "recheckTimer=setTimeout(async()=>{await requestMasterRefresh();await loadMasterPrices()},1200)"
+          new = "recheckTimer=setTimeout(async()=>{await requestMasterRefresh();await loadMasterPrices();await enrichMissingLinks()},1200)"
+          if old not in c: raise SystemExit('collection startup timer marker missing')
+          c = c.replace(old, new, 1)
+
+          old = "setInterval(()=>{if(!document.hidden)loadMasterPrices()},300000)"
+          new = "setInterval(()=>{if(!document.hidden){loadMasterPrices();enrichMissingLinks()}},300000)"
+          if old not in c: raise SystemExit('collection interval marker missing')
+          c = c.replace(old, new, 1)
+
+          coll.write_text(c)
+          PY
+      - name: Commit fixes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB/netlify/functions/seed-ascended-heroes-master.js' 'CARD CRATE CLUB/collection.html'
+          git commit -m 'Fix master price aliases and TCGplayer links' || exit 0
+          git push
