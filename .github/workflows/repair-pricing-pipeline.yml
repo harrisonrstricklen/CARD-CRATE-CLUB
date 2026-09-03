@@ -1,0 +1,205 @@
+name: Repair pricing pipeline
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-pricing-pipeline.yml'
+permissions:
+  contents: write
+jobs:
+  repair-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch search and refresh functions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('CARD CRATE CLUB/netlify/functions/search-cards.js')
+          s=p.read_text()
+          old="const { getFirebaseAdmin } = require('./_shared');"
+          new="const { getFirebaseAdmin } = require('./_shared');\nconst { resolveTcgcsvCards } = require('./_tcgcsv');"
+          if old not in s: raise SystemExit('search require marker missing')
+          s=s.replace(old,new,1)
+
+          old="""    if (isRoutineExactLookup) {
+      const masters = await fetchMasterPrices(selected, variantRaw);
+      const data = selected.map(card => masterCardShape(card, sets.get(String(card.setId)) || {}, masters.get(String(card.id)), variantRaw));
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=120' },
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-price-cache' })
+      };
+    }
+"""
+          new="""    if (isRoutineExactLookup) {
+      const masters = await fetchMasterPrices(selected, variantRaw);
+      const needsFallback = selected.filter(card => {
+        const master = masters.get(String(card.id));
+        const market = Number(master?.marketPrice);
+        return !(Number.isFinite(market) && market > 0) || !master?.tcgplayerUrl;
+      });
+      let fallback = new Map();
+      if (needsFallback.length) {
+        try { fallback = await resolveTcgcsvCards(needsFallback, variantRaw); }
+        catch (error) { console.warn('TCGCSV exact fallback failed:', error.message || error); }
+      }
+      const data = selected.map(card => {
+        const id = String(card.id);
+        const set = sets.get(String(card.setId)) || {};
+        const master = masters.get(id);
+        const base = masterCardShape(card, set, master, variantRaw);
+        const resolved = fallback.get(id);
+        if (!resolved) return base;
+        const market = Number(resolved.marketPrice);
+        const validMarket = Number.isFinite(market) && market > 0 ? market : null;
+        const variant = resolved.priceVariant || master?.priceVariant || null;
+        return {
+          ...base,
+          tcgplayer: {
+            ...(base.tcgplayer || {}),
+            url: resolved.tcgplayerUrl || base.tcgplayer?.url || '',
+            prices: validMarket && variant ? { [variant]: { market: validMarket } } : (base.tcgplayer?.prices || {})
+          },
+          pricing: {
+            source: validMarket ? 'tcgcsv-tcgplayer-fallback' : (base.pricing?.source || 'master-cache'),
+            status: validMarket ? resolved.pricingStatus : (base.pricing?.status || resolved.pricingStatus || 'unavailable'),
+            variant,
+            requestedVariant: variantRaw || null,
+            market: validMarket ?? base.pricing?.market ?? null
+          }
+        };
+      });
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' },
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-with-tcgcsv-fallback' })
+      };
+    }
+"""
+          if old not in s: raise SystemExit('search exact branch marker missing')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('CARD CRATE CLUB/netlify/functions/refresh-card-prices.js')
+          s=p.read_text()
+
+          old="""  const wantedName = normalizeText(item.name);
+  const wantedNumber = normalizeNumber(item.number);
+  let best = null;
+  let bestScore = -9999;
+
+  for (const product of products || []) {
+    const name = normalizeText(product.name || product.cleanName || '');
+    const number = productNumber(product);
+    let score = 0;
+
+    if (wantedName && name === wantedName) score += 140;
+    else if (wantedName && name.includes(wantedName)) score += 85;
+    else if (wantedName && wantedName.includes(name)) score += 55;
+
+    if (wantedNumber && number === wantedNumber) score += 180;
+    else if (wantedNumber && number) score -= 120;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = product;
+    }
+  }
+
+  const minimum = wantedNumber ? 180 : 130;
+  return bestScore >= minimum ? best : null;
+"""
+          new="""  const wantedName = normalizeText(item.name);
+  const wantedNumber = normalizeNumber(item.number);
+  let best = null;
+  let bestScore = -1;
+
+  for (const product of products || []) {
+    const number = productNumber(product);
+    if (wantedNumber && number !== wantedNumber) continue;
+    const fullName = normalizeText(product.name || product.cleanName || '');
+    const cleanName = normalizeText(product.cleanName || '');
+    let score = 0;
+    if (wantedName && (fullName === wantedName || cleanName === wantedName)) score = 500;
+    else if (wantedName && (fullName.startsWith(wantedName) || cleanName.startsWith(wantedName))) score = 320;
+    else if (wantedName && fullName.includes(wantedName)) score = 220;
+    else continue;
+    if (score > bestScore) { bestScore = score; best = product; }
+  }
+
+  return bestScore >= 320 ? best : null;
+"""
+          if old not in s: raise SystemExit('refresh resolver marker missing')
+          s=s.replace(old,new,1)
+
+          old="""            tcgplayerProductId: Number(product.productId),
+            tcgplayerUrl: entry.item.tcgplayerUrl || product.url || '',
+            source: 'tcgcsv-tcgplayer',
+"""
+          new="""            tcgplayerProductId: Number(product.productId),
+            tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,
+            source: 'tcgcsv-tcgplayer',
+"""
+          if old not in s: raise SystemExit('refresh master URL marker missing')
+          s=s.replace(old,new,1)
+
+          old="""          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
+
+          if (picked.marketPrice != null) {
+"""
+          new="""          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
+          const requestedVariant = normalizeVariant(entry.item.priceVariant || entry.item.variance || '');
+          if (picked.marketPrice != null && !requestedVariant) {
+            const autoKey = priceKey(entry.item, 'auto');
+            priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...master, key: autoKey, pricingStatus: 'master-default' } });
+          }
+
+          if (picked.marketPrice != null) {
+"""
+          if old not in s: raise SystemExit('refresh auto cache marker missing')
+          s=s.replace(old,new,1)
+
+          old="""                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || ''
+"""
+          new="""                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`
+"""
+          if old not in s: raise SystemExit('refresh collection URL marker missing')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Test resolver against real Ascended Heroes data
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const { resolveTcgcsvCards }=require('./CARD CRATE CLUB/netlify/functions/_tcgcsv');
+          const set=JSON.parse(fs.readFileSync('CARD CRATE CLUB/card-data/all-sets/me2pt5.json','utf8'));
+          const targets=['Mega Meganium ex',"Acerola's Mischief",'Pikachu'];
+          const cards=[];
+          for(const name of targets){
+            const card=set.cards.find(c=>c.name===name);
+            if(card) cards.push({...card,setName:set.name,variance:name==='Mega Meganium ex'?'Holofoil':''});
+          }
+          const resolved=await resolveTcgcsvCards(cards);
+          for(const card of cards){
+            const hit=resolved.get(String(card.id));
+            console.log(card.id,card.name,card.number,hit);
+            if(!hit) throw new Error(`No TCGCSV match for ${card.name} #${card.number}`);
+            if(!hit.tcgplayerUrl || !/tcgplayer\.com\/product\//.test(hit.tcgplayerUrl)) throw new Error(`Missing TCGplayer URL for ${card.name}`);
+            if(!(Number(hit.marketPrice)>0)) throw new Error(`Missing market price for ${card.name}`);
+          }
+          NODE
+      - name: Syntax check changed functions
+        run: |
+          node --check 'CARD CRATE CLUB/netlify/functions/search-cards.js'
+          node --check 'CARD CRATE CLUB/netlify/functions/refresh-card-prices.js'
+          node --check 'CARD CRATE CLUB/netlify/functions/_tcgcsv.js'
+      - name: Commit tested repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB/netlify/functions/search-cards.js' 'CARD CRATE CLUB/netlify/functions/refresh-card-prices.js'
+          git commit -m 'Use tested TCGCSV fallback for prices and links' || exit 0
+          git push
