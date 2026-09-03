@@ -1,26 +1,19 @@
 from pathlib import Path
 
-# Tested repair entrypoint for the pricing and TCGplayer-link pipeline.
 search = Path('CARD CRATE CLUB/netlify/functions/search-cards.js')
 s = search.read_text()
 
-old = "const { getFirebaseAdmin } = require('./_shared');"
-new = "const { getFirebaseAdmin } = require('./_shared');\nconst { resolveTcgcsvCards } = require('./_tcgcsv');"
-if "resolveTcgcsvCards" not in s:
-    if old not in s: raise SystemExit('search require marker missing')
-    s = s.replace(old, new, 1)
+old_require = "const { getFirebaseAdmin } = require('./_shared');"
+new_require = "const { getFirebaseAdmin } = require('./_shared');\nconst { resolveTcgcsvCards } = require('./_tcgcsv');"
+if "require('./_tcgcsv')" not in s:
+    if old_require not in s: raise SystemExit('search require marker missing')
+    s = s.replace(old_require, new_require, 1)
 
-old = '''    if (isRoutineExactLookup) {
-      const masters = await fetchMasterPrices(selected, variantRaw);
-      const data = selected.map(card => masterCardShape(card, sets.get(String(card.setId)) || {}, masters.get(String(card.id)), variantRaw));
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=120' },
-        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-price-cache' })
-      };
-    }
-'''
-new = '''    if (isRoutineExactLookup) {
+start = s.find("    if (isRoutineExactLookup) {")
+end_marker = "\n    const liveDetails = await fetchLiveDetails(selected, variantRaw);"
+end = s.find(end_marker, start)
+if start < 0 or end < 0: raise SystemExit('search exact branch boundaries missing')
+new_branch = '''    if (isRoutineExactLookup) {
       const masters = await fetchMasterPrices(selected, variantRaw);
       const needsFallback = selected.filter(card => {
         const master = masters.get(String(card.id));
@@ -39,41 +32,39 @@ new = '''    if (isRoutineExactLookup) {
         const base = masterCardShape(card, set, master, variantRaw);
         const resolved = fallback.get(id);
         if (!resolved) return base;
-        const market = Number(resolved.marketPrice);
-        const validMarket = Number.isFinite(market) && market > 0 ? market : null;
-        const variant = resolved.priceVariant || master?.priceVariant || null;
+        const fallbackMarket = Number(resolved.marketPrice);
+        const masterMarket = Number(master?.marketPrice);
+        const market = Number.isFinite(masterMarket) && masterMarket > 0 ? masterMarket : (Number.isFinite(fallbackMarket) && fallbackMarket > 0 ? fallbackMarket : null);
+        const variant = master?.priceVariant || resolved.priceVariant || null;
         return {
           ...base,
           tcgplayer: {
             ...(base.tcgplayer || {}),
-            url: resolved.tcgplayerUrl || base.tcgplayer?.url || '',
-            prices: validMarket && variant ? { [variant]: { market: validMarket } } : (base.tcgplayer?.prices || {})
+            url: base.tcgplayer?.url || resolved.tcgplayerUrl || '',
+            prices: market && variant ? { [variant]: { market } } : (base.tcgplayer?.prices || {})
           },
           pricing: {
-            source: validMarket ? 'tcgcsv-tcgplayer-fallback' : (base.pricing?.source || 'master-cache'),
-            status: validMarket ? resolved.pricingStatus : (base.pricing?.status || resolved.pricingStatus || 'unavailable'),
+            source: Number.isFinite(masterMarket) && masterMarket > 0 ? 'master-cache' : 'tcgcsv-tcgplayer-fallback',
+            status: master?.pricingStatus || resolved.pricingStatus || (market ? 'exact' : 'unavailable'),
             variant,
             requestedVariant: variantRaw || null,
-            market: validMarket ?? base.pricing?.market ?? null
+            market
           }
         };
       });
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' },
-        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-with-tcgcsv-fallback' })
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-with-tcgcsv-fallback', version: 'pricing-relay-v5' })
       };
     }
 '''
-if old in s:
-    s = s.replace(old, new, 1)
-elif "local-search-master-with-tcgcsv-fallback" not in s:
-    raise SystemExit('search exact branch marker missing')
+s = s[:start] + new_branch + s[end:]
 search.write_text(s)
 
 refresh = Path('CARD CRATE CLUB/netlify/functions/refresh-card-prices.js')
-s = refresh.read_text()
-old = '''  const wantedName = normalizeText(item.name);
+r = refresh.read_text()
+old_resolver = '''  const wantedName = normalizeText(item.name);
   const wantedNumber = normalizeNumber(item.number);
   let best = null;
   let bestScore = -9999;
@@ -99,7 +90,7 @@ old = '''  const wantedName = normalizeText(item.name);
   const minimum = wantedNumber ? 180 : 130;
   return bestScore >= minimum ? best : null;
 '''
-new = '''  const wantedName = normalizeText(item.name);
+new_resolver = '''  const wantedName = normalizeText(item.name);
   const wantedNumber = normalizeNumber(item.number);
   let best = null;
   let bestScore = -1;
@@ -119,25 +110,10 @@ new = '''  const wantedName = normalizeText(item.name);
 
   return bestScore >= 320 ? best : null;
 '''
-if old in s:
-    s = s.replace(old, new, 1)
-
-s = s.replace("tcgplayerUrl: entry.item.tcgplayerUrl || product.url || '',", "tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,", 1)
-s = s.replace("tcgplayerUrl: entry.item.tcgplayerUrl || product.url || ''\n", "tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`\n", 1)
-
-old = '''          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
-
-          if (picked.marketPrice != null) {
-'''
-new = '''          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
-          const requestedVariant = normalizeVariant(entry.item.priceVariant || entry.item.variance || '');
-          if (picked.marketPrice != null && !requestedVariant) {
-            const autoKey = priceKey(entry.item, 'auto');
-            priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...master, key: autoKey, pricingStatus: 'master-default' } });
-          }
-
-          if (picked.marketPrice != null) {
-'''
-if old in s:
-    s = s.replace(old, new, 1)
-refresh.write_text(s)
+if old_resolver in r: r = r.replace(old_resolver, new_resolver, 1)
+r = r.replace("tcgplayerUrl: entry.item.tcgplayerUrl || product.url || '',", "tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,", 1)
+r = r.replace("tcgplayerUrl: entry.item.tcgplayerUrl || product.url || ''\n", "tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`\n", 1)
+auto_marker = "          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });\n\n          if (picked.marketPrice != null) {"
+if auto_marker in r:
+    r = r.replace(auto_marker, "          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });\n          const requestedVariant = normalizeVariant(entry.item.priceVariant || entry.item.variance || '');\n          if (picked.marketPrice != null && !requestedVariant) {\n            const autoKey = priceKey(entry.item, 'auto');\n            priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...master, key: autoKey, pricingStatus: 'master-default' } });\n          }\n\n          if (picked.marketPrice != null) {", 1)
+refresh.write_text(r)
