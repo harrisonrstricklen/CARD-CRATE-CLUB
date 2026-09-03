@@ -1,17 +1,17 @@
-name: Test Ascended master pricing
+name: Verify repaired pricing
 on:
   push:
     paths:
       - '.github/workflows/test-ascended-master.yml'
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diagnose TCGCSV matching
+      - name: Verify Ascended Heroes source mapping
         run: |
           python - <<'PY'
-          import json,re,urllib.request,collections
+          import json,re,urllib.request
           from pathlib import Path
           def norm(v):
               import unicodedata
@@ -20,26 +20,63 @@ jobs:
           def num(v):
               s=str(v or '').strip().lower().split('/')[0].strip(); return str(int(s)) if s.isdigit() else s
           def pnum(p):
-              if p.get('number') or p.get('cardNumber'): return num(p.get('number') or p.get('cardNumber'))
               for row in p.get('extendedData') or []:
                   if norm(row.get('name') or row.get('displayName')) in ('number','card number'): return num(row.get('value'))
-              return ''
+              return num(p.get('number') or p.get('cardNumber'))
           def get(url):
-              req=urllib.request.Request(url,headers={'User-Agent':'CardCrateClub diagnostic/1.0'})
+              req=urllib.request.Request(url,headers={'User-Agent':'CardCrateClub verify/1.0'})
               with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
           raw=json.loads(Path('CARD CRATE CLUB/card-data/all-cards-index.json').read_text()); cards=raw if isinstance(raw,list) else raw.get('cards',[])
-          setcards=[c for c in cards if norm(c.get('setName'))==norm('Ascended Heroes')]
+          local=[c for c in cards if norm(c.get('setName'))==norm('Ascended Heroes')]
           products=get('https://tcgcsv.com/tcgplayer/3/24541/products').get('results',[])
-          prices=get('https://tcgcsv.com/tcgplayer/3/24541/prices').get('results',[]); by={}
-          for r in prices:by.setdefault(int(r.get('productId',0)),[]).append(r)
+          prices=get('https://tcgcsv.com/tcgplayer/3/24541/prices').get('results',[])
+          bynum={}
           for p in products:
-              if pnum(p)=='10' or 'meganium' in norm(p.get('name') or p.get('cleanName')):
-                  print('CANDIDATE',p.get('productId'),p.get('name'),pnum(p),p.get('extendedData'))
-                  print('PRICES',by.get(int(p.get('productId',0)),[]))
-          counts=collections.Counter(pnum(p) for p in products if pnum(p))
-          dups=[(n,c) for n,c in counts.items() if c>1]
-          print('NUMBER_COUNTS unique',len(counts),'duplicates',len(dups),'sample',dups[:30])
-          for target in ['10','180']:
-              print('NUMBER',target,'products',[(p.get('productId'),p.get('name'),pnum(p)) for p in products if pnum(p)==target])
-          print('LOCAL',[(c.get('id'),c.get('name'),c.get('number')) for c in setcards if num(c.get('number')) in ('10','180')])
+              n=pnum(p)
+              if n:bynum.setdefault(n,[]).append(p)
+          missing=[(c.get('name'),c.get('number')) for c in local if num(c.get('number')) not in bynum]
+          assert len(local)==295, len(local)
+          assert not missing, missing[:20]
+          mega=[p for p in bynum['10'] if 'meganium' in norm(p.get('name')) and 'box' not in norm(p.get('name')) and 'tin' not in norm(p.get('name'))][0]
+          acer=[p for p in bynum['180'] if norm(p.get('name')).startswith("acerola's mischief")][0]
+          pmap={}
+          for r in prices:pmap.setdefault(int(r['productId']),[]).append(r)
+          mega_market=[r['marketPrice'] for r in pmap[int(mega['productId'])] if r.get('marketPrice')]
+          acer_market=[r['marketPrice'] for r in pmap[int(acer['productId'])] if r.get('marketPrice')]
+          print('LOCAL_CARDS',len(local),'UNMATCHED_BY_NUMBER',len(missing))
+          print('MEGA',mega['productId'],mega['name'],mega_market)
+          print('ACEROLA',acer['productId'],acer['name'],acer_market)
+          assert int(mega['productId'])==675822
+          assert int(acer['productId'])==675992
+          assert mega_market and acer_market
+          PY
+      - name: Verify deployed exact-card relay
+        run: |
+          python - <<'PY'
+          import json,time,urllib.parse,urllib.request
+          base='https://cardcrateclub.netlify.app/.netlify/functions/search-cards'
+          tests=[('Mega Meganium ex','Ascended Heroes','10',675822),('Acerola\'s Mischief','Ascended Heroes','180',675992)]
+          last=[]
+          for attempt in range(24):
+              ok=True; last=[]
+              for name,setname,number,pid in tests:
+                  url=base+'?'+urllib.parse.urlencode({'q':name,'set':setname,'number':number})
+                  try:
+                      req=urllib.request.Request(url,headers={'User-Agent':'CardCrateClub verify/1.0'})
+                      with urllib.request.urlopen(req,timeout=20) as r:d=json.load(r)
+                      card=(d.get('data') or [None])[0]
+                      goturl=((card or {}).get('tcgplayer') or {}).get('url','')
+                      market=((card or {}).get('pricing') or {}).get('market')
+                      version=d.get('version')
+                      last.append((name,version,goturl,market,d.get('source')))
+                      if version!='pricing-relay-v4' or f'/product/{pid}' not in goturl or not market or float(market)<=0: ok=False
+                  except Exception as e:
+                      last.append((name,'ERROR',str(e))); ok=False
+              print('attempt',attempt+1,last)
+              if ok:
+                  print('LIVE_VERIFY_OK')
+                  break
+              time.sleep(10)
+          else:
+              raise SystemExit('Live deployment did not pass exact link+price verification: '+repr(last))
           PY
