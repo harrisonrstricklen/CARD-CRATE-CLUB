@@ -19,3 +19,4 @@ jobs:
           git add 'CARD CRATE CLUB/netlify/functions/seed-ascended-heroes-master.js' 'CARD CRATE CLUB/netlify/functions/search-cards.js' 'CARD CRATE CLUB/collection.html'
           git commit -m 'Repair pricing pipeline with tested TCGplayer fallback' || exit 0
           git push
+# run 2
