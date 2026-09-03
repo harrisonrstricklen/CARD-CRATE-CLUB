@@ -296,11 +296,31 @@ exports.handler = async function (event) {
 
     if (isRoutineExactLookup) {
       const masters = await fetchMasterPrices(selected, variantRaw);
-      const data = selected.map(card => masterCardShape(card, sets.get(String(card.setId)) || {}, masters.get(String(card.id)), variantRaw));
+      const needsLive = selected.filter(card => {
+        const master = masters.get(String(card.id));
+        const market = Number(master?.marketPrice);
+        return !(Number.isFinite(market) && market > 0) || !master?.tcgplayerUrl;
+      });
+      const liveDetails = needsLive.length ? await fetchLiveDetails(needsLive, variantRaw) : new Map();
+      const data = selected.map(card => {
+        const id = String(card.id);
+        const set = sets.get(String(card.setId)) || {};
+        const master = masters.get(id);
+        const masterShape = masterCardShape(card, set, master, variantRaw);
+        const masterMarket = Number(master?.marketPrice);
+        const hasMasterPrice = Number.isFinite(masterMarket) && masterMarket > 0;
+        const live = liveDetails.get(id);
+        if (!live) return masterShape;
+        if (!hasMasterPrice) return live;
+        if (!masterShape.tcgplayer?.url && live.tcgplayer?.url) {
+          masterShape.tcgplayer = { ...(masterShape.tcgplayer || {}), url: live.tcgplayer.url };
+        }
+        return masterShape;
+      });
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=120' },
-        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-price-cache' })
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' },
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-master-with-live-fallback', version: 'pricing-relay-v4' })
       };
     }
 

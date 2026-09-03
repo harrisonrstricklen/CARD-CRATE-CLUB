@@ -5,7 +5,7 @@ const { getFirebaseAdmin, json } = require('./_shared');
 const SET_NAME = 'Ascended Heroes';
 const TCGPLAYER_GROUP_ID = 24541;
 const BUILD_ID = 'ascended-heroes-en';
-const BUILD_VERSION = 2;
+const BUILD_VERSION = 3;
 
 function norm(value) {
   return String(value || '')
@@ -56,26 +56,35 @@ function productRarity(product) {
   return '';
 }
 
+function productBaseName(product) {
+  const raw = String(product?.name || product?.cleanName || '').replace(/\s*-\s*\d+\s*\/\s*\d+\s*$/i, '');
+  return norm(raw);
+}
+
 function bestProduct(card, products) {
   const wantedName = norm(card.name);
   const wantedNumber = normNumber(card.number);
+  const wantedRarity = norm(card.rarity);
   let best = null;
   let bestScore = -Infinity;
   for (const product of products) {
-    const name = norm(product.name || product.cleanName || '');
     const number = productNumber(product);
-    let score = 0;
-    if (name === wantedName) score += 140;
-    else if (name.includes(wantedName) || wantedName.includes(name)) score += 55;
-    else continue;
-    if (wantedNumber && number === wantedNumber) score += 180;
-    else if (wantedNumber && number) score -= 160;
+    if (wantedNumber && number !== wantedNumber) continue;
+    if (!number) continue;
+    const fullName = norm(product.name || product.cleanName || '');
+    const baseName = productBaseName(product);
+    const rarity = norm(productRarity(product));
+    let score = 300;
+    if (baseName === wantedName) score += 220;
+    else if (fullName === wantedName) score += 200;
+    else if (fullName.includes(wantedName) || wantedName.includes(baseName)) score += 90;
+    if (wantedRarity && rarity === wantedRarity) score += 40;
     if (score > bestScore) {
       bestScore = score;
       best = product;
     }
   }
-  return bestScore >= (wantedNumber ? 260 : 130) ? best : null;
+  return bestScore >= 300 ? best : null;
 }
 
 function chooseDefault(card, rows) {
