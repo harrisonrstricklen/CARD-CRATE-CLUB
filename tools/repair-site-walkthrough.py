@@ -3,6 +3,7 @@ import re
 
 ROOT = Path('CARD CRATE CLUB')
 
+# This script is intentionally assertion-heavy so the workflow fails instead of silently applying partial UI changes.
 def replace(path, old, new, count=None):
     p = ROOT / path
     text = p.read_text(encoding='utf-8')
