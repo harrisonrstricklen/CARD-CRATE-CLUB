@@ -105,28 +105,22 @@ function resolveProduct(item, products) {
   const wantedName = normalizeText(item.name);
   const wantedNumber = normalizeNumber(item.number);
   let best = null;
-  let bestScore = -9999;
+  let bestScore = -1;
 
   for (const product of products || []) {
-    const name = normalizeText(product.name || product.cleanName || '');
     const number = productNumber(product);
+    if (wantedNumber && number !== wantedNumber) continue;
+    const fullName = normalizeText(product.name || product.cleanName || '');
+    const cleanName = normalizeText(product.cleanName || '');
     let score = 0;
-
-    if (wantedName && name === wantedName) score += 140;
-    else if (wantedName && name.includes(wantedName)) score += 85;
-    else if (wantedName && wantedName.includes(name)) score += 55;
-
-    if (wantedNumber && number === wantedNumber) score += 180;
-    else if (wantedNumber && number) score -= 120;
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = product;
-    }
+    if (wantedName && (fullName === wantedName || cleanName === wantedName)) score = 500;
+    else if (wantedName && (fullName.startsWith(wantedName) || cleanName.startsWith(wantedName))) score = 320;
+    else if (wantedName && fullName.includes(wantedName)) score = 220;
+    else continue;
+    if (score > bestScore) { bestScore = score; best = product; }
   }
 
-  const minimum = wantedNumber ? 180 : 130;
-  return bestScore >= minimum ? best : null;
+  return bestScore >= 320 ? best : null;
 }
 
 function resolveGroup(setName, groups) {
@@ -308,11 +302,16 @@ exports.handler = async function(event = {}) {
             pricingStatus: picked.status,
             priceVariant: picked.variant,
             tcgplayerProductId: Number(product.productId),
-            tcgplayerUrl: entry.item.tcgplayerUrl || product.url || '',
+            tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,
             source: 'tcgcsv-tcgplayer',
             updatedAt: now
           };
           priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
+          const requestedVariant = normalizeVariant(entry.item.priceVariant || entry.item.variance || '');
+          if (picked.marketPrice != null && !requestedVariant) {
+            const autoKey = priceKey(entry.item, 'auto');
+            priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...master, key: autoKey, pricingStatus: 'master-default' } });
+          }
 
           if (picked.marketPrice != null) {
             cardsResolved += 1;
@@ -328,7 +327,7 @@ exports.handler = async function(event = {}) {
                 pricingStatus: picked.status,
                 priceVariant: picked.variant,
                 priceSource: 'master-tcgcsv-tcgplayer',
-                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || ''
+                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`
               }
             });
           } else if (picked.status === 'ambiguous') {

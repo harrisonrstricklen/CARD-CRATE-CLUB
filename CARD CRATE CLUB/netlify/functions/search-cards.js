@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getFirebaseAdmin } = require('./_shared');
+const { resolveTcgcsvCards } = require('./_tcgcsv');
 
 // Card identity/search is local. Routine exact collection lookups read the
 // centralized Firestore master price cache, while broad user searches may still
@@ -296,31 +297,47 @@ exports.handler = async function (event) {
 
     if (isRoutineExactLookup) {
       const masters = await fetchMasterPrices(selected, variantRaw);
-      const needsLive = selected.filter(card => {
+      const needsFallback = selected.filter(card => {
         const master = masters.get(String(card.id));
         const market = Number(master?.marketPrice);
         return !(Number.isFinite(market) && market > 0) || !master?.tcgplayerUrl;
       });
-      const liveDetails = needsLive.length ? await fetchLiveDetails(needsLive, variantRaw) : new Map();
+      let fallback = new Map();
+      if (needsFallback.length) {
+        try { fallback = await resolveTcgcsvCards(needsFallback, variantRaw); }
+        catch (error) { console.warn('TCGCSV exact fallback failed:', error.message || error); }
+      }
       const data = selected.map(card => {
         const id = String(card.id);
         const set = sets.get(String(card.setId)) || {};
         const master = masters.get(id);
-        const masterShape = masterCardShape(card, set, master, variantRaw);
+        const base = masterCardShape(card, set, master, variantRaw);
+        const resolved = fallback.get(id);
+        if (!resolved) return base;
+        const fallbackMarket = Number(resolved.marketPrice);
         const masterMarket = Number(master?.marketPrice);
-        const hasMasterPrice = Number.isFinite(masterMarket) && masterMarket > 0;
-        const live = liveDetails.get(id);
-        if (!live) return masterShape;
-        if (!hasMasterPrice) return live;
-        if (!masterShape.tcgplayer?.url && live.tcgplayer?.url) {
-          masterShape.tcgplayer = { ...(masterShape.tcgplayer || {}), url: live.tcgplayer.url };
-        }
-        return masterShape;
+        const market = Number.isFinite(masterMarket) && masterMarket > 0 ? masterMarket : (Number.isFinite(fallbackMarket) && fallbackMarket > 0 ? fallbackMarket : null);
+        const variant = master?.priceVariant || resolved.priceVariant || null;
+        return {
+          ...base,
+          tcgplayer: {
+            ...(base.tcgplayer || {}),
+            url: base.tcgplayer?.url || resolved.tcgplayerUrl || '',
+            prices: market && variant ? { [variant]: { market } } : (base.tcgplayer?.prices || {})
+          },
+          pricing: {
+            source: Number.isFinite(masterMarket) && masterMarket > 0 ? 'master-cache' : 'tcgcsv-tcgplayer-fallback',
+            status: master?.pricingStatus || resolved.pricingStatus || (market ? 'exact' : 'unavailable'),
+            variant,
+            requestedVariant: variantRaw || null,
+            market
+          }
+        };
       });
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' },
-        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-master-with-live-fallback', version: 'pricing-relay-v4' })
+        body: JSON.stringify({ data, count: data.length, totalCount: matches.length, source: 'local-search-master-with-tcgcsv-fallback', version: 'pricing-relay-v5' })
       };
     }
 
