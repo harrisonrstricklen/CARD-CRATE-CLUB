@@ -273,7 +273,7 @@
     </div>
 
     <div class="hero-cta">
-        <a href="#waitlist" class="btn btn-gold btn-lg">👑 Claim Your Founding Spot</a>
+        <a href="signup.html?intent=founding" class="btn btn-gold btn-lg">👑 Create Profile & Join Founding 100</a>
         <a href="how-it-works.html" class="btn btn-outline btn-lg">▶️ See How It Works</a>
     </div>
 
@@ -477,7 +477,7 @@
             <p class="counter-text"><span class="counter-number" id="spotsLeft">77</span> founding spots remaining</p>
         </div>
 
-        <a href="#waitlist" class="btn btn-gold btn-lg">👑 Claim My Founding Spot</a>
+        <a href="signup.html?intent=founding" class="btn btn-gold btn-lg">👑 Create Profile & Join Founding 100</a>
     </div>
 </section>
 
@@ -685,8 +685,8 @@
                 navAuth.innerHTML = `<a href="dashboard.html" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">My Dashboard</a>`;
                 mobileAuth.innerHTML = `<a href="dashboard.html">My Dashboard</a>`;
             } else {
-                navAuth.innerHTML = `<a href="login.html" style="padding:6px 12px;">Login</a><a href="#waitlist" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Join Waitlist</a>`;
-                mobileAuth.innerHTML = `<a href="login.html">Login</a>`;
+                navAuth.innerHTML = `<a href="login.html" style="padding:6px 12px;">Login</a><a href="signup.html?intent=waitlist" class="nav-btn-primary" style="padding:8px 16px;border-radius:8px;">Create Account</a>`;
+                mobileAuth.innerHTML = `<a href="login.html">Login</a><a href="signup.html?intent=waitlist">Create Account</a>`;
             }
         });
     });

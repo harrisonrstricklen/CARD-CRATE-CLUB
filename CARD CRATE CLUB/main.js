@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="tier-card">
                         <div class="tier-icon">🎴</div>
                         <div class="tier-name">4-Pack Crate</div>
-                        <div class="tier-amount">$24.99</div>
+                        <div class="tier-amount">$29.99</div>
                         <div class="tier-period">/month — current price</div>
                         <ul class="tier-features">
                             <li>✓ 4 booster packs each month</li>
@@ -158,13 +158,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>✓ Update next crate before cutoff</li>
                             <li>✓ Member store access</li>
                         </ul>
-                        <a href="onboarding.html?plan=pack-club" class="btn btn-outline btn-block">Build 4-Pack Crate</a>
+                        <a href="signup.html?intent=subscribe&plan=pack-club" class="btn btn-outline btn-block">Build 4-Pack Crate</a>
                     </div>
                     <div class="tier-card popular">
                         <div class="popular-badge">⭐ Most Popular</div>
                         <div class="tier-icon">⚡</div>
                         <div class="tier-name">8-Pack Crate</div>
-                        <div class="tier-amount">$44.99</div>
+                        <div class="tier-amount">$54.99</div>
                         <div class="tier-period">/month — current price</div>
                         <ul class="tier-features">
                             <li>✓ 8 booster packs each month</li>
@@ -172,12 +172,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>✓ Surprise Me option for open slots</li>
                             <li>✓ Early member access to select drops</li>
                         </ul>
-                        <a href="onboarding.html?plan=trainer-club" class="btn btn-gold btn-block">Build 8-Pack Crate</a>
+                        <a href="signup.html?intent=subscribe&plan=trainer-club" class="btn btn-gold btn-block">Build 8-Pack Crate</a>
                     </div>
                     <div class="tier-card">
                         <div class="tier-icon">🏆</div>
                         <div class="tier-name">12-Pack Crate</div>
-                        <div class="tier-amount">$64.99</div>
+                        <div class="tier-amount">$74.99</div>
                         <div class="tier-period">/month — current price</div>
                         <ul class="tier-features">
                             <li>✓ 12 booster packs each month</li>
@@ -185,12 +185,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>✓ Priority access to limited inventory</li>
                             <li>✓ Maximum mixed-crate flexibility</li>
                         </ul>
-                        <a href="onboarding.html?plan=collector-club" class="btn btn-outline btn-block">Build 12-Pack Crate</a>
+                        <a href="signup.html?intent=subscribe&plan=collector-club" class="btn btn-outline btn-block">Build 12-Pack Crate</a>
                     </div>
                     <div class="tier-card">
                         <div class="tier-icon">📦</div>
                         <div class="tier-name">Box Club</div>
-                        <div class="tier-amount">$119.99</div>
+                        <div class="tier-amount">$149</div>
                         <div class="tier-period">/month — current price</div>
                         <ul class="tier-features">
                             <li>✓ Premium monthly sealed-product option</li>
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <li>✓ Preview available options before checkout</li>
                             <li>✓ Member access to limited inventory</li>
                         </ul>
-                        <a href="onboarding.html?plan=box-club" class="btn btn-outline btn-block">Build Box Club Crate</a>
+                        <a href="signup.html?intent=subscribe&plan=box-club" class="btn btn-outline btn-block">Build Box Club Crate</a>
                     </div>
                 </div>
                 <p class="tiers-note">ℹ️ Pricing and eligible sets can change with product acquisition, shipping, and inventory. You'll see your crate options before subscribing.</p>
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 counter.innerHTML = '<p class="counter-text"><span class="counter-number">Founding 100</span> — limited to the first 100 activated founding memberships.</p>';
             }
             const foundingCta = foundingSection.querySelector('.btn.btn-gold');
-            if (foundingCta) foundingCta.textContent = '👑 Join the Founding 100 Waitlist';
+            if (foundingCta) { foundingCta.textContent = '👑 Create Profile & Join Founding 100'; foundingCta.href = 'signup.html?intent=founding'; }
         }
 
         // Remove outdated lifetime-price-lock language anywhere else on the homepage.
@@ -281,51 +281,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ---- WAITLIST FORM ----
+    // ---- WAITLIST / PROFILE CREATION ----
     const waitlistForm = document.getElementById('waitlistForm');
-    const formSuccess = document.getElementById('formSuccess');
     if (waitlistForm) {
-        waitlistForm.addEventListener('submit', async function(e) {
+        const submitBtn = waitlistForm.querySelector('.btn-submit');
+        if (submitBtn) submitBtn.textContent = 'Create Profile & Join Waitlist';
+        const explainer = waitlistForm.querySelector('.form-disclaimer');
+        if (explainer) explainer.textContent = 'Next, you’ll create your free Card Crate Club profile. No credit card is required.';
+        waitlistForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const submitBtn = waitlistForm.querySelector('.btn-submit');
-            const originalText = submitBtn ? submitBtn.innerHTML : '';
-            if (submitBtn) { submitBtn.innerHTML = 'Joining...'; submitBtn.disabled = true; }
-            try {
-                const formData = new FormData(waitlistForm);
-                const payload = Object.fromEntries(formData.entries());
-                const response = await fetch('/.netlify/functions/join-waitlist', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                });
-                let result = {};
-                try { result = await response.json(); } catch (_) {}
-                if (!response.ok) throw new Error(result.error || 'Form submission failed');
-                waitlistForm.style.display = 'none';
-                if (formSuccess) {
-                    formSuccess.style.display = 'block';
-                    if (result.alreadyJoined) {
-                        const message = formSuccess.querySelector('p');
-                        if (message) message.textContent = "You're already on the waitlist — we'll keep you posted!";
-                    }
-                }
-                updateCounter();
-            } catch (error) {
-                console.error('Waitlist error:', error);
-                if (submitBtn) { submitBtn.innerHTML = originalText; submitBtn.disabled = false; }
-                alert(error.message || 'Something went wrong. Please try again.');
-            }
+            const formData = new FormData(waitlistForm);
+            const firstName = String(formData.get('firstName') || '').trim();
+            const email = String(formData.get('email') || '').trim();
+            const tier = String(formData.get('tier') || '').trim();
+            const params = new URLSearchParams({ intent: 'waitlist' });
+            if (firstName) params.set('firstName', firstName);
+            if (email) params.set('email', email);
+            if (tier) params.set('plan', tier);
+            window.location.href = `signup.html?${params.toString()}`;
         });
-    }
-
-    function updateCounter() {
-        const counterFill = document.getElementById('counterFill');
-        const spotsLeft = document.getElementById('spotsLeft');
-        if (counterFill && spotsLeft) {
-            const current = parseInt(spotsLeft.textContent, 10);
-            if (Number.isNaN(current)) return;
-            const newCount = Math.max(current - 1, 0);
-            spotsLeft.textContent = newCount;
-            counterFill.style.width = ((100 - newCount) / 100) * 100 + '%';
-        }
     }
 
     // ---- SCROLL ANIMATIONS ----

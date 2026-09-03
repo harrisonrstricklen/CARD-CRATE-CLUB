@@ -63,6 +63,7 @@
     account:{kicker:'Join Card Crate Club',title:'Create your collector profile',copy:'Your profile is your home for the waitlist, collection tools, memberships, rewards, and future club features.',note:'Creating a profile is free. No credit card is required here.',button:'Create Profile'}
   }[intent]||null;
   document.getElementById('intentKicker').textContent=copy.kicker;document.getElementById('intentTitle').textContent=copy.title;document.getElementById('intentCopy').textContent=copy.copy;document.getElementById('intentNote').textContent=copy.note;createBtn.textContent=copy.button;
+  const preFirst=params.get('firstName')||'',preEmail=params.get('email')||'';if(preFirst)document.getElementById('firstName').value=preFirst;if(preEmail)document.getElementById('signupEmail').value=preEmail;
 
   function destination(){if(plan)return `onboarding.html?plan=${encodeURIComponent(plan)}`;if(intent==='founding')return 'founding-members.html?joined=1';if(intent==='waitlist')return 'dashboard.html?welcome=1';return 'dashboard.html';}
   function showMessage(text,type='error',html=false){if(html)msgEl.innerHTML=text;else msgEl.textContent=text;msgEl.className=`alert show ${type}`;}
