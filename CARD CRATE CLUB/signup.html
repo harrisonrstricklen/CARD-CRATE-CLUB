@@ -3,104 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Account — CardCrate Club</title>
-  <meta name="description" content="Join CardCrate Club — create your account to claim a Founding 100 spot and start your Pokémon TCG subscription." />
+  <title>Create Your Profile — Card Crate Club</title>
+  <meta name="description" content="Create your Card Crate Club collector profile, join the waitlist, and continue toward Founding 100 or a membership." />
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="theme.css" />
   <style>
-    .auth-shell { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
-    .auth-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 460px; }
-    .auth-logo { text-align: center; margin-bottom: 24px; }
-    .auth-logo-badge { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; font-weight: 900; font-size: 18px; padding: 8px 16px; border-radius: 8px; display: inline-block; margin-bottom: 8px; }
-    .auth-logo p { color: var(--muted); font-size: 14px; }
-    .name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .pw-strength { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); margin-top: 8px; overflow: hidden; }
-    .pw-strength-fill { height: 100%; width: 0%; background: var(--red); transition: width 0.2s, background 0.2s; }
-    .auth-footer-link { text-align: center; margin-top: 22px; font-size: 0.85rem; color: var(--muted); }
-    .auth-footer-link a { color: var(--gold); font-weight: 600; }
-    .auth-footer-link a:hover { text-decoration: underline; }
-    .back-link { text-align: center; margin-top: 14px; }
-    .back-link a { color: #555; font-size: 13px; }
-    .back-link a:hover { color: var(--gold); }
-    @media (max-width: 420px) { .name-row { grid-template-columns: 1fr; } }
+    .auth-shell{flex:1;display:flex;align-items:center;justify-content:center;padding:38px 18px 70px}.auth-card{background:linear-gradient(160deg,rgba(245,200,66,.055),var(--card-bg) 32%);border:1px solid rgba(245,200,66,.25);border-radius:18px;padding:34px;width:100%;max-width:500px;box-shadow:0 22px 70px rgba(0,0,0,.35)}.auth-logo{text-align:center;margin-bottom:22px}.auth-logo img{width:62px;height:62px;object-fit:contain;margin-bottom:10px}.auth-kicker{color:var(--gold);font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px}.auth-logo h1{font-size:1.55rem;font-weight:900;margin:0 0 7px}.auth-logo p{color:var(--muted);font-size:.84rem;line-height:1.5;max-width:390px;margin:auto}.intent-note{margin:0 0 20px;padding:12px 13px;border:1px solid rgba(245,200,66,.18);border-radius:11px;background:rgba(245,200,66,.045);font-size:.75rem;color:#bbb;line-height:1.5}.name-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pw-strength{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}.pw-strength-fill{height:100%;width:0%;background:var(--red);transition:.2s}.auth-footer-link{text-align:center;margin-top:20px;font-size:.84rem;color:var(--muted)}.auth-footer-link a{color:var(--gold);font-weight:700}.back-link{text-align:center;margin-top:12px}.back-link a{color:#777;font-size:.78rem}.existing-box{display:none;text-align:center;padding:18px 0 4px}.existing-box h2{font-size:1.2rem;margin-bottom:7px}.existing-box p{font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:16px}.helper{font-size:.7rem;color:var(--muted);margin-top:7px;line-height:1.45}.alert a{color:inherit;text-decoration:underline;font-weight:800}@media(max-width:440px){.auth-card{padding:27px 20px}.name-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<div class="floating-bg">
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3/4.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/47.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/81.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv1/247.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv2/86.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh12/67.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh4/94.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh7/111.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/swsh11/186.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/133.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/151.png" alt="" loading="lazy"/></div>
-  <div class="fc"><img src="https://images.pokemontcg.io/sv3pt5/94.png" alt="" loading="lazy"/></div>
-</div>
+<div class="floating-bg dense"><div class="fc"><img src="card-images/me05/116.webp" alt=""></div><div class="fc"><img src="card-images/me04/116.webp" alt=""></div><div class="fc"><img src="card-images/me03/120.webp" alt=""></div></div>
 <div class="page-wrapper">
   <div class="auth-shell">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="auth-logo-badge">CCC</div>
-        <p>Create your CardCrate Club account</p>
+        <a href="index.html"><img src="Card-Crate-Club-Official-Mark.svg" alt="Card Crate Club"></a>
+        <div class="auth-kicker" id="intentKicker">Join Card Crate Club</div>
+        <h1 id="intentTitle">Create your collector profile</h1>
+        <p id="intentCopy">Your profile is your home for the waitlist, collection tools, memberships, rewards, and future club features.</p>
       </div>
+      <div class="intent-note" id="intentNote">Creating a profile is free. No credit card is required here.</div>
+
       <form id="signupFormEl" novalidate>
         <div class="name-row">
-          <div class="form-group" id="group-firstName">
-            <label for="firstName">First Name</label>
-            <input type="text" id="firstName" placeholder="First name" required />
-            <div class="field-error">Required.</div>
-          </div>
-          <div class="form-group" id="group-lastName">
-            <label for="lastName">Last Name</label>
-            <input type="text" id="lastName" placeholder="Last name" required />
-            <div class="field-error">Required.</div>
-          </div>
+          <div class="form-group" id="group-firstName"><label for="firstName">First Name</label><input type="text" id="firstName" autocomplete="given-name" required><div class="field-error">Required.</div></div>
+          <div class="form-group" id="group-lastName"><label for="lastName">Last Name</label><input type="text" id="lastName" autocomplete="family-name" required><div class="field-error">Required.</div></div>
         </div>
-        <div class="form-group" id="group-signupEmail">
-          <label for="signupEmail">Email Address</label>
-          <input type="email" id="signupEmail" placeholder="you@example.com" required />
-          <div class="field-error">Enter a valid email address.</div>
-        </div>
-        <div class="form-group" id="group-signupPassword">
-          <label for="signupPassword">Password</label>
-          <input type="password" id="signupPassword" placeholder="At least 8 characters" required />
-          <div class="pw-strength"><div class="pw-strength-fill" id="pwFill"></div></div>
-          <div class="field-error">Password must be at least 8 characters.</div>
-        </div>
-        <div class="form-group" id="group-confirmPassword">
-          <label for="confirmPassword">Confirm Password</label>
-          <input type="password" id="confirmPassword" placeholder="Re-enter your password" required />
-          <div class="field-error">Passwords don't match.</div>
-        </div>
-        <div class="form-group" id="group-terms" style="margin-bottom: 20px;">
-          <label class="checkbox-row"><input type="checkbox" id="agreeTerms" /><span>I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></span></label>
-          <div class="field-error">You must agree to continue.</div>
-        </div>
-        <button type="submit" class="btn btn-gold btn-block btn-lg">Create Account</button>
+        <div class="form-group" id="group-signupEmail"><label for="signupEmail">Email Address</label><input type="email" id="signupEmail" autocomplete="email" placeholder="you@example.com" required><div class="field-error">Enter a valid email address.</div></div>
+        <div class="form-group" id="group-signupPassword"><label for="signupPassword">Password</label><input type="password" id="signupPassword" autocomplete="new-password" placeholder="At least 8 characters" required><div class="pw-strength"><div class="pw-strength-fill" id="pwFill"></div></div><div class="field-error">Password must be at least 8 characters.</div><div class="helper">Use 8+ characters. A mix of letters, numbers, and symbols is recommended.</div></div>
+        <div class="form-group" id="group-confirmPassword"><label for="confirmPassword">Confirm Password</label><input type="password" id="confirmPassword" autocomplete="new-password" required><div class="field-error">Passwords don't match.</div></div>
+        <div class="form-group" id="group-terms" style="margin-bottom:20px"><label class="checkbox-row"><input type="checkbox" id="agreeTerms"><span>I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></span></label><div class="field-error">You must agree to continue.</div></div>
+        <button type="submit" class="btn btn-gold btn-block btn-lg" id="createBtn">Create Profile</button>
       </form>
+
+      <div class="existing-box" id="existingBox"><h2>You're already signed in.</h2><p id="existingCopy">Continue with this account instead of creating another profile.</p><button class="btn btn-gold btn-block" id="continueExisting">Continue</button></div>
       <div class="alert" id="authMessage"></div>
-      <p class="auth-footer-link">Already have an account? <a href="login.html">Log in</a></p>
+      <p class="auth-footer-link" id="loginPrompt">Already have a profile? <a href="login.html">Log in</a></p>
       <div class="back-link"><a href="index.html">← Back to Home</a></div>
     </div>
   </div>
 </div>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  const firebaseConfig = {apiKey:"AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",authDomain:"cardcrate-club.firebaseapp.com",projectId:"cardcrate-club",storageBucket:"cardcrate-club.firebasestorage.app",messagingSenderId:"261800955788",appId:"1:261800955788:web:3f07f4c60886b26d05d0a9",measurementId:"G-5B8J0LWGKE"};
-  const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),msgEl=document.getElementById('authMessage');
-  function showMessage(text,type){msgEl.textContent=text;msgEl.className=`alert show ${type}`;}
-  function setFieldError(groupId,hasError){document.getElementById(groupId).classList.toggle('has-error',hasError);}
-  const pwInput=document.getElementById('signupPassword'),pwFill=document.getElementById('pwFill');
-  pwInput.addEventListener('input',()=>{const v=pwInput.value;let score=0;if(v.length>=8)score++;if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;pwFill.style.width=(score/4)*100+'%';pwFill.style.background=score<=1?'var(--red)':score===2?'#e0a030':score===3?'#a0d060':'var(--green)';});
-  function validate(){const firstName=document.getElementById('firstName').value.trim(),lastName=document.getElementById('lastName').value.trim(),email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value,confirm=document.getElementById('confirmPassword').value,agree=document.getElementById('agreeTerms').checked,emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),pwOk=password.length>=8,matchOk=password===confirm&&confirm.length>0;setFieldError('group-firstName',!firstName);setFieldError('group-lastName',!lastName);setFieldError('group-signupEmail',!emailOk);setFieldError('group-signupPassword',!pwOk);setFieldError('group-confirmPassword',!matchOk);setFieldError('group-terms',!agree);return firstName&&lastName&&emailOk&&pwOk&&matchOk&&agree;}
-  document.getElementById('signupFormEl').addEventListener('submit',async e=>{e.preventDefault();if(!validate())return;const firstName=document.getElementById('firstName').value.trim(),lastName=document.getElementById('lastName').value.trim(),email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value,displayName=`${firstName} ${lastName}`;try{const cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName});await setDoc(doc(db,'users',cred.user.uid),{firstName,lastName,email,createdAt:serverTimestamp(),subscription:null,crateCoins:0,memberNumber:null,foundingMember:null});showMessage('🎉 Account created! Redirecting to onboarding...','success');const requestedPlan=new URLSearchParams(window.location.search).get('plan'),nextUrl=requestedPlan?`onboarding.html?plan=${encodeURIComponent(requestedPlan)}`:'onboarding.html';setTimeout(()=>window.location.href=nextUrl,1200);}catch(err){showMessage('❌ '+(err.message||'Could not create account.'),'error');}});
+  import { getAuth, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig={apiKey:"AIzaSyDpx0EZyq2CdDru3UBDGlpA2qcUiqt0ed8",authDomain:"cardcrate-club.firebaseapp.com",projectId:"cardcrate-club",storageBucket:"cardcrate-club.firebasestorage.app",messagingSenderId:"261800955788",appId:"1:261800955788:web:3f07f4c60886b26d05d0a9",measurementId:"G-5B8J0LWGKE"};
+  const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+  const params=new URLSearchParams(location.search),intent=params.get('intent')||'account',plan=params.get('plan')||'';
+  const form=document.getElementById('signupFormEl'),existingBox=document.getElementById('existingBox'),msgEl=document.getElementById('authMessage'),createBtn=document.getElementById('createBtn');
+  let creating=false;
+
+  const copy={
+    waitlist:{kicker:'Join the Waitlist',title:'Create your profile & reserve your place',copy:'One quick profile gives you a login for the waitlist, collection tools, future member features, and launch updates.',note:'Your profile is free. Joining the waitlist does not start a paid subscription.',button:'Create Profile & Join Waitlist'},
+    founding:{kicker:'Founding 100',title:'Create your profile & join the Founding 100 line',copy:'Your collector profile keeps your Founding 100 eligibility, collection tools, and future membership in one place.',note:'Founding numbers are assigned to qualifying paid memberships. Creating this profile places you in the launch flow; it does not assign a Founder number by itself.',button:'Create Profile & Join Founding 100'},
+    subscribe:{kicker:'Start Your Membership',title:'Create your profile before building your crate',copy:'Your profile connects your crate choices, collection, rewards, billing, and member access.',note:'No card information is collected on this page. Payment happens later through Stripe.',button:'Create Profile & Continue'},
+    account:{kicker:'Join Card Crate Club',title:'Create your collector profile',copy:'Your profile is your home for the waitlist, collection tools, memberships, rewards, and future club features.',note:'Creating a profile is free. No credit card is required here.',button:'Create Profile'}
+  }[intent]||null;
+  document.getElementById('intentKicker').textContent=copy.kicker;document.getElementById('intentTitle').textContent=copy.title;document.getElementById('intentCopy').textContent=copy.copy;document.getElementById('intentNote').textContent=copy.note;createBtn.textContent=copy.button;
+
+  function destination(){if(plan)return `onboarding.html?plan=${encodeURIComponent(plan)}`;if(intent==='founding')return 'founding-members.html?joined=1';if(intent==='waitlist')return 'dashboard.html?welcome=1';return 'dashboard.html';}
+  function showMessage(text,type='error',html=false){if(html)msgEl.innerHTML=text;else msgEl.textContent=text;msgEl.className=`alert show ${type}`;}
+  function setFieldError(id,bad){document.getElementById(id).classList.toggle('has-error',!!bad)}
+  const pw=document.getElementById('signupPassword'),pwFill=document.getElementById('pwFill');pw.addEventListener('input',()=>{const v=pw.value;let score=0;if(v.length>=8)score++;if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;pwFill.style.width=(score/4*100)+'%';pwFill.style.background=score<=1?'var(--red)':score===2?'#e0a030':score===3?'#a0d060':'var(--green)'});
+  function validate(){const first=document.getElementById('firstName').value.trim(),last=document.getElementById('lastName').value.trim(),email=document.getElementById('signupEmail').value.trim(),password=pw.value,confirm=document.getElementById('confirmPassword').value,agree=document.getElementById('agreeTerms').checked,emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),pwOk=password.length>=8,match=password===confirm&&confirm.length>0;setFieldError('group-firstName',!first);setFieldError('group-lastName',!last);setFieldError('group-signupEmail',!emailOk);setFieldError('group-signupPassword',!pwOk);setFieldError('group-confirmPassword',!match);setFieldError('group-terms',!agree);return !!(first&&last&&emailOk&&pwOk&&match&&agree)}
+
+  async function joinWaitlist(firstName,email){if(intent!=='waitlist'&&intent!=='founding')return;const response=await fetch('/.netlify/functions/join-waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName,email,tier:plan,source:intent})});let data={};try{data=await response.json()}catch(_){}if(!response.ok)throw new Error(data.error||'Profile created, but the waitlist could not be updated. Please retry from your dashboard.');}
+
+  async function continueForUser(user){const snap=await getDoc(doc(db,'users',user.uid));const profile=snap.exists()?snap.data():{};const firstName=profile.firstName||String(user.displayName||'').split(' ')[0]||'Collector';const email=user.email||profile.email||'';await joinWaitlist(firstName,email);if(intent==='waitlist'||intent==='founding')await setDoc(doc(db,'users',user.uid),{waitlistJoined:true,waitlistIntent:intent,waitlistJoinedAt:serverTimestamp()},{merge:true});location.href=destination();}
+
+  form.addEventListener('submit',async e=>{e.preventDefault();if(!validate())return;creating=true;createBtn.disabled=true;createBtn.textContent='Creating profile…';const firstName=document.getElementById('firstName').value.trim(),lastName=document.getElementById('lastName').value.trim(),email=document.getElementById('signupEmail').value.trim().toLowerCase(),password=pw.value,displayName=`${firstName} ${lastName}`;try{const cred=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(cred.user,{displayName});await setDoc(doc(db,'users',cred.user.uid),{firstName,lastName,email,createdAt:serverTimestamp(),subscription:null,crateCoins:0,memberNumber:null,foundingMember:null,profileComplete:true},{merge:true});await joinWaitlist(firstName,email);if(intent==='waitlist'||intent==='founding')await setDoc(doc(db,'users',cred.user.uid),{waitlistJoined:true,waitlistIntent:intent,waitlistJoinedAt:serverTimestamp()},{merge:true});showMessage('Profile created. Taking you to the next step…','success');setTimeout(()=>location.href=destination(),650);}catch(err){creating=false;createBtn.disabled=false;createBtn.textContent=copy.button;if(err?.code==='auth/email-already-in-use')showMessage('That email already has a Card Crate Club profile. <a href="login.html">Log in instead →</a>','error',true);else showMessage(err?.message||'Could not create your profile. Please try again.');}});
+
+  document.getElementById('continueExisting').addEventListener('click',async()=>{const btn=document.getElementById('continueExisting');btn.disabled=true;btn.textContent='Continuing…';try{await continueForUser(auth.currentUser)}catch(err){btn.disabled=false;btn.textContent='Continue';showMessage(err?.message||'Could not continue. Please try again.')}});
+
+  onAuthStateChanged(auth,user=>{if(!user||creating)return;form.style.display='none';existingBox.style.display='block';document.getElementById('loginPrompt').style.display='none';document.getElementById('existingCopy').textContent=`You're signed in as ${user.email||'this account'}. Continue with this profile.`;});
 </script>
 </body>
 </html>
