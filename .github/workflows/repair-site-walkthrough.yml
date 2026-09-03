@@ -1,0 +1,76 @@
+name: Repair site walkthrough
+on:
+  push:
+    paths:
+      - 'tools/repair-site-walkthrough.py'
+permissions:
+  contents: write
+jobs:
+  repair-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply walkthrough repairs
+        run: python tools/repair-site-walkthrough.py
+      - name: Static HTML and JS checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlparse
+          root=Path('CARD CRATE CLUB')
+          errors=[]
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.refs=[]
+            def handle_starttag(self,tag,attrs):
+              d=dict(attrs)
+              for k in ('href','src'):
+                if k in d: self.refs.append((tag,k,d[k]))
+          for f in root.glob('*.html'):
+            txt=f.read_text(encoding='utf-8')
+            p=P(); p.feed(txt)
+            for tag,k,ref in p.refs:
+              if not ref or ref.startswith(('#','mailto:','tel:','javascript:','data:','blob:')): continue
+              u=urlparse(ref)
+              if u.scheme or ref.startswith('//'): continue
+              path=u.path
+              if not path: continue
+              target=(f.parent/path).resolve()
+              try: target.relative_to(root.resolve())
+              except ValueError: continue
+              if not target.exists(): errors.append(f'{f.name}: missing local {k} {ref}')
+          # Account funnel invariants
+          home=(root/'index.html').read_text(encoding='utf-8')
+          signup=(root/'signup.html').read_text(encoding='utf-8')
+          subs=(root/'subscriptions.html').read_text(encoding='utf-8')
+          main=(root/'main.js').read_text(encoding='utf-8')
+          founder=(root/'founding-members.html').read_text(encoding='utf-8')
+          checks={
+            'home founder account CTA':'signup.html?intent=founding' in home,
+            'home account nav':'Create Account' in home,
+            'signup waitlist integration':"joinWaitlist(firstName,email)" in signup,
+            'signup founding intent':"founding" in signup and 'waitlistIntent' in signup,
+            'subscriptions profile-first':all(f'signup.html?intent=subscribe&plan={p}' in subs for p in ('pack-club','trainer-club','collector-club','box-club')),
+            'founding profile CTA':'Create Profile & Join Founding 100' in founder,
+            'waitlist redirects into signup':'signup.html?intent=waitlist' in (root/'waitlist.html').read_text(encoding='utf-8'),
+            'home prices synced':all(x in main for x in ('$29.99','$54.99','$74.99','$149')) and all(x not in main for x in ('$24.99','$44.99','$64.99','$119.99')),
+          }
+          for name,ok in checks.items():
+            print(('PASS' if ok else 'FAIL'),name)
+            if not ok: errors.append(name)
+          if errors:
+            print('\n'.join(errors))
+            raise SystemExit(1)
+          print('STATIC_SITE_AUDIT_PASS')
+          PY
+      - name: JS syntax check
+        run: node --check 'CARD CRATE CLUB/main.js'
+      - name: Commit tested repairs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB' tools/repair-site-walkthrough.py
+          git commit -m 'Make profile creation part of the join flow' || exit 0
+          git push
