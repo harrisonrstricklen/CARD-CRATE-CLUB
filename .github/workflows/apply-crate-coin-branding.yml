@@ -1,0 +1,65 @@
+name: Apply Crate Coin branding
+
+on:
+  push:
+    paths:
+      - 'tools/apply-crate-coin-branding.py'
+      - '.github/workflows/apply-crate-coin-branding.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Crate Coin branding
+        run: python tools/apply-crate-coin-branding.py
+
+      - name: Verify asset and placements
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('CARD CRATE CLUB')
+          errors=[]
+          coin=root/'images/crate coin 2.png'
+          if not coin.exists() or coin.stat().st_size < 10000: errors.append('Crate Coin image missing or unexpectedly small')
+          rewards=(root/'rewards.html').read_text(encoding='utf-8')
+          main=(root/'main.js').read_text(encoding='utf-8')
+          theme=(root/'theme.css').read_text(encoding='utf-8')
+          checks={
+            'rewards hero coin':'crate-coin-hero-img' in rewards,
+            'rewards balance coin':'crate-coin-balance-img' in rewards,
+            'rewards transaction coin':'crate-coin-txn-icon' in rewards,
+            'homepage coin feature':'crate-coin-feature-icon' in main,
+            'shared coin styles':'CRATE COIN BRAND ASSET' in theme,
+          }
+          for name,ok in checks.items():
+            print(('PASS' if ok else 'FAIL'), name)
+            if not ok: errors.append(name)
+          # Every old member-nav coin emoji should be removed from HTML.
+          leftovers=[]
+          for p in root.glob('*.html'):
+            txt=p.read_text(encoding='utf-8')
+            if '🪙 Rewards' in txt or '<span class="micon">🪙</span>Rewards' in txt:
+              leftovers.append(p.name)
+          if leftovers: errors.append('Old Rewards emoji remains in: '+', '.join(leftovers))
+          if errors:
+            raise SystemExit('\n'.join(errors))
+          print('CRATE_COIN_BRANDING_PASS')
+          PY
+          node --check 'CARD CRATE CLUB/main.js'
+
+      - name: Commit tested branding
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'CARD CRATE CLUB' tools/apply-crate-coin-branding.py
+          git diff --cached --quiet && exit 0
+          git commit -m 'Use branded Crate Coin artwork across site'
+          git push
