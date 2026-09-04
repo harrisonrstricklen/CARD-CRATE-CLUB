@@ -1,8 +1,9 @@
 const { getFirebaseAdmin, json, requireUser } = require('./_shared');
-const { normalizeText, normalizeNumber, normalizeVariant, resolveProduct, resolveGroup, choosePrice } = require('./_tcgcsv');
+const { normalizeText, normalizeNumber, normalizeVariant, variantKeys, resolveProduct, resolveGroup, choosePrice } = require('./_tcgcsv');
 
 const TCGCSV_BASE = 'https://tcgcsv.com/tcgplayer/3';
 const FRESH_MS = 4 * 60 * 1000;
+const MASTER_FRESH_MS = 30 * 60 * 1000;
 const FUNCTION_BUDGET_MS = 22000;
 
 function normalizeLanguage(value) {
@@ -82,6 +83,49 @@ function identityKey(item, variant) {
   return `${language}__lookup__${set}__${name}__${number}__${v}`;
 }
 
+function selectedVariant(item) {
+  return item.variance || item.priceVariant || '';
+}
+
+function orderedVariantKeys(item) {
+  const requested = variantKeys(selectedVariant(item));
+  if (!requested.length) return ['auto'];
+  if (requested.length === 1) return requested;
+  const rarity = normalizeText(item.rarity || '');
+  const name = normalizeText(item.name || '');
+  const holoLikely = rarity.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(name);
+  return requested.slice().sort((a, b) => {
+    const score = key => holoLikely ? (key.includes('holofoil') ? 2 : 1) : (key.includes('normal') && !key.includes('reverse') ? 2 : 1);
+    return score(b) - score(a);
+  });
+}
+
+async function fetchMasterRows(db, keys) {
+  const rows = new Map();
+  const unique = [...new Set(keys.filter(Boolean))];
+  for (let start = 0; start < unique.length; start += 300) {
+    const chunk = unique.slice(start, start + 300);
+    const snaps = await db.getAll(...chunk.map(key => db.collection('cardPrices').doc(key)));
+    snaps.forEach((snap, index) => {
+      if (snap.exists) rows.set(chunk[index], snap.data() || {});
+    });
+  }
+  return rows;
+}
+
+function freshMasterHit(item, rows) {
+  for (const variant of orderedVariantKeys(item)) {
+    const key = priceKey(item, variant);
+    const row = rows.get(key);
+    const market = Number(row?.marketPrice);
+    const updated = timestampMs(row?.updatedAt);
+    if (Number.isFinite(market) && market > 0 && updated > 0 && Date.now() - updated < MASTER_FRESH_MS) {
+      return { key, row, market };
+    }
+  }
+  return null;
+}
+
 async function commitWrites(db, writes) {
   const unique = new Map();
   for (const write of writes) unique.set(write.ref.path, write);
@@ -123,6 +167,7 @@ exports.handler = async function(event = {}) {
   try {
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
+    const now = admin.firestore.FieldValue.serverTimestamp();
 
     let snapshot;
     if (event.httpMethod === 'POST') {
@@ -150,14 +195,66 @@ exports.handler = async function(event = {}) {
     });
 
     if (!candidates.length) {
-      return json(200, { updatedPrices: 0, updatedCollectionRows: 0, waiting: 0, message: 'All eligible collection prices are fresh.' });
+      return json(200, { updatedPrices: 0, updatedCollectionRows: 0, masterCacheHits: 0, waiting: 0, message: 'All eligible collection prices are fresh.' });
+    }
+
+    // First satisfy stale collection rows from the shared master archive.
+    // External TCGCSV traffic is only used for variants that are missing or stale here.
+    const masterKeys = candidates.flatMap(entry => orderedVariantKeys(entry.item).map(variant => priceKey(entry.item, variant)));
+    const masterRows = await fetchMasterRows(db, masterKeys);
+    const collectionWrites = [];
+    const processedRefs = new Set();
+    let masterCacheHits = 0;
+
+    for (const entry of candidates) {
+      const hit = freshMasterHit(entry.item, masterRows);
+      if (!hit) continue;
+      const row = hit.row;
+      masterCacheHits += 1;
+      processedRefs.add(entry.ref.path);
+      collectionWrites.push({
+        ref: entry.ref,
+        data: {
+          cardPriceKey: hit.key,
+          value: hit.market,
+          valueSource: 'master-market',
+          marketPrice: hit.market,
+          marketPriceUpdatedAt: now,
+          pricingStatus: row.pricingStatus || 'master-variant',
+          priceVariant: row.priceVariant || selectedVariant(entry.item) || null,
+          priceSource: 'master-cache',
+          tcgplayerUrl: row.tcgplayerUrl || entry.item.tcgplayerUrl || '',
+          retryCount: 0,
+          retryReason: null,
+          matchStatus: 'verified'
+        }
+      });
+    }
+
+    const externalCandidates = candidates.filter(entry => !processedRefs.has(entry.ref.path));
+    if (!externalCandidates.length) {
+      const updatedCollectionRows = await commitWrites(db, collectionWrites);
+      return json(200, {
+        updatedPrices: 0,
+        updatedCollectionRows,
+        masterCacheHits,
+        variantsCached: 0,
+        cardsResolved: masterCacheHits,
+        cardsAmbiguous: 0,
+        cardsUnmatched: 0,
+        setsProcessed: 0,
+        eligibleCards: candidates.length,
+        waiting: 0,
+        partialSuccess: false,
+        durationMs: Date.now() - startedAt
+      });
     }
 
     const groupsPayload = await fetchJson(`${TCGCSV_BASE}/groups`, 5000);
     const groups = groupsPayload.results || [];
     const bySet = new Map();
 
-    for (const candidate of candidates) {
+    for (const candidate of externalCandidates) {
       const setKey = normalizeText(candidate.item.set);
       if (!setKey) continue;
       if (!bySet.has(setKey)) bySet.set(setKey, []);
@@ -171,14 +268,11 @@ exports.handler = async function(event = {}) {
     });
 
     const priceWrites = [];
-    const collectionWrites = [];
-    const now = admin.firestore.FieldValue.serverTimestamp();
     let setsProcessed = 0;
-    let cardsResolved = 0;
+    let cardsResolved = masterCacheHits;
     let cardsAmbiguous = 0;
     let cardsUnmatched = 0;
     let variantsCached = 0;
-    const processedRefs = new Set();
 
     for (const [, entries] of setEntries) {
       if (Date.now() >= deadline - 5000) break;
@@ -212,7 +306,7 @@ exports.handler = async function(event = {}) {
           const productRows = rowsByProduct.get(Number(product.productId)) || [];
           const validRows = productRows.filter(row => finiteMarket(row) != null && row.subTypeName);
 
-          // Populate the shared archive with every exact TCGplayer printing for this product.
+          // Store every available exact printing once in the shared archive.
           for (const row of validRows) {
             const variant = String(row.subTypeName || '').trim();
             const marketPrice = finiteMarket(row);
@@ -225,7 +319,7 @@ exports.handler = async function(event = {}) {
             variantsCached += 1;
           }
 
-          const requestedVariant = entry.item.variance || entry.item.priceVariant || '';
+          const requestedVariant = selectedVariant(entry.item);
           const picked = choosePrice(
             productRows,
             requestedVariant,
@@ -292,6 +386,7 @@ exports.handler = async function(event = {}) {
     return json(200, {
       updatedPrices,
       updatedCollectionRows,
+      masterCacheHits,
       variantsCached,
       cardsResolved,
       cardsAmbiguous,
