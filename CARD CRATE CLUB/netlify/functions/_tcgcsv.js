@@ -27,11 +27,15 @@ function variantKeys(value) {
     normal: ['normal'], nonholo: ['normal'], nonfoil: ['normal'],
     holo: ['holofoil'], holofoil: ['holofoil'], foil: ['holofoil'],
     reverseholo: ['reverseholofoil'], reverseholofoil: ['reverseholofoil'], reversefoil: ['reverseholofoil'],
-    firstedition: ['1steditionholofoil', '1steditionnormal'], '1stedition': ['1steditionholofoil', '1steditionnormal'],
-    unlimited: ['unlimitedholofoil', 'unlimitednormal'],
-    shadowless: ['shadowlessholofoil', 'shadowlessnormal']
+    firstedition: ['1steditionnormal', '1steditionholofoil'], '1stedition': ['1steditionnormal', '1steditionholofoil'],
+    firsteditionholo: ['1steditionholofoil'], firsteditionholofoil: ['1steditionholofoil'], '1steditionholo': ['1steditionholofoil'],
+    firsteditionnormal: ['1steditionnormal'], '1steditionnormal': ['1steditionnormal'],
+    unlimited: ['unlimitednormal', 'unlimitedholofoil'],
+    unlimitedholo: ['unlimitedholofoil'], unlimitedholofoil: ['unlimitedholofoil'], unlimitednormal: ['unlimitednormal'],
+    shadowless: ['shadowlessnormal', 'shadowlessholofoil'],
+    shadowlessholo: ['shadowlessholofoil'], shadowlessholofoil: ['shadowlessholofoil'], shadowlessnormal: ['shadowlessnormal']
   };
-  return map[v] || [];
+  return map[v] || (v ? [v] : []);
 }
 
 function finiteMarket(row) {
@@ -103,13 +107,27 @@ function resolveGroup(setName, groups) {
   return bestScore >= 100 ? best : null;
 }
 
+function chooseAmongRequested(exact, rarity = '', name = '') {
+  if (!exact.length) return null;
+  if (exact.length === 1) return exact[0];
+  const r = normalizeText(rarity);
+  const n = normalizeText(name);
+  const isHolo = r.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(n);
+  const preferred = exact.find(row => {
+    const v = normalizeVariant(row.subTypeName);
+    return isHolo ? v.includes('holofoil') : (v.includes('normal') && !v.includes('reverse'));
+  });
+  return preferred || null;
+}
+
 function choosePrice(rows, requestedVariant = '', rarity = '', name = '') {
   const valid = (rows || []).filter(row => finiteMarket(row) != null);
   if (!valid.length) return { status: 'unavailable', variant: null, marketPrice: null };
   const requested = variantKeys(requestedVariant);
   if (requested.length) {
     const exact = valid.filter(row => requested.includes(normalizeVariant(row.subTypeName)));
-    if (exact.length === 1) return { status: 'exact-variant', variant: exact[0].subTypeName, marketPrice: finiteMarket(exact[0]) };
+    const selected = chooseAmongRequested(exact, rarity, name);
+    if (selected) return { status: 'exact-variant', variant: selected.subTypeName, marketPrice: finiteMarket(selected) };
   }
   if (valid.length === 1) return { status: 'exact', variant: valid[0].subTypeName, marketPrice: finiteMarket(valid[0]) };
   const r = normalizeText(rarity);
@@ -180,4 +198,4 @@ async function resolveTcgcsvCards(cards, requestedVariant = '') {
   return result;
 }
 
-module.exports = { normalizeText, normalizeNumber, normalizeVariant, productNumber, resolveProduct, resolveGroup, choosePrice, resolveTcgcsvCards };
+module.exports = { normalizeText, normalizeNumber, normalizeVariant, variantKeys, productNumber, resolveProduct, resolveGroup, choosePrice, resolveTcgcsvCards };
