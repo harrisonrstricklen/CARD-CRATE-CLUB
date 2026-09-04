@@ -20,6 +20,8 @@
   --text:       #f0f0f0;
   --muted:      #888;
   --radius:     14px;
+  --surface-shadow: 0 14px 40px rgba(0,0,0,.22);
+  --tap-size: 44px;
 }
 
 html, body {
@@ -28,11 +30,22 @@ html, body {
   color: var(--text);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+html { scroll-behavior: smooth; }
 a { text-decoration: none; color: inherit; }
+button, input, select, textarea { font: inherit; }
+img { max-width: 100%; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
 
@@ -121,7 +134,6 @@ header {
   gap: 10px;
   flex-shrink: 0;
 }
-/* Site-wide brand normalization: old pages still contain CCC. and/or CARDCRATE CLUB. */
 .nav-logo > span { display: none !important; }
 .nav-logo::after {
   content: 'CARD CRATE CLUB';
@@ -174,11 +186,11 @@ main.wide { max-width: 1200px; }
 .page-title { font-size: 2rem; font-weight: 900; margin-bottom: 8px; letter-spacing: -.025em; }
 .page-title .gold { color: var(--gold); }
 .page-subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 32px; }
-.card-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; }
-.card-block:hover { border-color: rgba(245,200,66,0.35); }
+.card-block { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; box-shadow: 0 8px 26px rgba(0,0,0,.12); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.card-block:hover { border-color: rgba(245,200,66,0.35); box-shadow: var(--surface-shadow); }
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-.stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; text-align: center; transition: border-color 0.2s; }
-.stat-card:hover { border-color: rgba(245,200,66,0.35); }
+.stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; text-align: center; transition: border-color 0.2s, transform .2s ease; }
+.stat-card:hover { border-color: rgba(245,200,66,0.35); transform: translateY(-1px); }
 .stat-icon { font-size: 1.4rem; margin-bottom: 6px; }
 .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 4px; }
 .stat-label { font-size: 0.72rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -189,22 +201,22 @@ main.wide { max-width: 1200px; }
 .founding-text strong { display: block; font-size: 0.95rem; font-weight: 800; color: var(--gold); margin-bottom: 3px; }
 .founding-text p { font-size: 0.8rem; color: var(--muted); }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--tap-size); padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; }
 .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
 .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,200,66,0.3); }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-outline:hover { border-color: rgba(245,200,66,0.4); background: rgba(245,200,66,0.05); }
 .btn-danger { background: transparent; border: 1px solid rgba(230,57,70,0.4); color: var(--red); }
 .btn-danger:hover { background: rgba(230,57,70,0.08); }
-.btn-sm { padding: 7px 14px; font-size: 0.78rem; }
-.btn-lg { padding: 14px 28px; font-size: 0.95rem; }
+.btn-sm { min-height: 36px; padding: 7px 14px; font-size: 0.78rem; }
+.btn-lg { min-height: 48px; padding: 14px 28px; font-size: 0.95rem; }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: #ccc; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; font-family: inherit; outline: none; transition: border 0.2s; }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+.form-group input, .form-group select, .form-group textarea { width: 100%; min-height: var(--tap-size); padding: 12px 14px; background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; font-family: inherit; outline: none; transition: border 0.2s, box-shadow .2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,200,66,.08); }
 .form-group .field-error { display: none; color: var(--red); font-size: 0.75rem; margin-top: 5px; }
 .form-group.has-error input { border-color: var(--red); }
 .form-group.has-error .field-error { display: block; }
@@ -229,36 +241,54 @@ main.wide { max-width: 1200px; }
 .footer-brand-logo::after { content: 'CARD CRATE CLUB'; color: var(--text); font-size: .7rem; font-weight: 800; letter-spacing: .11em; }
 .footer-tagline { font-size: 0.84rem; color: var(--muted); margin-bottom: 16px; }
 .footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; font-size: 0.73rem; color: var(--muted); display: flex; flex-direction: column; gap: 7px; line-height: 1.55; }
-/* Replace stale footer year/text on legacy pages without requiring a page-by-page rewrite. */
 .footer-bottom > p:first-child { font-size: 0 !important; }
 .footer-bottom > p:first-child::after { content: '© 2026 Card Crate Club. All rights reserved.'; font-size: .73rem; }
 
-.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(16px); border-top: 1px solid var(--border); padding: 10px 0 env(safe-area-inset-bottom, 10px); z-index: 100; }
-.mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; }
-.mnav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 12px; border-radius: 10px; cursor: pointer; text-decoration: none; color: var(--muted); transition: color 0.2s; font-size: 0.65rem; font-weight: 600; }
-.mnav-item .micon { font-size: 1.3rem; }
-.mnav-item.active { color: var(--gold); }
+.mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,15,0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border); padding: 8px 0 max(8px, env(safe-area-inset-bottom)); z-index: 100; box-shadow: 0 -12px 32px rgba(0,0,0,.28); }
+.mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; max-width: 560px; margin: 0 auto; }
+.mnav-item { min-width: 60px; min-height: var(--tap-size); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 5px 10px; border-radius: 10px; cursor: pointer; text-decoration: none; color: var(--muted); transition: color 0.2s, background .2s; font-size: 0.65rem; font-weight: 600; }
+.mnav-item .micon { font-size: 1.3rem; line-height: 1; }
+.mnav-item.active { color: var(--gold); background: rgba(245,200,66,.06); }
 .mnav-item:hover { color: var(--text); }
 
 @media (max-width: 860px) {
   .nav-links { display: none; }
-  .hamburger { display: flex; }
+  .hamburger { display: flex; width: var(--tap-size); height: var(--tap-size); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   header { padding: 0 16px; }
   .nav-right { margin-left: auto; margin-right: 8px; }
 }
+
+@media (min-width: 641px) {
+  body.member-page .mobile-nav { display: none !important; }
+}
+
 @media (max-width: 640px) {
-  main { padding-bottom: 90px; }
-  .page-title { font-size: 1.5rem; }
-  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .stat-card { padding: 14px 10px; }
-  .stat-value { font-size: 1.2rem; }
+  header { height: 60px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  .mobile-menu { top: 60px; max-height: calc(100dvh - 60px); overflow-y: auto; }
+  main { padding: 22px 14px calc(96px + env(safe-area-inset-bottom)); }
+  main.wide { padding-left: 14px; padding-right: 14px; }
+  .page-title { font-size: clamp(1.55rem, 8vw, 2rem); line-height: 1.12; }
+  .page-subtitle { font-size: .9rem; line-height: 1.55; margin-bottom: 24px; }
+  .stats-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stat-card { min-width: 0; padding: 14px 8px; }
+  .stat-value { font-size: 1.18rem; overflow-wrap: anywhere; }
+  .stat-label { font-size: .64rem; letter-spacing: .035em; }
+  .card-block { padding: 18px 15px; border-radius: 13px; }
+  .founding-banner { padding: 18px 16px; }
   .footer-grid { grid-template-columns: 1fr; gap: 25px; }
-  .site-footer { padding: 40px 18px 24px; }
+  .site-footer { padding: 40px 18px calc(90px + env(safe-area-inset-bottom)); }
   .footer-bottom { font-size: .7rem; }
   .nav-logo { gap: 7px; }
   .nav-logo::after { font-size: .62rem; letter-spacing: .08em; }
   .nav-right > a:not(.nav-btn-primary) { display: none; }
+  body.member-page .mobile-nav { display: block; }
+  .btn:not(.btn-sm) { min-height: 46px; }
 }
-body.member-page .mobile-nav { display: block; }
-@media (max-width: 640px) { body.member-page .mobile-nav { display: block; } }
+
+@media (max-width: 380px) {
+  .nav-logo::after { font-size: .56rem; letter-spacing: .055em; }
+  .stats-row { gap: 6px; }
+  .stat-card { padding: 12px 6px; }
+  .mnav-item { min-width: 52px; padding-left: 6px; padding-right: 6px; }
+}
