@@ -28,6 +28,10 @@ function baseCardId(item) {
   return String(item.apiId || item.sourceId || '').trim();
 }
 
+function selectedVariant(item) {
+  return item.variance || item.priceVariant || '';
+}
+
 function variantKeys(value) {
   const v = normalizeVariant(value);
   const map = {
@@ -42,7 +46,7 @@ function variantKeys(value) {
 }
 
 function orderedVariantKeys(item) {
-  const requested = variantKeys(item.priceVariant || item.variance || '');
+  const requested = variantKeys(selectedVariant(item));
   if (!requested.length) return ['auto'];
   if (requested.length === 1) return requested;
   const rarity = norm(item.rarity || '').replace(/-/g, ' ');
@@ -58,7 +62,7 @@ function priceKey(item, forceVariant = null) {
   const language = normalizeLanguage(item.language);
   const cardId = baseCardId(item);
   if (!cardId) return '';
-  const variant = normalizeVariant(forceVariant != null ? forceVariant : (item.priceVariant || item.variance || '')) || 'auto';
+  const variant = normalizeVariant(forceVariant != null ? forceVariant : selectedVariant(item)) || 'auto';
   return `${language}__${cardId}__${variant}`.replace(/\//g, '_');
 }
 
@@ -86,7 +90,7 @@ exports.handler = async function(event) {
 
     const candidateKeys = items.map(item => {
       const variants = orderedVariantKeys(item);
-      const requestedSpecific = normalizeVariant(item.priceVariant || item.variance || '');
+      const requestedSpecific = normalizeVariant(selectedVariant(item));
       const keys = [];
       for (const variant of variants) {
         keys.push(priceKey(item, variant));
