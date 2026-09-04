@@ -1,45 +1,13 @@
 const { getFirebaseAdmin, json, requireUser } = require('./_shared');
+const { normalizeText, normalizeNumber, normalizeVariant, resolveProduct, resolveGroup, choosePrice } = require('./_tcgcsv');
 
 const TCGCSV_BASE = 'https://tcgcsv.com/tcgplayer/3';
 const FRESH_MS = 4 * 60 * 1000;
 const FUNCTION_BUDGET_MS = 22000;
 
-function normalizeText(value) {
-  return String(value || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function normalizeVariant(value) {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
-function normalizeNumber(value) {
-  const raw = String(value || '').trim().toLowerCase().split('/')[0].trim();
-  return /^\d+$/.test(raw) ? String(Number(raw)) : raw;
-}
-
 function normalizeLanguage(value) {
   const v = String(value || '').toLowerCase();
   return v === 'ja' || v === 'jp' || v.includes('japanese') ? 'ja' : 'en';
-}
-
-function variantKeys(value) {
-  const v = normalizeVariant(value);
-  const map = {
-    normal: ['normal'], nonholo: ['normal'], nonfoil: ['normal'],
-    holo: ['holofoil'], holofoil: ['holofoil'], foil: ['holofoil'],
-    reverseholo: ['reverseholofoil'], reverseholofoil: ['reverseholofoil'], reversefoil: ['reverseholofoil'],
-    firstedition: ['1steditionholofoil', '1steditionnormal'], '1stedition': ['1steditionholofoil', '1steditionnormal'],
-    unlimited: ['unlimitedholofoil', 'unlimitednormal'],
-    shadowless: ['shadowlessholofoil', 'shadowlessnormal']
-  };
-  return map[v] || [];
 }
 
 function finiteMarket(row) {
@@ -47,102 +15,18 @@ function finiteMarket(row) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-function choosePrice(rows, requestedVariant = '', rarity = '', name = '') {
-  const valid = (rows || []).filter(row => finiteMarket(row) != null);
-  if (!valid.length) return { status: 'unavailable', variant: null, marketPrice: null };
-
-  const requested = variantKeys(requestedVariant);
-  if (requested.length) {
-    const exact = valid.filter(row => requested.includes(normalizeVariant(row.subTypeName)));
-    if (exact.length === 1) return { status: 'exact-variant', variant: exact[0].subTypeName, marketPrice: finiteMarket(exact[0]) };
-  }
-
-  if (valid.length === 1) return { status: 'exact', variant: valid[0].subTypeName, marketPrice: finiteMarket(valid[0]) };
-
-  const r = normalizeText(rarity);
-  const n = normalizeText(name);
-  const normal = valid.find(row => normalizeVariant(row.subTypeName) === 'normal');
-  const holo = valid.find(row => normalizeVariant(row.subTypeName) === 'holofoil');
-
-  if ((r === 'common' || r === 'uncommon' || r === 'rare') && normal) {
-    return { status: 'inferred', variant: normal.subTypeName, marketPrice: finiteMarket(normal) };
-  }
-  if ((r.includes('holo') || /\b(ex|gx|v|vmax|vstar)\b/.test(n)) && holo) {
-    return { status: 'inferred', variant: holo.subTypeName, marketPrice: finiteMarket(holo) };
-  }
-
-  const ordinary = valid.filter(row => !/(reverse|1st|first|unlimited|shadowless)/i.test(String(row.subTypeName || '')));
-  if (ordinary.length === 1) {
-    return { status: 'inferred', variant: ordinary[0].subTypeName, marketPrice: finiteMarket(ordinary[0]) };
-  }
-
-  return { status: 'ambiguous', variant: null, marketPrice: null };
-}
-
 function extractProductId(url) {
   const match = String(url || '').match(/\/product\/(\d+)/i);
   return match ? Number(match[1]) : null;
 }
 
-function productNumber(product) {
-  const direct = product?.number || product?.cardNumber;
-  if (direct) return normalizeNumber(direct);
-  for (const row of product?.extendedData || []) {
-    const key = normalizeText(row?.name || row?.displayName || '');
-    if (key === 'number' || key === 'card number') return normalizeNumber(row?.value || '');
-  }
-  const nameMatch = String(product?.name || '').match(/#\s*([a-z0-9-]+)/i);
-  return nameMatch ? normalizeNumber(nameMatch[1]) : '';
-}
-
-function resolveProduct(item, products) {
+function resolveLinkedProduct(item, products) {
   const linkedId = extractProductId(item.tcgplayerUrl);
   if (linkedId) {
     const linked = products.find(p => Number(p.productId) === linkedId);
     if (linked) return linked;
   }
-
-  const wantedName = normalizeText(item.name);
-  const wantedNumber = normalizeNumber(item.number);
-  let best = null;
-  let bestScore = -1;
-
-  for (const product of products || []) {
-    const number = productNumber(product);
-    if (wantedNumber && number !== wantedNumber) continue;
-    const fullName = normalizeText(product.name || product.cleanName || '');
-    const cleanName = normalizeText(product.cleanName || '');
-    let score = 0;
-    if (wantedName && (fullName === wantedName || cleanName === wantedName)) score = 500;
-    else if (wantedName && (fullName.startsWith(wantedName) || cleanName.startsWith(wantedName))) score = 320;
-    else if (wantedName && fullName.includes(wantedName)) score = 220;
-    else continue;
-    if (score > bestScore) { bestScore = score; best = product; }
-  }
-
-  return bestScore >= 320 ? best : null;
-}
-
-function resolveGroup(setName, groups) {
-  const wanted = normalizeText(setName);
-  if (!wanted) return null;
-  let best = null;
-  let bestScore = -1;
-
-  for (const group of groups || []) {
-    const name = normalizeText(group.name);
-    let score = -1;
-    if (name === wanted) score = 120;
-    else if (name.endsWith(wanted)) score = 105;
-    else if (name.includes(wanted)) score = 85;
-    else if (wanted.includes(name)) score = 65;
-    if (score > bestScore) {
-      bestScore = score;
-      best = group;
-    }
-  }
-
-  return bestScore >= 85 ? best : null;
+  return resolveProduct(item, products);
 }
 
 async function fetchJson(url, timeout = 4500) {
@@ -174,20 +58,62 @@ function isTrustedFresh(item) {
 function priceKey(item, variant) {
   const language = normalizeLanguage(item.language);
   const cardId = String(item.apiId || item.sourceId || '').trim();
-  const v = normalizeVariant(variant || item.priceVariant || item.variance || '') || 'auto';
+  const v = normalizeVariant(variant || '') || 'auto';
   return `${language}__${cardId}__${v}`.replace(/\//g, '_');
 }
 
+function slug(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function identityKey(item, variant) {
+  const language = normalizeLanguage(item.language);
+  const set = slug(item.set || item.setName || '');
+  const name = slug(item.name || '');
+  const number = normalizeNumber(item.number || '');
+  if (!set || !name || !number) return '';
+  const v = normalizeVariant(variant || '') || 'auto';
+  return `${language}__lookup__${set}__${name}__${number}__${v}`;
+}
+
 async function commitWrites(db, writes) {
+  const unique = new Map();
+  for (const write of writes) unique.set(write.ref.path, write);
+  const list = [...unique.values()];
   let committed = 0;
-  for (let start = 0; start < writes.length; start += 300) {
-    const chunk = writes.slice(start, start + 300);
+  for (let start = 0; start < list.length; start += 300) {
+    const chunk = list.slice(start, start + 300);
     const batch = db.batch();
     for (const write of chunk) batch.set(write.ref, write.data, { merge: true });
     await batch.commit();
     committed += chunk.length;
   }
   return committed;
+}
+
+function masterRow({ entry, product, group, variant, marketPrice, now, status = 'master-variant' }) {
+  const tcgplayerProductId = Number(product.productId);
+  return {
+    cardId: entry.cardId,
+    language: 'en',
+    name: entry.item.name || product.name || '',
+    set: entry.item.set || group.name || '',
+    number: entry.item.number || '',
+    requestedVariant: null,
+    marketPrice,
+    pricingStatus: status,
+    priceVariant: variant,
+    tcgplayerProductId,
+    tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${tcgplayerProductId}`,
+    source: 'tcgcsv-tcgplayer',
+    updatedAt: now
+  };
 }
 
 exports.handler = async function(event = {}) {
@@ -251,6 +177,7 @@ exports.handler = async function(event = {}) {
     let cardsResolved = 0;
     let cardsAmbiguous = 0;
     let cardsUnmatched = 0;
+    let variantsCached = 0;
     const processedRefs = new Set();
 
     for (const [, entries] of setEntries) {
@@ -276,44 +203,47 @@ exports.handler = async function(event = {}) {
         }
 
         for (const entry of entries) {
-          const product = resolveProduct(entry.item, products);
+          const product = resolveLinkedProduct(entry.item, products);
           if (!product) {
             cardsUnmatched += 1;
             continue;
           }
 
+          const productRows = rowsByProduct.get(Number(product.productId)) || [];
+          const validRows = productRows.filter(row => finiteMarket(row) != null && row.subTypeName);
+
+          // Populate the shared archive with every exact TCGplayer printing for this product.
+          for (const row of validRows) {
+            const variant = String(row.subTypeName || '').trim();
+            const marketPrice = finiteMarket(row);
+            if (!variant || marketPrice == null) continue;
+            const data = masterRow({ entry, product, group, variant, marketPrice, now });
+            const key = priceKey(entry.item, variant);
+            priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: { ...data, key } });
+            const lookupKey = identityKey(entry.item, variant);
+            if (lookupKey) priceWrites.push({ ref: db.collection('cardPrices').doc(lookupKey), data: { ...data, key: lookupKey } });
+            variantsCached += 1;
+          }
+
+          const requestedVariant = entry.item.variance || entry.item.priceVariant || '';
           const picked = choosePrice(
-            rowsByProduct.get(Number(product.productId)) || [],
-            entry.item.priceVariant || entry.item.variance || '',
+            productRows,
+            requestedVariant,
             entry.item.rarity || '',
             entry.item.name || ''
           );
 
-          const key = priceKey(entry.item, picked.variant);
-          const master = {
-            key,
-            cardId: entry.cardId,
-            language: 'en',
-            name: entry.item.name || product.name || '',
-            set: entry.item.set || group.name || '',
-            number: entry.item.number || '',
-            requestedVariant: entry.item.variance || entry.item.priceVariant || null,
-            marketPrice: picked.marketPrice,
-            pricingStatus: picked.status,
-            priceVariant: picked.variant,
-            tcgplayerProductId: Number(product.productId),
-            tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,
-            source: 'tcgcsv-tcgplayer',
-            updatedAt: now
-          };
-          priceWrites.push({ ref: db.collection('cardPrices').doc(key), data: master });
-          const requestedVariant = normalizeVariant(entry.item.priceVariant || entry.item.variance || '');
-          if (picked.marketPrice != null && !requestedVariant) {
-            const autoKey = priceKey(entry.item, 'auto');
-            priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...master, key: autoKey, pricingStatus: 'master-default' } });
-          }
-
           if (picked.marketPrice != null) {
+            const key = priceKey(entry.item, picked.variant);
+            const requestedSpecific = normalizeVariant(requestedVariant);
+            if (!requestedSpecific) {
+              const autoKey = priceKey(entry.item, 'auto');
+              const autoData = masterRow({ entry, product, group, variant: picked.variant, marketPrice: picked.marketPrice, now, status: 'master-default' });
+              priceWrites.push({ ref: db.collection('cardPrices').doc(autoKey), data: { ...autoData, key: autoKey } });
+              const identityAutoKey = identityKey(entry.item, 'auto');
+              if (identityAutoKey) priceWrites.push({ ref: db.collection('cardPrices').doc(identityAutoKey), data: { ...autoData, key: identityAutoKey } });
+            }
+
             cardsResolved += 1;
             processedRefs.add(entry.ref.path);
             collectionWrites.push({
@@ -327,7 +257,10 @@ exports.handler = async function(event = {}) {
                 pricingStatus: picked.status,
                 priceVariant: picked.variant,
                 priceSource: 'master-tcgcsv-tcgplayer',
-                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`
+                tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,
+                retryCount: 0,
+                retryReason: null,
+                matchStatus: 'verified'
               }
             });
           } else if (picked.status === 'ambiguous') {
@@ -341,7 +274,8 @@ exports.handler = async function(event = {}) {
                 valueSource: 'needs-variant',
                 marketPriceUpdatedAt: now,
                 pricingStatus: 'ambiguous',
-                priceSource: 'master-tcgcsv-tcgplayer'
+                priceSource: 'master-tcgcsv-tcgplayer',
+                retryReason: 'Multiple exact TCGplayer printings remain possible.'
               }
             });
           }
@@ -358,6 +292,7 @@ exports.handler = async function(event = {}) {
     return json(200, {
       updatedPrices,
       updatedCollectionRows,
+      variantsCached,
       cardsResolved,
       cardsAmbiguous,
       cardsUnmatched,
