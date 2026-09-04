@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
             h3.textContent = update[0];
             const p = h3.parentElement.querySelector('p');
             if (p) p.textContent = update[1];
+            if (update[0] === 'Crate Coins') { const icon = h3.parentElement.querySelector('.feature-icon'); if (icon) icon.innerHTML = '<img class="crate-coin-feature-icon" src="images/crate%20coin%202.png" alt="Crate Coin">'; }
         });
 
         // Prefer local decorative card art to avoid third-party image failures.

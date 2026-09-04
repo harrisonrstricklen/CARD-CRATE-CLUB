@@ -84,7 +84,7 @@
       <a href="dashboard.html">🏠 Dashboard</a>
       <a href="crates.html">📦 My Crates</a>
       <a href="collection.html">🃏 Collection</a>
-      <a href="rewards.html" class="active">🪙 Rewards</a>
+      <a href="rewards.html" class="active"><img class="crate-coin-nav-icon" src="images/crate%20coin%202.png" alt=""> Rewards</a>
       <div class="nav-dropdown">
         <a href="#">🤖 AI Tools ▾</a>
         <div class="nav-dropdown-menu">
@@ -102,12 +102,13 @@
 
   <main>
     <div class="coin-hero">
+      <img class="crate-coin-hero-img" src="images/crate%20coin%202.png" alt="Card Crate Club Crate Coin">
       <div class="page-title">Crate <span class="gold">Coins</span></div>
       <p class="page-subtitle" style="margin-bottom:0;">Earn coins by subscribing, referring friends, and staying active — redeem them in the Rewards Shop.</p>
     </div>
 
     <div class="coin-balance-card">
-      <div class="coin-balance-icon">🪙</div>
+      <img class="crate-coin-balance-img" src="images/crate%20coin%202.png" alt="Crate Coin">
       <div class="coin-balance-value" id="coinBalance">0</div>
       <div class="coin-balance-label">Current Balance</div>
     </div>
@@ -153,7 +154,7 @@
       <a href="dashboard.html"   class="mnav-item"><span class="micon">🏠</span>Home</a>
       <a href="crates.html"      class="mnav-item"><span class="micon">📦</span>Crates</a>
       <a href="collection.html"  class="mnav-item"><span class="micon">🃏</span>Collection</a>
-      <a href="rewards.html"     class="mnav-item active"><span class="micon">🪙</span>Rewards</a>
+      <a href="rewards.html"     class="mnav-item active"><span class="micon"><img class="crate-coin-mobile-icon" src="images/crate%20coin%202.png" alt=""></span>Rewards</a>
       <a href="account.html"     class="mnav-item"><span class="micon">⚙️</span>Account</a>
     </div>
   </nav>
@@ -194,7 +195,7 @@
         if (Array.isArray(data.coinTransactions) && data.coinTransactions.length > 0) {
           document.getElementById('txnList').innerHTML = data.coinTransactions.slice(0, 8).map(t => `
             <div class="txn-row">
-              <span class="txn-icon">${t.icon || '🪙'}</span>
+              <span class="txn-icon">${t.icon || '<img class=\"crate-coin-txn-icon\" src=\"images/crate%20coin%202.png\" alt=\"Crate Coin\">'}</span>
               <span class="txn-text">${t.text || ''}<br><span class="txn-time">${t.time || ''}</span></span>
               <span class="txn-amount ${t.amount >= 0 ? 'positive' : 'negative'}">${t.amount >= 0 ? '+' : ''}${t.amount ?? 0}</span>
             </div>
