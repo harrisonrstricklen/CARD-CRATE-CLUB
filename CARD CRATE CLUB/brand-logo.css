@@ -101,6 +101,90 @@ body:has(.brand-lockup.nav-logo) .welcome-sub {
   font-weight:500;
 }
 
+/* Collector-first dashboard hierarchy */
+body:has(.brand-lockup.nav-logo) main {
+  display:flex;
+  flex-direction:column;
+}
+body:has(.brand-lockup.nav-logo) .welcome-banner { order:1; }
+body:has(.brand-lockup.nav-logo) .collection-preview-section { order:2; margin:0 0 22px !important; }
+body:has(.brand-lockup.nav-logo) .stats-row { order:3; }
+body:has(.brand-lockup.nav-logo) .subscription-section { order:4; }
+body:has(.brand-lockup.nav-logo) .timeline-section { order:5; }
+body:has(.brand-lockup.nav-logo) .sets-section { order:6; }
+body:has(.brand-lockup.nav-logo) .actions-section { order:7; }
+body:has(.brand-lockup.nav-logo) .activity-section { order:8; }
+body:has(.brand-lockup.nav-logo) .crates-section { order:9; }
+body:has(.brand-lockup.nav-logo) .founding-banner { order:10; }
+body:has(.brand-lockup.nav-logo) .controls-section { order:11; }
+
+body:has(.brand-lockup.nav-logo) .collection-preview-head {
+  align-items:center !important;
+  margin-bottom:14px !important;
+}
+body:has(.brand-lockup.nav-logo) .collection-preview-head h2 {
+  font-size:1.28rem !important;
+  letter-spacing:-.025em;
+}
+body:has(.brand-lockup.nav-logo) .collection-preview-card {
+  border-color:rgba(245,200,66,.28) !important;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(245,200,66,.09),transparent 34%),
+    linear-gradient(135deg,#11131c,#181a27) !important;
+  box-shadow:0 20px 45px rgba(0,0,0,.24);
+}
+body:has(.brand-lockup.nav-logo) .collection-item {
+  min-height:220px !important;
+  grid-template-columns:108px 1fr !important;
+  padding:20px !important;
+  transition:background .2s ease,transform .2s ease;
+}
+body:has(.brand-lockup.nav-logo) .collection-item:hover {
+  background:rgba(245,200,66,.035);
+}
+body:has(.brand-lockup.nav-logo) .collection-item img {
+  width:108px !important;
+  height:152px !important;
+}
+body:has(.brand-lockup.nav-logo) .collection-item-name { font-size:1.02rem !important; }
+body:has(.brand-lockup.nav-logo) .collection-item-meta { font-size:.8rem !important; }
+
+body:has(.brand-lockup.nav-logo) .stats-row {
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  margin-bottom:22px !important;
+}
+body:has(.brand-lockup.nav-logo) .stat-card {
+  min-height:92px !important;
+  padding:14px 12px !important;
+}
+body:has(.brand-lockup.nav-logo) .stat-icon { font-size:1.1rem !important; margin-bottom:4px !important; }
+body:has(.brand-lockup.nav-logo) .stat-value { font-size:1.15rem !important; }
+
+body:has(.brand-lockup.nav-logo) .subscription-section { margin-bottom:14px !important; }
+body:has(.brand-lockup.nav-logo) .subscription-section .section-title {
+  display:flex !important;
+  font-size:.72rem !important;
+  text-transform:uppercase;
+  letter-spacing:.11em;
+  color:var(--gold);
+}
+body:has(.brand-lockup.nav-logo) .subscription-section .section-title::first-letter { font-size:0; }
+body:has(.brand-lockup.nav-logo) .sub-card {
+  border-color:rgba(245,200,66,.26) !important;
+  background:linear-gradient(135deg,#151721,#1c1d29) !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.2);
+}
+body:has(.brand-lockup.nav-logo) .timeline-section .section-title,
+body:has(.brand-lockup.nav-logo) .sets-section .section-title {
+  color:#f4f4f5;
+  font-weight:850 !important;
+}
+body:has(.brand-lockup.nav-logo) .set-card { width:158px !important; }
+body:has(.brand-lockup.nav-logo) .set-art { height:136px !important; }
+body:has(.brand-lockup.nav-logo) .top-card-fan { transform:scale(1.12); }
+body:has(.brand-lockup.nav-logo) .actions-section { opacity:.92; }
+body:has(.brand-lockup.nav-logo) .founding-banner { margin-top:4px; opacity:.9; }
+
 /* Loading screen: override every generic logo dimension with a viewport-sized mark. */
 #loading-overlay .loader-logo {
   display:flex !important;
@@ -146,8 +230,7 @@ body:has(.brand-lockup.nav-logo) .welcome-sub {
 .brand-emblem > img { display:none !important; }
 .brand-emblem::before { width:100%; height:100%; flex-basis:auto; }
 
-/* Collection import processing state. The import page disables these buttons while work is active,
-   so this gives users an unmistakable stay-on-page indicator without blocking the actual request. */
+/* Collection import processing state. */
 body.member-page:has(#analyzeBtn:disabled)::before,
 body.member-page:has(#importBtn:disabled)::before {
   content:"";
@@ -198,4 +281,13 @@ body.member-page:has(#importBtn:disabled)::after {
     min-width:250px !important;
     min-height:250px !important;
   }
+  body:has(.brand-lockup.nav-logo) .collection-item {
+    grid-template-columns:92px 1fr !important;
+    min-height:150px !important;
+    padding:14px !important;
+  }
+  body:has(.brand-lockup.nav-logo) .collection-item img { width:92px !important; height:130px !important; }
+  body:has(.brand-lockup.nav-logo) .stats-row { grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:7px !important; }
+  body:has(.brand-lockup.nav-logo) .stat-card { min-height:84px !important; padding:10px 6px !important; }
+  body:has(.brand-lockup.nav-logo) .set-card { width:150px !important; }
 }
