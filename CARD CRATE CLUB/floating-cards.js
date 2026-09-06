@@ -1,4 +1,5 @@
 (() => {
+  // Shared randomized background pool; bump this file to trigger the site deploy.
   const sets = [
     ['me01', 188],
     ['me02', 130],
