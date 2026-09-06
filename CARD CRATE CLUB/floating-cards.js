@@ -1,5 +1,5 @@
 (() => {
-  // Shared randomized background pool; bump this file to trigger the site deploy.
+  // Shared randomized background pool. Cache version: random2.
   const sets = [
     ['me01', 188],
     ['me02', 130],
