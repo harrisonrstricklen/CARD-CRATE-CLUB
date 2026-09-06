@@ -224,8 +224,10 @@ exports.handler = async function(event = {}) {
           priceVariant: row.priceVariant || selectedVariant(entry.item) || null,
           priceSource: 'master-cache',
           tcgplayerUrl: row.tcgplayerUrl || entry.item.tcgplayerUrl || '',
-          retryCount: 0,
-          retryReason: null,
+          priceRetryAttempts: 0,
+          priceRetryState: 'verified',
+          priceRetryReason: null,
+          priceRetryAfterMs: 0,
           matchStatus: 'verified'
         }
       });
@@ -352,8 +354,10 @@ exports.handler = async function(event = {}) {
                 priceVariant: picked.variant,
                 priceSource: 'master-tcgcsv-tcgplayer',
                 tcgplayerUrl: entry.item.tcgplayerUrl || product.url || `https://www.tcgplayer.com/product/${Number(product.productId)}`,
-                retryCount: 0,
-                retryReason: null,
+                priceRetryAttempts: 0,
+                priceRetryState: 'verified',
+                priceRetryReason: null,
+                priceRetryAfterMs: 0,
                 matchStatus: 'verified'
               }
             });
@@ -369,7 +373,11 @@ exports.handler = async function(event = {}) {
                 marketPriceUpdatedAt: now,
                 pricingStatus: 'ambiguous',
                 priceSource: 'master-tcgcsv-tcgplayer',
-                retryReason: 'Multiple exact TCGplayer printings remain possible.'
+                priceRetryAttempts: 5,
+                priceRetryState: 'needs-review',
+                priceRetryReason: 'Multiple exact TCGplayer printings remain possible.',
+                priceRetryAfterMs: 0,
+                matchStatus: 'needs-review'
               }
             });
           }
