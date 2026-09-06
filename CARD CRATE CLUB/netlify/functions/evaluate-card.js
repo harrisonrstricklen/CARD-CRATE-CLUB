@@ -1,7 +1,58 @@
-const { json, requireUser } = require('./_shared');
+const { getFirebaseAdmin, json, requireUser } = require('./_shared');
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+const MONTHLY_EVALUATION_LIMIT = 25;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+async function getQuota(uid) {
+  const admin = getFirebaseAdmin();
+  const month = currentMonthKey();
+  const ref = admin.firestore().doc(`users/${uid}/evaluatorUsage/${month}`);
+  const snap = await ref.get();
+  const used = Math.max(0, Number(snap.data()?.used) || 0);
+  return { month, used, limit: MONTHLY_EVALUATION_LIMIT, remaining: Math.max(0, MONTHLY_EVALUATION_LIMIT - used) };
+}
+
+async function reserveEvaluation(uid) {
+  const admin = getFirebaseAdmin();
+  const month = currentMonthKey();
+  const ref = admin.firestore().doc(`users/${uid}/evaluatorUsage/${month}`);
+  return admin.firestore().runTransaction(async transaction => {
+    const snap = await transaction.get(ref);
+    const used = Math.max(0, Number(snap.data()?.used) || 0);
+    if (used >= MONTHLY_EVALUATION_LIMIT) {
+      const error = new Error('You have used all 25 card evaluations for this month. Your allowance resets next month.');
+      error.statusCode = 429;
+      error.quota = { month, used, limit: MONTHLY_EVALUATION_LIMIT, remaining: 0 };
+      throw error;
+    }
+    const nextUsed = used + 1;
+    transaction.set(ref, {
+      used: nextUsed,
+      limit: MONTHLY_EVALUATION_LIMIT,
+      month,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    return { ref, quota: { month, used: nextUsed, limit: MONTHLY_EVALUATION_LIMIT, remaining: MONTHLY_EVALUATION_LIMIT - nextUsed } };
+  });
+}
+
+async function releaseEvaluation(ref) {
+  if (!ref) return;
+  const admin = getFirebaseAdmin();
+  await admin.firestore().runTransaction(async transaction => {
+    const snap = await transaction.get(ref);
+    const used = Math.max(0, Number(snap.data()?.used) || 0);
+    transaction.set(ref, {
+      used: Math.max(0, used - 1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+}
 
 function validateImage(dataUrl, label) {
   if (typeof dataUrl !== 'string') throw Object.assign(new Error(`${label} photo is required.`), { statusCode: 400 });
@@ -62,10 +113,13 @@ function normalizeEvaluation(value) {
 }
 
 exports.handler = async function(event) {
-  if (event.httpMethod !== 'POST') return json(405, { error: 'POST required' });
+  if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'GET or POST required' });
+
+  let reservationRef = null;
 
   try {
-    await requireUser(event);
+    const user = await requireUser(event);
+    if (event.httpMethod === 'GET') return json(200, { quota: await getQuota(user.uid) });
     if (!process.env.OPENAI_API_KEY) {
       return json(503, { error: 'Card Evaluator is not configured yet.', setupRequired: 'OPENAI_API_KEY' });
     }
@@ -74,6 +128,8 @@ exports.handler = async function(event) {
     const frontImage = validateImage(body.frontImage, 'Front');
     const backImage = validateImage(body.backImage, 'Back');
     const cardHint = String(body.cardHint || '').trim().slice(0, 160);
+    const reservation = await reserveEvaluation(user.uid);
+    reservationRef = reservation.ref;
 
     const prompt = `Act as a cautious trading-card condition evaluator. Review the FRONT and BACK photos of one Pokémon card and estimate the PSA numeric grade visible from these photos only.
 
@@ -117,21 +173,23 @@ If the images do not show the complete front and back clearly enough, set gradea
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       console.error('OpenAI evaluator request failed:', response.status, payload?.error?.message || payload);
-      return json(response.status === 429 ? 429 : 502, {
-        error: response.status === 429 ? 'The evaluator is busy. Please try again shortly.' : 'The card could not be evaluated right now.'
-      });
+      throw Object.assign(new Error(response.status === 429 ? 'The evaluator is busy. Please try again shortly.' : 'The card could not be evaluated right now.'), { statusCode: response.status === 429 ? 503 : 502 });
     }
 
     const message = payload?.choices?.[0]?.message;
     if (message?.refusal) return json(422, { error: 'These photos could not be evaluated.' });
     if (!message?.content) return json(502, { error: 'The evaluator returned an empty result.' });
 
-    return json(200, { evaluation: normalizeEvaluation(JSON.parse(message.content)) });
+    return json(200, { evaluation: normalizeEvaluation(JSON.parse(message.content)), quota: reservation.quota });
   } catch (error) {
     console.error('Card evaluation failed:', error);
+    if (reservationRef) {
+      try { await releaseEvaluation(reservationRef); } catch (releaseError) { console.error('Could not release evaluator quota:', releaseError); }
+    }
     const status = error.name === 'AbortError' ? 504 : (error.statusCode || 500);
     return json(status, {
-      error: error.name === 'AbortError' ? 'The evaluation timed out. Please try again.' : (status < 500 ? error.message : 'The card could not be evaluated right now.')
+      error: error.name === 'AbortError' ? 'The evaluation timed out. Please try again.' : (status === 500 ? 'The card could not be evaluated right now.' : error.message),
+      ...(error.quota ? { quota: error.quota } : {})
     });
   }
 };
@@ -139,3 +197,4 @@ If the images do not show the complete front and back clearly enough, set gradea
 exports.evaluationSchema = evaluationSchema;
 exports.validateImage = validateImage;
 exports.normalizeEvaluation = normalizeEvaluation;
+exports.MONTHLY_EVALUATION_LIMIT = MONTHLY_EVALUATION_LIMIT;
