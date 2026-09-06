@@ -86,7 +86,7 @@ exports.handler = async function(event) {
         body: JSON.stringify({
           model: process.env.OPENAI_VISION_MODEL || 'gpt-5-mini',
           messages: [{ role: 'user', content: [
-            { type: 'text', text: 'Identify this Pokémon trading card so it can be matched against a card database. Read the exact card name, printed set or expansion when recognizable, and the collector number printed on the card (for example 054/191). Note a visible variant such as full art, illustration rare, reverse holo, first edition, shadowless, promo, or standard. Do not guess missing text. Set readable=false when the card cannot be identified reliably.' },
+            { type: 'text', text: 'Identify this Pokémon trading card so it can be matched against a card database and confirmed by the user. First use the visible Pokémon name, artwork, card layout, set symbol, and color even when small printed text is not perfectly sharp. Return the most likely exact card name. Read the printed set or expansion and collector number (for example 054/191) only when recognizable; otherwise use an empty string for those fields. Note a visible variant such as full art, illustration rare, reverse holo, first edition, shadowless, promo, or standard. Use low confidence when relying mainly on artwork. Set readable=false only when neither the card name nor artwork can support a useful database search.' },
             { type: 'image_url', image_url: { url: image, detail: 'high' } }
           ] }],
           response_format: { type: 'json_schema', json_schema: { name: 'card_scan_identity', strict: true, schema: scanSchema } }
@@ -103,7 +103,7 @@ exports.handler = async function(event) {
     const message = payload?.choices?.[0]?.message;
     if (message?.refusal || !message?.content) throw Object.assign(new Error('The card could not be identified from this photo.'), { statusCode: 422 });
     const identification = JSON.parse(message.content);
-    if (!identification.readable || !identification.card_name.trim()) throw Object.assign(new Error('The card text was not clear enough. Try again with a closer, brighter photo.'), { statusCode: 422 });
+    if (!identification.card_name.trim()) throw Object.assign(new Error('The card could not be identified. Move closer so the card fills most of the frame and try again.'), { statusCode: 422 });
     return json(200, { identification, quota: reservation.quota });
   } catch (error) {
     console.error('Card scan failed:', error);
