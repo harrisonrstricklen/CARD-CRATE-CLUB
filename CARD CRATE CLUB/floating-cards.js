@@ -53,5 +53,13 @@
     }));
   }
 
-  document.querySelectorAll('.floating-bg').forEach(buildBackground);
+  function init() {
+    document.querySelectorAll('.floating-bg').forEach(buildBackground);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 })();
