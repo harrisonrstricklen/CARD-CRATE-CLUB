@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-14T09:31:41.319335+00:00",
+  "generatedAt": "2026-09-21T09:28:39.228492+00:00",
   "source": "PokemonTCG/pokemon-tcg-data",
   "language": "en",
-  "sets": 174,
-  "cards": 20444,
+  "sets": 176,
+  "cards": 20635,
   "missingSetMetadata": [],
   "setCatalog": "card-data/all-sets/index.json",
   "cardIndex": "card-data/all-cards-index.json"
